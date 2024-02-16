@@ -1,0 +1,5 @@
+dist
+coverage
+node_modules
+src-tauri/target
+vite.config.ts
