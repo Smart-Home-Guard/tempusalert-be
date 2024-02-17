@@ -9,24 +9,28 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("mongodb error: {0}")]
+    #[error("Mongodb error: {0}")]
     MongoError(#[from] mongodb::error::Error),
-    #[error("error during mongodb query: {0}")]
+    #[error("Error during mongodb query: {0}")]
     MongoQueryError(mongodb::error::Error),
-    #[error("dulicate key error occurred: {0}")]
+    #[error("Dulicate key error occurred: {0}")]
     MongoDuplicateError(mongodb::error::Error),
-    #[error("could not serialize data: {0}")]
+    #[error("Could not serialize data: {0}")]
     MongoSerializeBsonError(bson::ser::Error),
-    #[error("could not deserialize bson: {0}")]
+    #[error("Could not deserialize bson: {0}")]
     MongoDeserializeBsonError(bson::de::Error),
-    #[error("could not access field in document: {0}")]
+    #[error("Could not access field in document: {0}")]
     MongoDataError(#[from] bson::document::ValueAccessError),
-    #[error("invalid id used: {0}")]
+    #[error(transparent)]
+    AxumError(#[from] axum::Error),
+    #[error("Invalid id used: {0}")]
     InvalidIDError(String),
     #[error("{0}")]
     BadRequest(#[from] BadRequest),
     #[error("{0}")]
     NotFound(#[from] NotFound),
+    #[error(transparent)]
+    UnknownError(#[from] anyhow::Error),
 }
 
 #[derive(Error, Debug)]
@@ -74,11 +78,15 @@ impl Error {
             }
             Error::MongoDataError(e) => {
                 eprintln!("validation error: {:?}", e);
-                (StatusCode::BAD_REQUEST, "failed", "validation error")
+                (StatusCode::BAD_REQUEST, "failed", "Validation error")
             }
             Error::InvalidIDError(e) => {
                 eprintln!("Invalid ID: {:?}", e);
                 (StatusCode::BAD_REQUEST, "failed", e.as_str())
+            }
+            Error::AxumError(e) => {
+                eprintln!("{:?}", e);
+                (StatusCode::INTERNAL_SERVER_ERROR, "failed", "Axum Error")
             }
             Error::BadRequest(e) => {
                 eprintln!("{:?}", e);
@@ -91,6 +99,10 @@ impl Error {
                     "failed",
                     "Route does not exist on the server",
                 )
+            }
+            Error::UnknownError(e) => {
+                eprintln!("{:?}", e);
+                (StatusCode::INTERNAL_SERVER_ERROR, "error", "Unknown error")
             }
         }
     }
