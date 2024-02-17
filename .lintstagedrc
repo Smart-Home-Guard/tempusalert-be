@@ -1,5 +1,0 @@
-{
-    "**/*.{ts,tsx}": ["eslint --fix"],
-    "**/*.{ts,tsx,json}": ["prettier --write"],
-    "**/*.rs": ["rustfmt"]
-}
