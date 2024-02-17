@@ -25,3 +25,7 @@ dist-ssr
 *.sw?
 .env
 !.env.*
+
+# Added by cargo
+
+/target
