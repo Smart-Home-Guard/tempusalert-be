@@ -2,7 +2,7 @@ use dotenv::dotenv;
 use futures::FutureExt;
 use tracing::info;
 
-use tempusalert_be::{
+use web_server::{
     configs::{self, AppConfig},
     constants::CONFIG,
     repositories,
