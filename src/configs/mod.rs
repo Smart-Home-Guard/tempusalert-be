@@ -8,6 +8,7 @@ use crate::utils::get_project_root;
 
 use self::server::ServerConfig;
 
+pub mod env;
 mod server;
 mod swagger;
 pub mod tracing;
@@ -28,6 +29,7 @@ impl AppConfig {
             .unwrap_or_else(|_e| Ok(Profile::Dev))?;
         let profile_filename = format!("{profile}.toml");
         let config = config::Config::builder()
+            .add_source(config::File::from(config_dir.join("base.toml")))
             .add_source(config::File::from(config_dir.join(profile_filename)))
             .add_source(env_src)
             .build()?;
@@ -70,7 +72,14 @@ pub enum Profile {
 mod tests {
     use std::convert::TryFrom;
 
-    pub use super::*;
+    use self::env::get_env_source;
+
+    use super::*;
+
+    #[test]
+    pub fn test_read_app_config() {
+        let _config = AppConfig::read(get_env_source("TEST_APP")).unwrap();
+    }
 
     #[test]
     pub fn test_profile_to_string() {

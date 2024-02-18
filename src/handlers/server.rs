@@ -1,7 +1,7 @@
 use axum::Json;
 
 use crate::dtos::GenericResponse;
-use crate::types;
+use crate::types::AppResult;
 
 // Health check.
 #[utoipa::path(
@@ -11,7 +11,7 @@ use crate::types;
         (status = 200, description = "check service is up", body = [GenericResponse])
     )
 )]
-pub async fn health_check() -> types::Result<Json<GenericResponse>> {
+pub async fn health_check() -> AppResult<Json<GenericResponse>> {
     const MESSAGE: &str = "Build CRUD API with Rust and MongoDB";
 
     let response_json = GenericResponse {

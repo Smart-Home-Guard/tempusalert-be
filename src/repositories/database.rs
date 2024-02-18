@@ -1,6 +1,6 @@
 use mongodb::{bson::Document, options::ClientOptions, Client, Collection};
 
-use crate::types;
+use crate::types::AppResult;
 
 #[derive(Debug)]
 pub struct DB {
@@ -8,7 +8,7 @@ pub struct DB {
 }
 
 impl DB {
-    pub async fn init() -> types::Result<Self> {
+    pub async fn init() -> AppResult<Self> {
         let mongodb_uri: String = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set.");
         let database_name: String =
             std::env::var("MONGO_INITDB_DATABASE").expect("MONGO_INITDB_DATABASE must be set.");

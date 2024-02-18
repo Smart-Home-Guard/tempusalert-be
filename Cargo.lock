@@ -1904,6 +1904,7 @@ dependencies = [
  "dotenv",
  "futures",
  "mongodb",
+ "once_cell",
  "serde",
  "serde_json",
  "strum",

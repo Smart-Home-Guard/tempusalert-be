@@ -6,8 +6,10 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
     configs::{ApiDoc, AppConfig},
-    types,
+    types::AppResult,
 };
+
+mod server;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -15,14 +17,12 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub async fn new(config: AppConfig) -> types::Result<Self> {
+    pub async fn new(config: AppConfig) -> AppResult<Self> {
         Ok(Self {
             config: Arc::new(config),
         })
     }
 }
-
-mod server;
 
 pub fn create_router_app(state: AppState) -> Router {
     let router = Router::new()

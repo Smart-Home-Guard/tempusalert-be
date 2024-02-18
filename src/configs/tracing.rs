@@ -7,7 +7,7 @@ use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 use tracing_log::LogTracer;
 use tracing_subscriber::{fmt::MakeWriter, layer::SubscriberExt, EnvFilter, Registry};
 
-use crate::types;
+use crate::types::AppResult;
 
 fn create_subscriber<W>(
     name: &str,
@@ -33,7 +33,7 @@ where
     Ok(())
 }
 
-pub fn init() -> types::Result<WorkerGuard> {
+pub fn init() -> AppResult<WorkerGuard> {
     let file_appender = RollingFileAppender::new(Rotation::DAILY, "logs", "app.log");
     let (file_appender, file_appender_guard) = tracing_appender::non_blocking(file_appender);
     init_subscriber(create_subscriber(

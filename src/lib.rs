@@ -6,3 +6,4 @@ pub mod repositories;
 pub mod routes;
 pub mod types;
 pub mod utils;
+pub mod constants;

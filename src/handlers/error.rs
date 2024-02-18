@@ -8,7 +8,7 @@ use serde_json::json;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum Error {
+pub enum AppError {
     #[error("Mongodb error: {0}")]
     MongoError(#[from] mongodb::error::Error),
     #[error("Error during mongodb query: {0}")]
@@ -30,6 +30,10 @@ pub enum Error {
     #[error("{0}")]
     NotFound(#[from] NotFound),
     #[error(transparent)]
+    IoError(#[from] std::io::Error),
+    #[error(transparent)]
+    AddrParseError(#[from] std::net::AddrParseError),
+    #[error(transparent)]
     UnknownError(#[from] anyhow::Error),
 }
 
@@ -41,14 +45,14 @@ pub struct BadRequest {}
 #[error("Not found")]
 pub struct NotFound {}
 
-impl Error {
+impl AppError {
     fn get_codes(&self) -> (StatusCode, &str, &str) {
         match self {
-            Error::MongoError(e) => {
+            AppError::MongoError(e) => {
                 eprintln!("MongoDB error: {:?}", e);
                 (StatusCode::INTERNAL_SERVER_ERROR, "failed", "MongoDB error")
             }
-            Error::MongoQueryError(e) => {
+            AppError::MongoQueryError(e) => {
                 eprintln!("Error during mongodb query: {:?}", e);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
@@ -56,11 +60,11 @@ impl Error {
                     "Error during mongodb query",
                 )
             }
-            Error::MongoDuplicateError(e) => {
+            AppError::MongoDuplicateError(e) => {
                 eprintln!("MongoDB error: {:?}", e);
                 (StatusCode::CONFLICT, "failed", "Duplicate key error")
             }
-            Error::MongoSerializeBsonError(e) => {
+            AppError::MongoSerializeBsonError(e) => {
                 eprintln!("Error seserializing BSON: {:?}", e);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
@@ -68,7 +72,7 @@ impl Error {
                     "Error seserializing BSON",
                 )
             }
-            Error::MongoDeserializeBsonError(e) => {
+            AppError::MongoDeserializeBsonError(e) => {
                 eprintln!("Error deserializing BSON: {:?}", e);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
@@ -76,23 +80,23 @@ impl Error {
                     "Error deserializing BSON",
                 )
             }
-            Error::MongoDataError(e) => {
+            AppError::MongoDataError(e) => {
                 eprintln!("validation error: {:?}", e);
                 (StatusCode::BAD_REQUEST, "failed", "Validation error")
             }
-            Error::InvalidIDError(e) => {
+            AppError::InvalidIDError(e) => {
                 eprintln!("Invalid ID: {:?}", e);
                 (StatusCode::BAD_REQUEST, "failed", e.as_str())
             }
-            Error::AxumError(e) => {
+            AppError::AxumError(e) => {
                 eprintln!("{:?}", e);
                 (StatusCode::INTERNAL_SERVER_ERROR, "failed", "Axum Error")
             }
-            Error::BadRequest(e) => {
+            AppError::BadRequest(e) => {
                 eprintln!("{:?}", e);
                 (StatusCode::BAD_REQUEST, "failed", "Invalid Body")
             }
-            Error::NotFound(e) => {
+            AppError::NotFound(e) => {
                 eprintln!("{:?}", e);
                 (
                     StatusCode::NOT_FOUND,
@@ -100,7 +104,27 @@ impl Error {
                     "Route does not exist on the server",
                 )
             }
-            Error::UnknownError(e) => {
+            AppError::IoError(e) => {
+                eprintln!("{:?}", e);
+                match e.kind() {
+                    std::io::ErrorKind::NotFound => {
+                        (StatusCode::NOT_FOUND, "failed", "Not found error")
+                    }
+                    std::io::ErrorKind::PermissionDenied => {
+                        (StatusCode::FORBIDDEN, "failed", "Forbidden error")
+                    }
+                    _ => (StatusCode::INTERNAL_SERVER_ERROR, "failed", "IO error"),
+                }
+            }
+            AppError::AddrParseError(e) => {
+                eprintln!("{:?}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "failed",
+                    "Address parser error",
+                )
+            }
+            AppError::UnknownError(e) => {
                 eprintln!("{:?}", e);
                 (StatusCode::INTERNAL_SERVER_ERROR, "error", "Unknown error")
             }
@@ -108,7 +132,7 @@ impl Error {
     }
 }
 
-impl IntoResponse for Error {
+impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status_code, status, message) = self.get_codes();
         let body = Json(json!({ "status": status, "message": message }));
