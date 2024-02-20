@@ -1,8 +1,7 @@
 use mongodb::{options::ClientOptions, Client};
 
-pub async fn init(mongodb_uri: String, database_name: String) -> mongodb::error::Result<Client> {
-    let mut client_options = ClientOptions::parse(mongodb_uri).await?;
-    client_options.app_name = Some(database_name);
+pub async fn init(mongodb_uri: String) -> mongodb::error::Result<Client> {
+    let client_options = ClientOptions::parse(mongodb_uri).await?;
 
     let client = Client::with_options(client_options)?;
 
