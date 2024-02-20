@@ -430,7 +430,6 @@ checksum = "7e962a19be5cfc3f3bf6dd8f61eb50107f356ad6270fbb3ed41476571db78be5"
 name = "database-connector"
 version = "0.1.0"
 dependencies = [
- "dotenv",
  "mongodb",
  "tokio",
 ]
@@ -900,6 +899,8 @@ name = "iot-server"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "database-connector",
+ "mongodb",
  "rumqttc",
  "serde",
  "serde_json",
