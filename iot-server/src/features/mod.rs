@@ -1,4 +1,4 @@
-pub mod featureA;
+pub mod template_feature;
 
 use async_trait::async_trait;
 

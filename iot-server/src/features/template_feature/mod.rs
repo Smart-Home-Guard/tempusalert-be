@@ -1,17 +1,17 @@
 use crate::Feature;
 use async_trait::async_trait;
 
-pub struct FeatureA {
+pub struct FeatureExample {
 }
 
-impl FeatureA {
+impl FeatureExample {
 
 }
 
 #[async_trait]
-impl Feature for FeatureA {
+impl Feature for FeatureExample {
     fn name() -> String {
-        "FeatureA".into()
+        "Feature Example".into()
     }
 
     async fn init(&mut self) {
