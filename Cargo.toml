@@ -1,4 +1,4 @@
 [workspace]
 
-members = ["web-server", "iot-server"]
+members = ["web-server", "iot-server", "database-connector"]
 resolver = "2"

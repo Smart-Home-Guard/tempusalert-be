@@ -1,0 +1,12 @@
+[package]
+name = "database-connector"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+dotenv = "0.15.0"
+mongodb = "2.8.1"
+tokio = { version = "1.36.0", features = ["full"] }
+
