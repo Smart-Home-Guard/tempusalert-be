@@ -1530,6 +1530,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "tokio-rustls",
+ "url",
 ]
 
 [[package]]
