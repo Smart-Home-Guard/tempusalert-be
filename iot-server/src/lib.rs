@@ -20,11 +20,16 @@ impl Server {
     async fn create(config: ServerConfig) -> Option<Self> {
         match database::init(config.mongo_url).await {
             Ok(mongo_client) => Some(mongo_client),
-            _ => None
-        }.and_then( |mongo_client| {
+            _ => None,
+        }
+        .and_then(|mongo_client| {
             let options = rumqttc::MqttOptions::parse_url(config.mqtt_url).ok()?;
             let (client, connection) = rumqttc::Client::new(options, config.mqtt_cap);
-            Some(Server { mongo_client, mqtt_client: client, mqtt_connection: connection })
+            Some(Server {
+                mongo_client,
+                mqtt_client: client,
+                mqtt_connection: connection,
+            })
         })
     }
 
