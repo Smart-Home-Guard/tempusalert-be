@@ -1,4 +1,4 @@
-mod featureA;
+pub mod featureA;
 
 use async_trait::async_trait;
 
