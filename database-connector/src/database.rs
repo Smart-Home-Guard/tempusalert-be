@@ -12,8 +12,6 @@ impl DB {
         let mongodb_uri: String = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set.");
         let database_name: String =
             std::env::var("MONGO_INITDB_DATABASE").expect("MONGO_INITDB_DATABASE must be set.");
-        let mongodb_note_collection: String =
-            std::env::var("MONGODB_COLLECTION").expect("MONGODB_COLLECTION must be set.");
 
         let mut client_options = ClientOptions::parse(mongodb_uri).await?;
         client_options.app_name = Some(database_name.to_string());
