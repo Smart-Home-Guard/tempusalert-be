@@ -1,7 +1,6 @@
 mod features;
 
 use database_connector::database;
-use rumqttc::MqttOptions;
 use features::Feature;
 
 pub struct ServerConfig {
@@ -23,14 +22,14 @@ impl Server {
             Ok(mongo_client) => Some(mongo_client),
             _ => None
         }.and_then( |mongo_client| {
-            let options = rumqttc::MqttOptions::parse_url(config.mqtt_url)?;
-            let (mut client, mut connection) = rumqttc::Client::new(options, config.mqtt_cap);
+            let options = rumqttc::MqttOptions::parse_url(config.mqtt_url).ok()?;
+            let (client, connection) = rumqttc::Client::new(options, config.mqtt_cap);
             Some(Server { mongo_client, mqtt_client: client, mqtt_connection: connection })
         })
     }
 
     async fn register(&mut self, mut module: impl Feature) -> &mut Self {
-        module.init();
+        module.init(&mut self.mqtt_client);
         self
     }
 

@@ -1,5 +1,6 @@
 use crate::Feature;
 use async_trait::async_trait;
+use rumqttc::Client;
 
 pub struct FeatureExample {
 }
@@ -14,7 +15,7 @@ impl Feature for FeatureExample {
         "Feature Example".into()
     }
 
-    async fn init(&mut self) {
+    async fn init(&mut self, rumqttc: &mut Client) {
         
     } 
 
