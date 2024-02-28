@@ -3,3 +3,7 @@ profile = "test"
 [server]
 addr = "127.0.0.1"
 port = 0
+
+[iot]
+addr = "127.0.0.1"
+port = 8081

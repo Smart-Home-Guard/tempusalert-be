@@ -9,6 +9,6 @@ pub trait Feature<S: Clone + Send + Sync + 'static = ()> {
 }
 
 pub struct SwaggerMeta {
-    key: String,
-    value: PathItem,
+    pub key: String,
+    pub value: PathItem,
 }
