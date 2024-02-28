@@ -3,7 +3,7 @@ use utoipa::{
     Modify, OpenApi,
 };
 
-use crate::dtos::*;
+use crate::{dtos::*, features::Feature};
 
 #[derive(OpenApi)]
 #[openapi(
@@ -11,24 +11,21 @@ use crate::dtos::*;
         version = "v0.1.0",
         title = "TEMPUSALERT API",
     ),
-    paths(
-        // server api 
-        crate::handlers::server::health_check,
-
-    ),
     components(
         schemas(
             GenericResponse,
+        ),
+        responses(
+            GenericResponse
         )
     ),
-    tags(
-        (name = "crate::handlers::server", description = "server endpoints."),
-    ),
-    modifiers(&SecurityAddon)
+    modifiers(&CustomPaths)
 )]
 pub struct ApiDoc;
 
 struct SecurityAddon;
+
+struct CustomPaths;
 
 impl Modify for SecurityAddon {
     fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
@@ -37,5 +34,15 @@ impl Modify for SecurityAddon {
             "jwt",
             SecurityScheme::Http(Http::new(HttpAuthScheme::Bearer)),
         )
+    }
+}
+
+impl Modify for CustomPaths {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        let example = crate::features::template_feature::FeatureExample::new();
+        example.add_swagger(openapi);
+
+        let sample = crate::features::example_feature::FeatureSample::new();
+        sample.add_swagger(openapi)
     }
 }
