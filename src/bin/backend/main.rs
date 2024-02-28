@@ -2,7 +2,7 @@ use config::CONFIG;
 use dotenv::dotenv;
 use futures::FutureExt;
 use iot::IotServer;
-use tempusalert_be::web_core::error::AppError;
+use tempusalert_be::errors::AppError;
 use web::WebServer;
 
 mod config;
