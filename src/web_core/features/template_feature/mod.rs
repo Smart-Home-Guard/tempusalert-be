@@ -5,7 +5,7 @@ use utoipa::openapi::{path::OperationBuilder, PathItem, PathItemType};
 use utoipa::{ToResponse, ToSchema};
 
 use super::{Feature, SwaggerMeta};
-use crate::web_core::error::AppError;
+use crate::errors::AppError;
 
 #[derive(Serialize, ToSchema, ToResponse)]
 pub struct GenericResponse {
