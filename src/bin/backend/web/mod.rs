@@ -6,7 +6,7 @@ use tempusalert_be::web_core::features::{
 use utoipa::{Modify, OpenApi};
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::{configuration::AppConfig, AppResult};
+use crate::{config::AppConfig, AppResult};
 
 #[derive(OpenApi)]
 #[openapi(

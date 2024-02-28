@@ -4,7 +4,7 @@ use std::{
     str::FromStr,
 };
 
-use config::{ConfigError, Environment};
+use config::Environment;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 
@@ -14,19 +14,12 @@ pub static CONFIG: Lazy<AppConfig> =
     Lazy::new(|| AppConfig::read(get_env_source(ENV_PREFIX)).unwrap());
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct ServerConfig {
+pub struct WebConfig {
     pub addr: String,
     pub port: u16,
 }
 
-#[derive(Debug, Deserialize, Clone)]
-pub struct AppConfig {
-    pub profile: Profile,
-    pub server: ServerConfig,
-    pub iot: ServerConfig,
-}
-
-impl ServerConfig {
+impl WebConfig {
     pub fn get_addr(&self) -> String {
         format!("{}:{}", self.addr, self.port)
     }
@@ -35,12 +28,24 @@ impl ServerConfig {
     }
 }
 
+#[derive(Debug, Deserialize, Clone)]
+pub struct IoTConfig {
+
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct AppConfig {
+    pub profile: Profile,
+    pub server: WebConfig,
+    pub iot: IoTConfig,
+}
+
 impl AppConfig {
     pub fn read(env_src: Environment) -> Result<Self, config::ConfigError> {
-        let config_dir = get_settings_dir()?;
-        let profile = std::env::var("APP_PROFILE")
-            .map(|env| Profile::from_str(&env).map_err(|e| ConfigError::Message(e.to_string())))
-            .unwrap_or_else(|_e| Ok(Profile::Dev))?;
+        let config_dir = get_settings_dir();
+        let profile = std::env::var("APP_PROFILE").ok()
+            .and_then(|env| Profile::from_str(&env).ok())
+            .unwrap_or(Profile::Dev);
         let profile_filename = format!("{profile}.toml");
         let config = config::Config::builder()
             .add_source(config::File::from(config_dir.join("base.toml")))
@@ -51,32 +56,8 @@ impl AppConfig {
     }
 }
 
-pub fn get_settings_dir() -> Result<std::path::PathBuf, ConfigError> {
-    Ok(get_project_root()
-        .map_err(|e| ConfigError::Message(e.to_string()))?
-        .join("settings"))
-}
-
-pub fn get_project_root() -> std::io::Result<PathBuf> {
-    if let Some(root) = get_cargo_project_root()? {
-        Ok(root)
-    } else {
-        Ok(std::env::current_dir()?)
-    }
-}
-
-pub fn get_cargo_project_root() -> std::io::Result<Option<PathBuf>> {
-    let current_path = std::env::current_dir()?;
-
-    for ancestor in current_path.ancestors() {
-        for dir in std::fs::read_dir(ancestor)? {
-            let dir = dir?;
-            if dir.file_name() == *"Cargo.lock" {
-                return Ok(Some(ancestor.to_path_buf()));
-            }
-        }
-    }
-    Ok(None)
+fn get_settings_dir() -> PathBuf {
+    std::env::current_dir().unwrap().join("settings")
 }
 
 fn get_env_source(prefix: &str) -> config::Environment {
