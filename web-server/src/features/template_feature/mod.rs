@@ -1,6 +1,5 @@
 use axum::{routing::get, Json};
 use utoipa::openapi::{path::OperationBuilder, PathItem, PathItemType};
-
 use crate::{dtos::GenericResponse, features::Feature, types::AppResult};
 
 pub struct FeatureExample;
