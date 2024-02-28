@@ -1,10 +1,14 @@
-use crate::web_core::routes::AppState;
-
-pub mod example_feature;
 pub mod template_feature;
 
-pub trait Feature {
-    fn new() -> Self;
-    fn add_routers(router: axum::Router<AppState>) -> axum::Router<AppState>;
-    fn add_swagger(&self, openapi: &mut utoipa::openapi::OpenApi);
+use axum::Router;
+use utoipa::openapi::PathItem;
+
+pub trait Feature<S: Clone + Send + Sync + 'static = ()> {
+    fn create_router() -> Router<S>;
+    fn create_swagger() -> SwaggerMeta;
+}
+
+pub struct SwaggerMeta {
+    key: String,
+    value: PathItem,
 }

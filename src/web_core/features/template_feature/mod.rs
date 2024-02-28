@@ -1,11 +1,22 @@
-use crate::web_core::{dtos::GenericResponse, features::Feature, types::AppResult};
-use axum::{routing::get, Json};
+use axum::{routing::get, Json, Router};
+use serde::Serialize;
+use std::result::Result;
 use utoipa::openapi::{path::OperationBuilder, PathItem, PathItemType};
+use utoipa::{ToResponse, ToSchema};
+
+use super::{Feature, SwaggerMeta};
+use crate::web_core::error::AppError;
+
+#[derive(Serialize, ToSchema, ToResponse)]
+pub struct GenericResponse {
+    pub status: String,
+    pub message: String,
+}
 
 pub struct FeatureExample;
 
 impl FeatureExample {
-    pub async fn health_check() -> AppResult<Json<GenericResponse>> {
+    pub async fn health_check() -> Result<Json<GenericResponse>, AppError> {
         const MESSAGE: &str = "Build CRUD API with Rust and MongoDB";
 
         let response_json = GenericResponse {
@@ -17,20 +28,14 @@ impl FeatureExample {
 }
 
 impl Feature for FeatureExample {
-    fn new() -> Self {
-        FeatureExample {}
+    fn create_router() -> Router<()> {
+        Router::new().route("/api/health_check", get(FeatureExample::health_check))
     }
 
-    fn add_routers(
-        router: axum::Router<crate::web_core::routes::AppState>,
-    ) -> axum::Router<crate::web_core::routes::AppState> {
-        router.route("/api/health_check", get(FeatureExample::health_check))
-    }
-
-    fn add_swagger(&self, openapi: &mut utoipa::openapi::OpenApi) {
-        openapi.paths.paths.insert(
-            String::from("/api/health_check"),
-            PathItem::new(
+    fn create_swagger() -> SwaggerMeta {
+        SwaggerMeta {
+            key: String::from("/api/health_check"),
+            value: PathItem::new(
                 PathItemType::Get,
                 OperationBuilder::new()
                     .responses(
@@ -58,6 +63,6 @@ impl Feature for FeatureExample {
                     ))
                     .tag("health_check_api"),
             ),
-        );
+        }
     }
 }
