@@ -1,7 +1,7 @@
 use crate::web_core::routes::AppState;
 
-pub mod template_feature;
 pub mod example_feature;
+pub mod template_feature;
 
 pub trait Feature {
     fn new() -> Self;

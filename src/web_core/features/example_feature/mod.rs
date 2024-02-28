@@ -19,7 +19,7 @@ impl FeatureSample {
 
 impl Feature for FeatureSample {
     fn new() -> Self {
-        FeatureSample{}
+        FeatureSample {}
     }
 
     fn add_routers(

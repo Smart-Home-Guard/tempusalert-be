@@ -1,6 +1,6 @@
+use crate::web_core::{dtos::GenericResponse, features::Feature, types::AppResult};
 use axum::{routing::get, Json};
 use utoipa::openapi::{path::OperationBuilder, PathItem, PathItemType};
-use crate::web_core::{dtos::GenericResponse, features::Feature, types::AppResult};
 
 pub struct FeatureExample;
 
@@ -18,7 +18,7 @@ impl FeatureExample {
 
 impl Feature for FeatureExample {
     fn new() -> Self {
-        FeatureExample{}
+        FeatureExample {}
     }
 
     fn add_routers(
