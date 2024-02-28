@@ -1,0 +1,24 @@
+name: test and lint
+
+on:
+    push:
+        branches: [ main ]
+    pull_request:
+        branches: [ main ]
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        steps:
+        - uses: actions/checkout@v3
+        - uses: actions-rs/toolchain@v1
+          with:
+            toolchain: stable
+        - name: Build
+          run: cargo build
+        - name: Run checks
+          run: cargo check
+        - name: Run tests
+          run: cargo test --verbose
+        - name: Run lint
+          run: cargo clippy
