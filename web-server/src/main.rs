@@ -5,7 +5,6 @@ use tracing::info;
 use web_server::{
     configs::{self, AppConfig},
     constants::CONFIG,
-    repositories,
     routes::{create_router_app, AppState},
     types::AppResult,
     utils,
@@ -35,8 +34,6 @@ impl AppServer {
 #[tokio::main]
 async fn main() {
     dotenv().ok();
-
-    repositories::DB::init().await.unwrap();
 
     let _file_appender_guard = configs::tracing::init().unwrap();
     info!("The initialization of Tracing was successful.");

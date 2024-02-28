@@ -1,7 +1,7 @@
 use serde::Serialize;
-use utoipa::ToSchema;
+use utoipa::{ToResponse, ToSchema};
 
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize, ToSchema, ToResponse)]
 pub struct GenericResponse {
     pub status: String,
     pub message: String,

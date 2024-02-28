@@ -6,10 +6,9 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
     configs::{ApiDoc, AppConfig},
+    features::{example_feature::FeatureSample, template_feature::FeatureExample, Feature},
     types::AppResult,
 };
-
-mod server;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -27,6 +26,7 @@ impl AppState {
 pub fn create_router_app(state: AppState) -> Router {
     let router = Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()));
-    let router = server::add_routers(router);
+    let router = FeatureExample::add_routers(router);
+    let router = FeatureSample::add_routers(router);
     router.with_state(state)
 }
