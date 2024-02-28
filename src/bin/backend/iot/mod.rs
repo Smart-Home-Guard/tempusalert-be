@@ -1,4 +1,4 @@
-use crate::{configuration::AppConfig, AppResult};
+use crate::{config::AppConfig, AppResult};
 
 pub struct IotServer {
     config: AppConfig,

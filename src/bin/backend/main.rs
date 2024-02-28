@@ -1,11 +1,11 @@
-use configuration::CONFIG;
+use config::CONFIG;
 use dotenv::dotenv;
 use futures::FutureExt;
 use iot::IotServer;
 use tempusalert_be::web_core::error::AppError;
 use web::WebServer;
 
-mod configuration;
+mod config;
 mod iot;
 mod web;
 
