@@ -15,7 +15,7 @@ jobs:
           with:
             toolchain: stable
         - name: Build
-          run: cargo build --verbose
+          run: cargo build
         - name: Run checks
           run: cargo check
         - name: Run tests
