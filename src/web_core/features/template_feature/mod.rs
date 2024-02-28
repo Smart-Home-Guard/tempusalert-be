@@ -1,11 +1,11 @@
 use axum::{routing::get, Json, Router};
+use serde::Serialize;
+use std::result::Result;
 use utoipa::openapi::{path::OperationBuilder, PathItem, PathItemType};
 use utoipa::{ToResponse, ToSchema};
-use std::result::Result;
-use serde::Serialize;
 
 use super::{Feature, SwaggerMeta};
-use crate::web_core::error::{self, AppError};
+use crate::web_core::error::AppError;
 
 #[derive(Serialize, ToSchema, ToResponse)]
 pub struct GenericResponse {
