@@ -3,8 +3,8 @@ pub mod template_feature;
 use axum::Router;
 use utoipa::openapi::PathItem;
 
-pub trait Feature<S: Clone + Send + Sync + 'static = ()> {
-    fn create_router() -> Router<S>;
+pub trait Feature {
+    fn create_router() -> Router;
     fn create_swagger() -> SwaggerMeta;
 }
 

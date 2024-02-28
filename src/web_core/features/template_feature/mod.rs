@@ -28,7 +28,7 @@ impl FeatureExample {
 }
 
 impl Feature for FeatureExample {
-    fn create_router() -> Router<()> {
+    fn create_router() -> Router {
         Router::new().route("/api/health_check", get(FeatureExample::health_check))
     }
 

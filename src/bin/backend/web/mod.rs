@@ -1,42 +1,15 @@
+mod swagger;
+
 use axum::Router;
 use tempusalert_be::web_core::features::{
-    template_feature::{FeatureExample, GenericResponse},
+    template_feature::FeatureExample,
     Feature,
 };
-use utoipa::{Modify, OpenApi};
+use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{config::AppConfig, AppResult};
-
-#[derive(OpenApi)]
-#[openapi(
-        info(
-            version = "v0.1.0",
-            title = "TEMPUSALERT API",
-        ),
-        components(
-            schemas(
-                GenericResponse,
-            ),
-            responses(
-                GenericResponse
-            )
-        ),
-        modifiers(&CustomPaths)
-    )]
-pub struct ApiDoc;
-
-struct CustomPaths;
-
-impl Modify for CustomPaths {
-    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
-        let template_feature = FeatureExample::create_swagger();
-        openapi
-            .paths
-            .paths
-            .insert(template_feature.key, template_feature.value);
-    }
-}
+use self::swagger::ApiDoc;
 
 pub struct WebServer {
     config: AppConfig,
@@ -53,7 +26,7 @@ impl WebServer {
 
     pub async fn run(self) -> AppResult<()> {
         let router = Router::new()
-            .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()));
+            .merge(SwaggerUi::new("/doc").url("/doc/openapi.json", ApiDoc::openapi()));
         let template_feature = FeatureExample::create_router();
         let router = router.nest("/", template_feature);
         axum::serve(self.tcp, router).await?;
