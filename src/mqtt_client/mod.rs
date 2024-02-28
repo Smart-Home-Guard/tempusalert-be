@@ -12,7 +12,7 @@ pub struct ClientConfig {
 #[tokio::main]
 pub async fn init(config: ClientConfig) -> (AsyncClient, EventLoop) {
     let mut mqttoptions = MqttOptions::new(config.client_id, config.broker_hostname, config.broker_port);
-    mqttoptions.set_keep_alive(Duration::from_secs(keep_alive_sec));
+    mqttoptions.set_keep_alive(Duration::from_secs(config.keep_alive_sec));
 
     AsyncClient::new(mqttoptions, config.capacity)
 }
