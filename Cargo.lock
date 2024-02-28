@@ -427,6 +427,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7e962a19be5cfc3f3bf6dd8f61eb50107f356ad6270fbb3ed41476571db78be5"
 
 [[package]]
+name = "database-connector"
+version = "0.1.0"
+dependencies = [
+ "mongodb",
+ "tokio",
+]
+
+[[package]]
 name = "deranged"
 version = "0.3.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -890,6 +898,9 @@ dependencies = [
 name = "iot-server"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
+ "database-connector",
+ "mongodb",
  "rumqttc",
  "serde",
  "serde_json",
@@ -1519,6 +1530,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "tokio-rustls",
+ "url",
 ]
 
 [[package]]
