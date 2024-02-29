@@ -6,7 +6,6 @@ async fn main() {
     let this_file = file!();
     let path = Path::new(this_file);
     let config_path = path.parent().unwrap().join("rumqttd.toml");
-    println!("The current directory is {}", config_path.display());
 
     let builder = tracing_subscriber::fmt()
         .pretty()
@@ -23,7 +22,7 @@ async fn main() {
         .add_source(config::File::with_name(config_path.to_str().unwrap()))
         .build()
         .unwrap();
-    let mut config: Config = config.try_deserialize().unwrap();
+    let config: Config = config.try_deserialize().unwrap();
 
     let mut broker = Broker::new(config);
 
