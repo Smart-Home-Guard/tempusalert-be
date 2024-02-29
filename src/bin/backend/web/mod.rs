@@ -1,32 +1,44 @@
 mod swagger;
 
 use axum::Router;
-use tempusalert_be::web_core::features::{
-    template_feature::FeatureExample,
-    Feature,
+use tempusalert_be::{
+    notification::{IotNotification, WebNotification},
+    web_core::features::{template_feature::FeatureExample, WebFeature},
 };
+use tokio::sync::mpsc::{Receiver, Sender};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::{config::AppConfig, AppResult};
 use self::swagger::ApiDoc;
+use crate::{config::WebConfig, AppResult};
 
-pub struct WebServer {
-    config: AppConfig,
+pub struct WebTask {
+    pub config: WebConfig,
     tcp: tokio::net::TcpListener,
+    pub iot_rx: Receiver<IotNotification>,
+    pub iot_tx: Sender<WebNotification>,
 }
 
-impl WebServer {
-    pub async fn new(mut config: AppConfig) -> AppResult<Self> {
-        let tcp = tokio::net::TcpListener::bind(config.server.get_socket_addr()?).await?;
+impl WebTask {
+    pub async fn create(
+        mut config: WebConfig,
+        iot_rx: Receiver<IotNotification>,
+        iot_tx: Sender<WebNotification>,
+    ) -> AppResult<Self> {
+        let tcp = tokio::net::TcpListener::bind(config.get_socket_addr()?).await?;
         let addr = tcp.local_addr()?;
-        config.server.port = addr.port();
-        Ok(Self { config, tcp })
+        config.port = addr.port();
+        Ok(Self {
+            config,
+            tcp,
+            iot_rx,
+            iot_tx,
+        })
     }
 
-    pub async fn run(self) -> AppResult<()> {
-        let router = Router::new()
-            .merge(SwaggerUi::new("/doc").url("/doc/openapi.json", ApiDoc::openapi()));
+    pub async fn run(self) -> AppResult {
+        let router =
+            Router::new().merge(SwaggerUi::new("/doc").url("/doc/openapi.json", ApiDoc::openapi()));
         let template_feature = FeatureExample::create_router();
         let router = router.nest("/", template_feature);
         axum::serve(self.tcp, router).await?;

@@ -3,7 +3,8 @@ pub mod template_feature;
 use async_trait::async_trait;
 
 #[async_trait]
-pub trait Feature {
+pub trait IotFeature {
+    type IotNotification;
     fn name() -> String;
     async fn init(&mut self, mqtt_client: &mut rumqttc::Client);
     async fn process_iot_message(&mut self, message: String);

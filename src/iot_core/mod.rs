@@ -1,3 +1,3 @@
 mod features;
 
-pub use features::Feature;
+pub use features::IotFeature;

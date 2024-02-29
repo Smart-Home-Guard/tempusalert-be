@@ -29,15 +29,14 @@ impl WebConfig {
 }
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct IoTConfig {
+pub struct IotConfig {
 
 }
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct AppConfig {
-    pub profile: Profile,
     pub server: WebConfig,
-    pub iot: IoTConfig,
+    pub iot: IotConfig,
 }
 
 impl AppConfig {
@@ -48,7 +47,6 @@ impl AppConfig {
             .unwrap_or(Profile::Dev);
         let profile_filename = format!("{profile}.toml");
         let config = config::Config::builder()
-            .add_source(config::File::from(config_dir.join("base.toml")))
             .add_source(config::File::from(config_dir.join(profile_filename)))
             .add_source(env_src)
             .build()?;

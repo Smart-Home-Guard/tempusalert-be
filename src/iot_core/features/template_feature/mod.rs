@@ -1,4 +1,4 @@
-use super::Feature;
+use super::IotFeature;
 use async_trait::async_trait;
 use rumqttc::Client;
 
@@ -7,7 +7,9 @@ pub struct FeatureExample {}
 impl FeatureExample {}
 
 #[async_trait]
-impl Feature for FeatureExample {
+impl IotFeature for FeatureExample {
+    type IotNotification = ();
+
     fn name() -> String {
         "Feature Example".into()
     }

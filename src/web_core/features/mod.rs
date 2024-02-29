@@ -3,7 +3,8 @@ pub mod template_feature;
 use axum::Router;
 use utoipa::openapi::PathItem;
 
-pub trait Feature {
+pub trait WebFeature {
+    type WebNotification;
     fn create_router() -> Router;
     fn create_swagger() -> SwaggerMeta;
 }

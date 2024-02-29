@@ -2,7 +2,7 @@
 mod macros;
 
 use utoipa::{Modify, OpenApi};
-use tempusalert_be::web_core::features::{template_feature::{FeatureExample, GenericResponse}, Feature};
+use tempusalert_be::web_core::features::{template_feature::{FeatureExample, GenericResponse}, WebFeature};
 
 #[derive(OpenApi)]
 #[openapi(

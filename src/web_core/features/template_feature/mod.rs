@@ -4,7 +4,7 @@ use std::result::Result;
 use utoipa::openapi::{path::OperationBuilder, PathItem, PathItemType};
 use utoipa::{ToResponse, ToSchema};
 
-use super::{Feature, SwaggerMeta};
+use super::{WebFeature, SwaggerMeta};
 use crate::errors::AppError;
 
 #[derive(Serialize, ToSchema, ToResponse)]
@@ -27,7 +27,9 @@ impl FeatureExample {
     }
 }
 
-impl Feature for FeatureExample {
+impl WebFeature for FeatureExample {
+    type WebNotification = ();
+
     fn create_router() -> Router {
         Router::new().route("/api/health_check", get(FeatureExample::health_check))
     }
