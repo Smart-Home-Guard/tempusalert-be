@@ -1,9 +1,10 @@
 use config::CONFIG;
 use dotenv::dotenv;
 use futures::FutureExt;
-use iot::IotServer;
+use iot::IotTask;
 use tempusalert_be::errors::AppError;
-use web::WebServer;
+use tokio::sync::mpsc;
+use web::WebTask;
 
 mod config;
 mod iot;
@@ -42,17 +43,20 @@ pub async fn join_all(tasks: Vec<Task>) -> AppResult {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> AppResult {
     dotenv().ok();
     let config = CONFIG.clone();
-    let web_server = WebServer::new(config).await.unwrap();
-    let config = CONFIG.clone();
-    let iot_server = IotServer::new(config).await.unwrap();
+    let (iot_tx, web_rx) = mpsc::channel(64);
+    let (web_tx, iot_rx) = mpsc::channel(64);
+    let web_task = WebTask::create(config.server, iot_rx, iot_tx).await?;
+    let iot_task = IotTask::create(config.iot, web_rx, web_tx).await?;
 
     join_all(vec![
-        (true, web_server.run().boxed()),
-        (true, iot_server.run().boxed()),
+        (true, web_task.run().boxed()),
+        (true, iot_task.run().boxed()),
     ])
     .await
     .unwrap();
+
+    Ok(())
 }

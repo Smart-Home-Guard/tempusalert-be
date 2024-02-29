@@ -2,7 +2,7 @@
 mod macros;
 
 use utoipa::{Modify, OpenApi};
-use tempusalert_be::web_core::features::{template_feature::{FeatureExample, GenericResponse}, Feature};
+use tempusalert_be::backend_core::features::{template_feature::{WebFeatureExample, GenericResponse}, WebFeature};
 
 #[derive(OpenApi)]
 #[openapi(
@@ -26,6 +26,6 @@ struct CustomPaths;
 
 impl Modify for CustomPaths {
     fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
-        insert_paths![openapi, FeatureExample];
+        insert_paths![openapi, WebFeatureExample];
     }
 }
