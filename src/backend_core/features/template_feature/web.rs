@@ -1,3 +1,4 @@
+use axum::async_trait;
 use axum::{routing::get, Json, Router};
 use serde::Serialize;
 use std::result::Result;
@@ -6,6 +7,7 @@ use utoipa::{ToResponse, ToSchema};
 
 use super::super::{WebFeature, SwaggerMeta};
 use crate::errors::AppError;
+use crate::notification::IotNotification;
 
 #[derive(Serialize, ToSchema, ToResponse)]
 pub struct GenericResponse {
@@ -27,14 +29,13 @@ impl WebFeatureExample {
     }
 }
 
+#[async_trait]
 impl WebFeature for WebFeatureExample {
-    type WebNotification = ();
-
-    fn create_router() -> Router {
+    fn create_router(&self) -> Router {
         Router::new().route("/api/health_check", get(WebFeatureExample::health_check))
     }
 
-    fn create_swagger() -> SwaggerMeta {
+    fn create_swagger(&self) -> SwaggerMeta {
         SwaggerMeta {
             key: String::from("/api/health_check"),
             value: PathItem::new(
@@ -66,5 +67,9 @@ impl WebFeature for WebFeatureExample {
                     .tag("health_check_api"),
             ),
         }
+    }
+
+    async fn process_iot_notification(&mut self, notification: IotNotification) {
+        
     }
 }
