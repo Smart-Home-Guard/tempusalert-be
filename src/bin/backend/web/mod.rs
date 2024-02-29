@@ -2,7 +2,7 @@ mod swagger;
 
 use axum::Router;
 use tempusalert_be::{
-    core::features::{template_feature::WebFeatureExample, WebFeature}, notification::{IotNotification, WebNotification}
+    backend_core::features::{template_feature::WebFeatureExample, WebFeature}, notification::{IotNotification, WebNotification}
 };
 use tokio::sync::mpsc::{Receiver, Sender};
 use utoipa::OpenApi;

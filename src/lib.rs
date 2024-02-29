@@ -3,4 +3,4 @@ pub mod mqtt_client;
 pub mod errors;
 pub mod auth;
 pub mod notification;
-pub mod core;
+pub mod backend_core;
