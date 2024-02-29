@@ -1,6 +1,6 @@
-pub mod template_feature;
-
 use async_trait::async_trait;
+use axum::Router;
+use utoipa::openapi::PathItem;
 
 #[async_trait]
 pub trait IotFeature {
@@ -11,3 +11,19 @@ pub trait IotFeature {
     async fn process_push_notification(&mut self, message: String);
     async fn send_command(&mut self, command: String);
 }
+
+pub trait WebFeature {
+    type WebNotification;
+    fn create_router() -> Router;
+    fn create_swagger() -> SwaggerMeta;
+}
+
+pub struct SwaggerMeta {
+    pub key: String,
+    pub value: PathItem,
+}
+
+
+
+// Features
+pub mod template_feature;

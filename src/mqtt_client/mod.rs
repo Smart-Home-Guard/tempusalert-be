@@ -1,4 +1,4 @@
-use rumqttc::{AsyncClient, EventLoop, MqttOptions, QoS};
+use rumqttc::{AsyncClient, EventLoop, MqttOptions};
 use std::time::Duration;
 
 pub struct ClientConfig<'a> {

@@ -4,7 +4,7 @@ use std::result::Result;
 use utoipa::openapi::{path::OperationBuilder, PathItem, PathItemType};
 use utoipa::{ToResponse, ToSchema};
 
-use super::{WebFeature, SwaggerMeta};
+use super::super::{WebFeature, SwaggerMeta};
 use crate::errors::AppError;
 
 #[derive(Serialize, ToSchema, ToResponse)]
@@ -13,9 +13,9 @@ pub struct GenericResponse {
     pub message: String,
 }
 
-pub struct FeatureExample;
+pub struct WebFeatureExample;
 
-impl FeatureExample {
+impl WebFeatureExample {
     pub async fn health_check() -> Result<Json<GenericResponse>, AppError> {
         const MESSAGE: &str = "Build CRUD API with Rust and MongoDB";
 
@@ -27,11 +27,11 @@ impl FeatureExample {
     }
 }
 
-impl WebFeature for FeatureExample {
+impl WebFeature for WebFeatureExample {
     type WebNotification = ();
 
     fn create_router() -> Router {
-        Router::new().route("/api/health_check", get(FeatureExample::health_check))
+        Router::new().route("/api/health_check", get(WebFeatureExample::health_check))
     }
 
     fn create_swagger() -> SwaggerMeta {

@@ -2,8 +2,7 @@ mod swagger;
 
 use axum::Router;
 use tempusalert_be::{
-    notification::{IotNotification, WebNotification},
-    web_core::features::{template_feature::FeatureExample, WebFeature},
+    core::features::{template_feature::WebFeatureExample, WebFeature}, notification::{IotNotification, WebNotification}
 };
 use tokio::sync::mpsc::{Receiver, Sender};
 use utoipa::OpenApi;
@@ -39,7 +38,7 @@ impl WebTask {
     pub async fn run(self) -> AppResult {
         let router =
             Router::new().merge(SwaggerUi::new("/doc").url("/doc/openapi.json", ApiDoc::openapi()));
-        let template_feature = FeatureExample::create_router();
+        let template_feature = WebFeatureExample::create_router();
         let router = router.nest("/", template_feature);
         axum::serve(self.tcp, router).await?;
         Ok(())
