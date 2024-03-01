@@ -24,7 +24,6 @@ strum = { version = "0.26.1", features = ["derive"] }
 thiserror = "1.0.57"
 tokio = { version = "1.36.0", features = ["full"] }
 tower = "0.4.13"
-utoipa-swagger-ui = { version = "6.0.0", features = ["axum"] }
 uuid = { version = "1.7.0", features = ["v4", "serde"] }
 rumqttd = "0.19.0"
 tracing-subscriber = { version = "0.3.18", features = [
