@@ -9,7 +9,7 @@ pub struct IotTask {
     pub config: IotConfig,
     pub iot_rx: Arc<Mutex<Receiver<WebNotification>>>,
     pub iot_tx: Sender<IotNotification>,
-    features: Vec<Box<dyn IotFeature>>
+    features: Vec<Box<dyn IotFeature + Send>>
 }
 
 impl IotTask {
@@ -17,7 +17,7 @@ impl IotTask {
         config: IotConfig,
         iot_rx: Arc<Mutex<Receiver<WebNotification>>>,
         iot_tx: Sender<IotNotification>,
-        features: Vec<Box<dyn IotFeature>>,
+        features: Vec<Box<dyn IotFeature + Send>>,
     ) -> AppResult<Self> {
         Ok(Self {
             config,
