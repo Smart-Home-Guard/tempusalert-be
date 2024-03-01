@@ -1,13 +1,18 @@
 use axum::async_trait;
 use axum::{routing::get, Json, Router};
 use serde::Serialize;
+use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::sync::Mutex;
 use std::result::Result;
+use std::sync::Arc;
 use utoipa::openapi::{path::OperationBuilder, PathItem, PathItemType};
 use utoipa::{ToResponse, ToSchema};
 
 use super::super::{WebFeature, SwaggerMeta};
+use super::IotExampleFeature;
+use crate::backend_core::features::IotFeature;
 use crate::errors::AppError;
-use crate::notification::IotNotification;
+use crate::message::{IotNotification, WebNotification};
 
 #[derive(Serialize, ToSchema, ToResponse)]
 pub struct GenericResponse {
@@ -15,9 +20,9 @@ pub struct GenericResponse {
     pub message: String,
 }
 
-pub struct WebFeatureExample;
+pub struct WebExampleFeature;
 
-impl WebFeatureExample {
+impl WebExampleFeature {
     pub async fn health_check() -> Result<Json<GenericResponse>, AppError> {
         const MESSAGE: &str = "Build CRUD API with Rust and MongoDB";
 
@@ -30,12 +35,33 @@ impl WebFeatureExample {
 }
 
 #[async_trait]
-impl WebFeature for WebFeatureExample {
-    fn create_router(&self) -> Router {
-        Router::new().route("/api/health_check", get(WebFeatureExample::health_check))
+impl WebFeature for WebExampleFeature {
+    fn create(web_rx: Arc<Mutex<Receiver<IotNotification>>>, web_tx: &mut Sender<WebNotification>) -> Self {
+        WebExampleFeature
     }
 
-    fn create_swagger(&self) -> SwaggerMeta {
+    fn set_receiver(&mut self, iot_feat: Arc<dyn IotFeature>) {
+        
+    }
+
+    fn name(&mut self) -> String {
+        "Feature Example".into()
+    }
+
+    async fn send(&mut self, notif: WebNotification) {
+
+    }
+
+    async fn recv(&mut self) -> IotNotification {
+        IotNotification::None
+    }
+
+
+    fn create_router(&mut self) -> Router {
+        Router::new().route("/api/health_check", get(WebExampleFeature::health_check))
+    }
+
+    fn create_swagger(&mut self) -> SwaggerMeta {
         SwaggerMeta {
             key: String::from("/api/health_check"),
             value: PathItem::new(
