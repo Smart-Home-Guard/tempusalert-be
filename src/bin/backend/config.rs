@@ -29,9 +29,7 @@ impl WebConfig {
 }
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct IotConfig {
-
-}
+pub struct IotConfig {}
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct AppConfig {
@@ -42,7 +40,8 @@ pub struct AppConfig {
 impl AppConfig {
     pub fn read(env_src: Environment) -> Result<Self, config::ConfigError> {
         let config_dir = get_settings_dir();
-        let profile = std::env::var("APP_PROFILE").ok()
+        let profile = std::env::var("APP_PROFILE")
+            .ok()
             .and_then(|env| Profile::from_str(&env).ok())
             .unwrap_or(Profile::Dev);
         let profile_filename = format!("{profile}.toml");

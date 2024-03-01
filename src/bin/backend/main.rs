@@ -1,9 +1,11 @@
+use std::sync::Arc;
+
 use config::CONFIG;
 use dotenv::dotenv;
 use futures::FutureExt;
 use iot::IotTask;
-use tempusalert_be::errors::AppError;
-use tokio::sync::mpsc;
+use tempusalert_be::{backend_core::features::{template_feature::{IotExampleFeature, WebExampleFeature}, WebFeature}, errors::AppError};
+use tokio::sync::{mpsc, Mutex};
 use web::WebTask;
 
 mod config;
@@ -48,8 +50,8 @@ async fn main() -> AppResult {
     let config = CONFIG.clone();
     let (iot_tx, web_rx) = mpsc::channel(64);
     let (web_tx, iot_rx) = mpsc::channel(64);
-    let web_task = WebTask::create(config.server, iot_rx, iot_tx).await?;
-    let iot_task = IotTask::create(config.iot, web_rx, web_tx).await?;
+    let web_task = WebTask::create(config.server, Arc::new(Mutex::new(iot_rx)), iot_tx, vec![]).await?;
+    let iot_task = IotTask::create(config.iot, Arc::new(Mutex::new(web_rx)), web_tx, vec![]).await?;
 
     join_all(vec![
         (true, web_task.run().boxed()),

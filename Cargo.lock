@@ -2604,7 +2604,6 @@ dependencies = [
  "tokio",
  "tower",
  "tracing-subscriber",
- "utoipa",
  "utoipa-swagger-ui",
  "uuid",
 ]
@@ -3067,9 +3066,7 @@ dependencies = [
  "proc-macro-error",
  "proc-macro2",
  "quote",
- "regex",
  "syn 2.0.51",
- "uuid",
 ]
 
 [[package]]

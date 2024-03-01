@@ -1,11 +1,17 @@
 use std::sync::Arc;
 
-use crate::{backend_core::features::WebFeature, message::{IotCommand, IotMessage, IotNotification, WebNotification}};
+use crate::{
+    backend_core::features::WebFeature,
+    message::{IotCommand, IotMessage, IotNotification, WebNotification},
+};
 
 use super::{super::IotFeature, WebExampleFeature};
 use async_trait::async_trait;
 use rumqttc::Client;
-use tokio::sync::{mpsc::{Receiver, Sender}, Mutex};
+use tokio::sync::{
+    mpsc::{Receiver, Sender},
+    Mutex,
+};
 
 pub struct IotExampleFeature;
 
@@ -13,17 +19,16 @@ impl IotExampleFeature {}
 
 #[async_trait]
 impl IotFeature for IotExampleFeature {
-    fn create(web_rx: Arc<Mutex<Receiver<WebNotification>>>, web_tx: &mut Sender<IotNotification>) -> Self {
+    fn create(
+        web_rx: Arc<Mutex<Receiver<WebNotification>>>,
+        web_tx: &mut Sender<IotNotification>,
+    ) -> Self {
         IotExampleFeature
     }
 
-    fn set_receiver(&mut self, web_feat: Arc<dyn WebFeature>) {
+    fn set_receiver(&mut self, web_feat: Arc<dyn WebFeature>) {}
 
-    }
-
-    async fn send(&mut self, notif: IotNotification) {
-
-    }
+    async fn send(&mut self, notif: IotNotification) {}
 
     async fn recv(&mut self) -> WebNotification {
         WebNotification::None

@@ -10,7 +10,8 @@ pub struct ClientConfig<'a> {
 }
 
 pub fn init(config: ClientConfig) -> (AsyncClient, EventLoop) {
-    let mut mqttoptions = MqttOptions::new(config.client_id, config.broker_hostname, config.broker_port);
+    let mut mqttoptions =
+        MqttOptions::new(config.client_id, config.broker_hostname, config.broker_port);
     mqttoptions.set_keep_alive(Duration::from_secs(config.keep_alive_sec));
 
     AsyncClient::new(mqttoptions, config.capacity)
