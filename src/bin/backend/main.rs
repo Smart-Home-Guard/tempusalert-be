@@ -48,10 +48,8 @@ pub async fn join_all(tasks: Vec<Task>) -> AppResult {
 async fn main() -> AppResult {
     dotenv().ok();
     let config = CONFIG.clone();
-    let (iot_tx, web_rx) = mpsc::channel(64);
-    let (web_tx, iot_rx) = mpsc::channel(64);
-    let web_task = WebTask::create(config.server, Arc::new(Mutex::new(iot_rx)), iot_tx, vec![]).await?;
-    let iot_task = IotTask::create(config.iot, Arc::new(Mutex::new(web_rx)), web_tx, vec![]).await?;
+    let web_task = WebTask::create(config.server, vec![]).await?;
+    let iot_task = IotTask::create(config.iot, vec![]).await?;
 
     join_all(vec![
         (true, web_task.run().boxed()),

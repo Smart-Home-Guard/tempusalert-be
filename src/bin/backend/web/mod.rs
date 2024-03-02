@@ -12,8 +12,6 @@ use crate::{config::WebConfig, AppResult};
 pub struct WebTask {
     pub config: WebConfig,
     tcp: tokio::net::TcpListener,
-    pub web_rx: Arc<Mutex<Receiver<IotNotification>>>,
-    pub web_tx: Sender<WebNotification>,
     features: Vec<Box<dyn WebFeature + Send>>,
     router: Router,
 }
@@ -21,8 +19,6 @@ pub struct WebTask {
 impl WebTask {
     pub async fn create(
         mut config: WebConfig,
-        iot_rx: Arc<Mutex<Receiver<IotNotification>>>,
-        iot_tx: Sender<WebNotification>,
         features: Vec<Box<dyn WebFeature + Send>>,
     ) -> AppResult<Self> {
         let tcp = tokio::net::TcpListener::bind(config.get_socket_addr()?).await?;
@@ -32,8 +28,6 @@ impl WebTask {
         Ok(Self {
             config,
             tcp,
-            web_rx: iot_rx,
-            web_tx: iot_tx,
             features,
             router,
         })
