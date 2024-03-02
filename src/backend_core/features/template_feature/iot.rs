@@ -1,24 +1,25 @@
-use super::super::IotFeature;
+use std::sync::Arc;
+
 use async_trait::async_trait;
-use rumqttc::Client;
+use tokio::sync::Mutex;
 
-pub struct IotFeatureExample {}
+use crate::backend_core::features::{IotFeature, WebFeature};
 
-impl IotFeatureExample {}
+pub struct IotExampleFeature;
+
+impl IotExampleFeature {}
 
 #[async_trait]
-impl IotFeature for IotFeatureExample {
-    type IotNotification = ();
+impl IotFeature for IotExampleFeature {
+    fn create(mqttc: rumqttc::Client, mongoc: mongodb::Client) -> Self {
+        IotExampleFeature
+    }
 
-    fn name() -> String {
+    fn name(&mut self) -> String {
         "Feature Example".into()
     }
 
-    async fn init(&mut self, rumqttc: &mut Client) {}
+    async fn init(&mut self, web_feat: Arc<Mutex<dyn WebFeature + Sync + Send>>) {}
 
-    async fn process_iot_message(&mut self, message: String) {}
-
-    async fn process_push_notification(&mut self, message: String) {}
-
-    async fn send_command(&mut self, command: String) {}
+    async fn run_loop(&mut self) {}
 }

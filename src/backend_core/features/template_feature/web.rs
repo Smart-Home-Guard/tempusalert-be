@@ -1,21 +1,22 @@
+use axum::async_trait;
 use axum::{routing::get, Json, Router};
 use serde::Serialize;
+use tokio::sync::Mutex;
 use std::result::Result;
-use utoipa::openapi::{path::OperationBuilder, PathItem, PathItemType};
-use utoipa::{ToResponse, ToSchema};
+use std::sync::Arc;
 
-use super::super::{WebFeature, SwaggerMeta};
+use crate::backend_core::features::{IotFeature, WebFeature};
 use crate::errors::AppError;
 
-#[derive(Serialize, ToSchema, ToResponse)]
+#[derive(Serialize)]
 pub struct GenericResponse {
     pub status: String,
     pub message: String,
 }
 
-pub struct WebFeatureExample;
+pub struct WebExampleFeature;
 
-impl WebFeatureExample {
+impl WebExampleFeature {
     pub async fn health_check() -> Result<Json<GenericResponse>, AppError> {
         const MESSAGE: &str = "Build CRUD API with Rust and MongoDB";
 
@@ -27,44 +28,21 @@ impl WebFeatureExample {
     }
 }
 
-impl WebFeature for WebFeatureExample {
-    type WebNotification = ();
-
-    fn create_router() -> Router {
-        Router::new().route("/api/health_check", get(WebFeatureExample::health_check))
+#[async_trait]
+impl WebFeature for WebExampleFeature {
+    fn create(mongoc: mongodb::Client) -> Self {
+        WebExampleFeature
     }
 
-    fn create_swagger() -> SwaggerMeta {
-        SwaggerMeta {
-            key: String::from("/api/health_check"),
-            value: PathItem::new(
-                PathItemType::Get,
-                OperationBuilder::new()
-                    .responses(
-                        utoipa::openapi::ResponsesBuilder::new()
-                            .response(
-                                "200",
-                                utoipa::openapi::ResponseBuilder::new()
-                                    .description("Pet found succesfully")
-                                    .content(
-                                        "application/json",
-                                        utoipa::openapi::Content::new(
-                                            utoipa::openapi::Ref::from_response_name(
-                                                "GenericResponse",
-                                            ),
-                                        ),
-                                    ),
-                            )
-                            .response("404", utoipa::openapi::Response::new("Pet was not found")),
-                    )
-                    .operation_id(Some("get_pet_by_id"))
-                    .deprecated(Some(utoipa::openapi::Deprecated::False))
-                    .summary(Some("Get pet by id"))
-                    .description(Some(
-                        "Get pet by id\n\nGet pet from database by pet database id\n",
-                    ))
-                    .tag("health_check_api"),
-            ),
-        }
+    async fn init(&mut self, iot_feat: Arc<Mutex<dyn IotFeature + Sync + Send>>) {}
+
+    fn name(&mut self) -> String {
+        "Feature Example".into()
     }
+
+    fn create_router(&mut self) -> Router {
+        Router::new().route("/api/health_check", get(WebExampleFeature::health_check))
+    }
+
+    async fn run_loop(&mut self) {}
 }

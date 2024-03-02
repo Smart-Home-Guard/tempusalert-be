@@ -1,46 +1,46 @@
-mod swagger;
+use std::sync::Arc;
 
 use axum::Router;
-use tempusalert_be::{
-    backend_core::features::{template_feature::WebFeatureExample, WebFeature}, notification::{IotNotification, WebNotification}
-};
-use tokio::sync::mpsc::{Receiver, Sender};
-use utoipa::OpenApi;
-use utoipa_swagger_ui::SwaggerUi;
-
-use self::swagger::ApiDoc;
+use tempusalert_be::backend_core::features::WebFeature;
+use tokio::{join, sync::Mutex};
 use crate::{config::WebConfig, AppResult};
 
 pub struct WebTask {
     pub config: WebConfig,
     tcp: tokio::net::TcpListener,
-    pub iot_rx: Receiver<IotNotification>,
-    pub iot_tx: Sender<WebNotification>,
+    features: Vec<Arc<Mutex<dyn WebFeature + Send + Sync>>>,
+    router: Router,
 }
 
 impl WebTask {
     pub async fn create(
         mut config: WebConfig,
-        iot_rx: Receiver<IotNotification>,
-        iot_tx: Sender<WebNotification>,
+        features: Vec<Arc<Mutex<dyn WebFeature + Send + Sync>>>,
     ) -> AppResult<Self> {
         let tcp = tokio::net::TcpListener::bind(config.get_socket_addr()?).await?;
         let addr = tcp.local_addr()?;
         config.port = addr.port();
+        let router = Router::new();
         Ok(Self {
             config,
             tcp,
-            iot_rx,
-            iot_tx,
+            features,
+            router,
         })
     }
 
-    pub async fn run(self) -> AppResult {
-        let router =
-            Router::new().merge(SwaggerUi::new("/doc").url("/doc/openapi.json", ApiDoc::openapi()));
-        let template_feature = WebFeatureExample::create_router();
-        let router = router.nest("/", template_feature);
-        axum::serve(self.tcp, router).await?;
+    pub async fn run(mut self) -> AppResult {
+        for feat in &mut self.features {
+            self.router = self.router.nest("/", feat.lock().await.create_router())
+        }
+        tokio::spawn(async { axum::serve(self.tcp, self.router).await });
+        let mut join_handles = vec![];
+        for feat in self.features {
+            join_handles.push(tokio::spawn(async move { feat.lock().await.run_loop().await }));
+        }
+        for handle in join_handles {
+            handle.await.unwrap()
+        }
         Ok(())
     }
 }
