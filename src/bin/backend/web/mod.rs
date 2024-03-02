@@ -1,5 +1,6 @@
 use axum::Router;
 use tempusalert_be::backend_core::features::WebFeature;
+use tokio::join;
 use crate::{config::WebConfig, AppResult};
 
 pub struct WebTask {
@@ -26,8 +27,18 @@ impl WebTask {
         })
     }
 
-    pub async fn run(self) -> AppResult {
-        axum::serve(self.tcp, self.router).await?;
+    pub async fn run(mut self) -> AppResult {
+        for feat in &mut self.features {
+            self.router = self.router.nest("/", feat.create_router())
+        }
+        tokio::spawn(async { axum::serve(self.tcp, self.router).await });
+        let mut join_handles = vec![];
+        for mut feat in self.features {
+            join_handles.push(tokio::spawn(async move { feat.run_loop().await }));
+        }
+        for handle in join_handles {
+            handle.await.unwrap()
+        }
         Ok(())
     }
 }
