@@ -2,45 +2,26 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use axum::Router;
-use tokio::sync::{
-    mpsc::{Receiver, Sender},
-    Mutex,
-};
-
-use crate::message::{IotCommand, IotMessage, IotNotification, WebNotification};
 
 #[async_trait]
 pub trait IotFeature {
-    fn create(
-        web_rx: Arc<Mutex<Receiver<WebNotification>>>,
-        web_tx: &mut Sender<IotNotification>,
-    ) -> Self
+    fn create(mqttc: rumqttc::Client, mongoc: mongodb::Client) -> Self
     where
         Self: Sized;
-    fn set_receiver(&mut self, web_feat: Arc<dyn WebFeature>);
-    async fn send(&mut self, notif: IotNotification);
-    async fn recv(&mut self) -> WebNotification;
     fn name(&mut self) -> String;
-    async fn init(&mut self, mqtt_client: &mut rumqttc::Client);
-    async fn process_iot_message(&mut self, message: IotMessage);
-    async fn process_web_notification(&mut self, notification: WebNotification);
-    async fn send_iot_command(&mut self, command: IotCommand);
+    async fn init(&mut self, web_feat: Arc<dyn WebFeature + Sync + Send>);
+    async fn run_loop(&mut self);
 }
 
 #[async_trait]
 pub trait WebFeature {
-    fn create(
-        web_rx: Arc<Mutex<Receiver<IotNotification>>>,
-        web_tx: &mut Sender<WebNotification>,
-    ) -> Self
+    fn create(mongoc: mongodb::Client) -> Self
     where
         Self: Sized;
-    fn set_receiver(&mut self, web_feat: Arc<dyn IotFeature>);
     fn name(&mut self) -> String;
-    async fn send(&mut self, notif: WebNotification);
-    async fn recv(&mut self) -> IotNotification;
+    async fn init(&mut self, iot_feat: Arc<dyn IotFeature + Sync + Send>);
     fn create_router(&mut self) -> Router;
-    async fn process_iot_notification(&mut self, notification: IotNotification);
+    async fn run_loop(&mut self);
 }
 
 // Features
