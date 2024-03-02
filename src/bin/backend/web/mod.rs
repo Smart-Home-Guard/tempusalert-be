@@ -1,12 +1,5 @@
-use std::sync::Arc;
-
 use axum::Router;
-use tempusalert_be::{
-    backend_core::features::{WebFeature},
-    message::{IotNotification, WebNotification},
-};
-use tokio::sync::{mpsc::{Receiver, Sender}, Mutex};
-
+use tempusalert_be::backend_core::features::WebFeature;
 use crate::{config::WebConfig, AppResult};
 
 pub struct WebTask {
@@ -34,8 +27,7 @@ impl WebTask {
     }
 
     pub async fn run(self) -> AppResult {
-        let router = Router::new();
-        axum::serve(self.tcp, router).await?;
+        axum::serve(self.tcp, self.router).await?;
         Ok(())
     }
 }
