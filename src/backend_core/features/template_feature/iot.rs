@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use tokio::sync::Mutex;
 
 use crate::backend_core::features::{IotFeature, WebFeature};
 
@@ -18,7 +19,7 @@ impl IotFeature for IotExampleFeature {
         "Feature Example".into()
     }
 
-    async fn init(&mut self, web_feat: Arc<dyn WebFeature + Sync + Send>) {}
+    async fn init(&mut self, web_feat: Arc<Mutex<dyn WebFeature + Sync + Send>>) {}
 
     async fn run_loop(&mut self) {}
 }

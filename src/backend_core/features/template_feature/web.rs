@@ -1,6 +1,7 @@
 use axum::async_trait;
 use axum::{routing::get, Json, Router};
 use serde::Serialize;
+use tokio::sync::Mutex;
 use std::result::Result;
 use std::sync::Arc;
 
@@ -33,7 +34,7 @@ impl WebFeature for WebExampleFeature {
         WebExampleFeature
     }
 
-    async fn init(&mut self, iot_feat: Arc<dyn IotFeature + Sync + Send>) {}
+    async fn init(&mut self, iot_feat: Arc<Mutex<dyn IotFeature + Sync + Send>>) {}
 
     fn name(&mut self) -> String {
         "Feature Example".into()

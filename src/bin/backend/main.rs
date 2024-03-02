@@ -4,7 +4,7 @@ use config::CONFIG;
 use dotenv::dotenv;
 use futures::FutureExt;
 use iot::IotTask;
-use tempusalert_be::{backend_core::features::{template_feature::{IotExampleFeature, WebExampleFeature}, WebFeature}, errors::AppError};
+use tempusalert_be::{backend_core::features::{template_feature::{IotExampleFeature, WebExampleFeature}, IotFeature, WebFeature}, errors::AppError};
 use tokio::sync::{mpsc, Mutex};
 use web::WebTask;
 
@@ -48,8 +48,15 @@ pub async fn join_all(tasks: Vec<Task>) -> AppResult {
 async fn main() -> AppResult {
     dotenv().ok();
     let config = CONFIG.clone();
-    let web_task = WebTask::create(config.server, vec![]).await?;
-    let iot_task = IotTask::create(config.iot, vec![]).await?;
+    let web_feats: Vec<Arc<Mutex<dyn WebFeature + Send + Sync>>> = vec![Arc::new(Mutex::new(WebExampleFeature))];
+    let iot_feats: Vec<Arc<Mutex<dyn IotFeature + Send + Sync>>>= vec![Arc::new(Mutex::new(IotExampleFeature))];
+    for index in 0..web_feats.len() {
+        web_feats[index].lock().await.init(iot_feats[index].clone());
+        iot_feats[index].lock().await.init(web_feats[index].clone());
+    }
+
+    let web_task = WebTask::create(config.server, web_feats).await?;
+    let iot_task = IotTask::create(config.iot, iot_feats).await?;
 
     join_all(vec![
         (true, web_task.run().boxed()),
