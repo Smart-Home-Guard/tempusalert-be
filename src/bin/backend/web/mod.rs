@@ -55,7 +55,11 @@ impl WebTask {
             .nest_api_service("/docs", docs_routes())
             .finish_api(&mut api)
             .layer(Extension(Arc::new(api)));
-        tokio::spawn(async { axum::serve(self.tcp, router).await });
+        tokio::spawn(async move {
+            println!("Web server ready to server on {}:{}", self.config.addr, self.config.port);
+            println!("Check web server doc at {}:{}/docs", self.config.addr, self.config.port);
+            axum::serve(self.tcp, router).await
+        });
         let mut join_handles = vec![];
         for feat in self.features {
             join_handles.push(tokio::spawn(
