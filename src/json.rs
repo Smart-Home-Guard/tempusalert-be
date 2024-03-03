@@ -27,11 +27,9 @@ where
 impl From<JsonSchemaRejection> for AppError {
     fn from(rejection: JsonSchemaRejection) -> Self {
         match rejection {
-            JsonSchemaRejection::Json(j) => Self::BadRequest(BadRequest{}),
-            JsonSchemaRejection::Serde(_) => Self::BadRequest(BadRequest{}),
-            JsonSchemaRejection::Schema(s) => {
-                Self::BadRequest(BadRequest{})
-            }
+            JsonSchemaRejection::Json(j) => Self::BadRequest(BadRequest {}),
+            JsonSchemaRejection::Serde(_) => Self::BadRequest(BadRequest {}),
+            JsonSchemaRejection::Schema(s) => Self::BadRequest(BadRequest {}),
         }
     }
 }

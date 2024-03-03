@@ -1,9 +1,7 @@
 use std::sync::Arc;
 
+use aide::axum::ApiRouter;
 use async_trait::async_trait;
-use aide::{
-    axum::ApiRouter
-};
 use tokio::sync::Mutex;
 
 #[async_trait]

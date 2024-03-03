@@ -15,16 +15,15 @@ impl IotTask {
         config: IotConfig,
         features: Vec<Arc<Mutex<dyn IotFeature + Send + Sync>>>,
     ) -> AppResult<Self> {
-        Ok(Self {
-            config,
-            features,
-        })
+        Ok(Self { config, features })
     }
 
     pub async fn run(self) -> AppResult {
         let mut join_handles = vec![];
         for feat in self.features {
-            join_handles.push(tokio::spawn(async move { feat.lock().await.run_loop().await }));
+            join_handles.push(tokio::spawn(
+                async move { feat.lock().await.run_loop().await },
+            ));
         }
         for handle in join_handles {
             handle.await.unwrap()
