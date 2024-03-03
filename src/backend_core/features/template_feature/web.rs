@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use axum::extract::State;
 use axum::http::StatusCode;
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -18,21 +18,22 @@ pub struct GenericResponse {
     pub message: String,
 }
 
+#[derive(JsonSchema, Deserialize)]
+pub struct GenericRequest(String);
+
 pub struct WebExampleFeature;
 
 impl WebExampleFeature {
-    async fn health_check(Json(_): Json<()>) -> impl IntoApiResponse {
-        const MESSAGE: &str = "Build CRUD API with Rust and MongoDB";
-
+    async fn example(Json(GenericRequest(req)): Json<GenericRequest>) -> impl IntoApiResponse {
         let response_json = GenericResponse {
             status: "success".to_string(),
-            message: MESSAGE.to_string(),
+            message: req,
         };
 
         (StatusCode::OK, Json(response_json))
     }
 
-    pub fn health_check_docs(op: TransformOperation) -> TransformOperation {
+    pub fn example_docs(op: TransformOperation) -> TransformOperation {
         op.description("Example api")
             .response::<200, Json<GenericResponse>>()
     }
@@ -52,11 +53,8 @@ impl WebFeature for WebExampleFeature {
 
     fn create_router(&mut self) -> ApiRouter {
         ApiRouter::new().api_route(
-            "/api/health_check",
-            get_with(
-                WebExampleFeature::health_check,
-                WebExampleFeature::health_check_docs,
-            ),
+            "/api/example",
+            get_with(WebExampleFeature::example, WebExampleFeature::example_docs),
         )
     }
 
