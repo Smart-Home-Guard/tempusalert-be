@@ -18,16 +18,13 @@ pub struct GenericResponse {
     pub message: String,
 }
 
-#[derive(JsonSchema, Deserialize)]
-pub struct GenericRequest(String);
-
 pub struct WebExampleFeature;
 
 impl WebExampleFeature {
-    async fn example(Json(GenericRequest(req)): Json<GenericRequest>) -> impl IntoApiResponse {
+    async fn example(Json(_): Json<()>) -> impl IntoApiResponse {
         let response_json = GenericResponse {
             status: "success".to_string(),
-            message: req,
+            message: "Example API".into(),
         };
 
         (StatusCode::OK, Json(response_json))
@@ -35,6 +32,7 @@ impl WebExampleFeature {
 
     pub fn example_docs(op: TransformOperation) -> TransformOperation {
         op.description("Example api")
+            .tag("Demo")
             .response::<200, Json<GenericResponse>>()
     }
 }
