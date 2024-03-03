@@ -9,8 +9,8 @@ use crate::errors::{AppError, BadRequest};
 #[derive(FromRequest, OperationIo)]
 #[from_request(via(axum_jsonschema::Json), rejection(AppError))]
 #[aide(
-    input_with = "axum::body::Bytes",
-    output_with = "axum::body::Bytes",
+    input_with = "axum::Json<T>",
+    output_with = "axum::Json<T>",
     json_schema
 )]
 pub struct Json<T>(pub T);

@@ -21,7 +21,7 @@ pub struct GenericResponse {
 pub struct WebExampleFeature;
 
 impl WebExampleFeature {
-    async fn example(Json(_): Json<()>) -> impl IntoApiResponse {
+    async fn example() -> impl IntoApiResponse {
         let response_json = GenericResponse {
             status: "success".to_string(),
             message: "Example API".into(),
