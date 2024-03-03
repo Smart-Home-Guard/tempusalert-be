@@ -2,14 +2,12 @@ use aide::axum::routing::get_with;
 use aide::axum::{ApiRouter, IntoApiResponse};
 use aide::transform::TransformOperation;
 use async_trait::async_trait;
-use axum::extract::State;
 use axum::http::StatusCode;
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use tokio::sync::Mutex;
+use serde::{Serialize};
+use tokio::sync::mpsc::{Receiver, Sender};
 
-use crate::backend_core::features::{IotFeature, WebFeature};
+use crate::backend_core::features::WebFeature;
 use crate::json::Json;
 
 #[derive(Serialize, JsonSchema)]
@@ -39,11 +37,9 @@ impl WebExampleFeature {
 
 #[async_trait]
 impl WebFeature for WebExampleFeature {
-    fn create(mongoc: mongodb::Client) -> Self {
+    fn create<ExampleWebNotification, ExampleIotNotification>(mongoc: mongodb::Client, iot_tx: Sender<ExampleWebNotification>, iot_rx: Receiver<ExampleIotNotification>) -> Self {
         WebExampleFeature
     }
-
-    async fn init(&mut self, iot_feat: Arc<Mutex<dyn IotFeature + Sync + Send>>) {}
 
     fn name(&mut self) -> String {
         "Feature Example".into()
