@@ -1,7 +1,9 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use axum::Router;
+use aide::{
+    axum::ApiRouter
+};
 use tokio::sync::Mutex;
 
 #[async_trait]
@@ -21,7 +23,7 @@ pub trait WebFeature {
         Self: Sized;
     fn name(&mut self) -> String;
     async fn init(&mut self, iot_feat: Arc<Mutex<dyn IotFeature + Sync + Send>>);
-    fn create_router(&mut self) -> Router;
+    fn create_router(&mut self) -> ApiRouter;
     async fn run_loop(&mut self);
 }
 

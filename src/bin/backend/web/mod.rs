@@ -1,15 +1,21 @@
 use std::sync::Arc;
 
-use axum::Router;
+use aide::{
+    axum::ApiRouter,
+    openapi::{OpenApi, Tag},
+    transform::TransformOpenApi,
+};
+
+use axum::Extension;
 use tempusalert_be::backend_core::features::WebFeature;
 use tokio::{join, sync::Mutex};
-use crate::{config::WebConfig, AppResult};
+use crate::{config::WebConfig, doc::docs_routes, AppResult};
 
 pub struct WebTask {
     pub config: WebConfig,
     tcp: tokio::net::TcpListener,
     features: Vec<Arc<Mutex<dyn WebFeature + Send + Sync>>>,
-    router: Router,
+    router: ApiRouter,
 }
 
 impl WebTask {
@@ -20,7 +26,7 @@ impl WebTask {
         let tcp = tokio::net::TcpListener::bind(config.get_socket_addr()?).await?;
         let addr = tcp.local_addr()?;
         config.port = addr.port();
-        let router = Router::new();
+        let router = ApiRouter::new();
         Ok(Self {
             config,
             tcp,
@@ -30,10 +36,22 @@ impl WebTask {
     }
 
     pub async fn run(mut self) -> AppResult {
+        aide::gen::on_error(|error| {
+            println!("{error}");
+        });
+
+        aide::gen::extract_schemas(true);
+
+        let mut api = OpenApi::default();     
+
         for feat in &mut self.features {
-            self.router = self.router.nest("/", feat.lock().await.create_router())
+            self.router = self.router.nest_api_service("/", feat.lock().await.create_router())
         }
-        tokio::spawn(async { axum::serve(self.tcp, self.router).await });
+        
+        let router = self.router.nest_api_service("/docs", docs_routes())
+                                        .finish_api(&mut api)
+                                        .layer(Extension(Arc::new(api)));
+        tokio::spawn(async { axum::serve(self.tcp, router).await });
         let mut join_handles = vec![];
         for feat in self.features {
             join_handles.push(tokio::spawn(async move { feat.lock().await.run_loop().await }));

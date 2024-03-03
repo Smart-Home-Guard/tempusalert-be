@@ -1,14 +1,18 @@
-use axum::async_trait;
-use axum::{routing::get, Json, Router};
+use aide::axum::routing::get_with;
+use aide::axum::{ApiRouter, IntoApiResponse};
+use aide::transform::TransformOperation;
+use axum::extract::State;
+use axum::http::StatusCode;
+use schemars::JsonSchema;
 use serde::Serialize;
 use tokio::sync::Mutex;
-use std::result::Result;
 use std::sync::Arc;
+use async_trait::async_trait;
 
 use crate::backend_core::features::{IotFeature, WebFeature};
-use crate::errors::AppError;
+use crate::json::Json;
 
-#[derive(Serialize)]
+#[derive(Serialize, JsonSchema)]
 pub struct GenericResponse {
     pub status: String,
     pub message: String,
@@ -17,14 +21,22 @@ pub struct GenericResponse {
 pub struct WebExampleFeature;
 
 impl WebExampleFeature {
-    pub async fn health_check() -> Result<Json<GenericResponse>, AppError> {
+    async fn health_check(
+        Json(_): Json<()>,
+    ) -> impl IntoApiResponse {
         const MESSAGE: &str = "Build CRUD API with Rust and MongoDB";
 
         let response_json = GenericResponse {
             status: "success".to_string(),
             message: MESSAGE.to_string(),
         };
-        Ok(Json(response_json))
+        
+        (StatusCode::OK, Json(response_json))
+    }
+
+    pub fn health_check_docs(op: TransformOperation) -> TransformOperation {
+        op.description("Example api")
+            .response::<200, Json<GenericResponse>>()
     }
 }
 
@@ -40,8 +52,8 @@ impl WebFeature for WebExampleFeature {
         "Feature Example".into()
     }
 
-    fn create_router(&mut self) -> Router {
-        Router::new().route("/api/health_check", get(WebExampleFeature::health_check))
+    fn create_router(&mut self) -> ApiRouter {
+        ApiRouter::new().api_route("/api/health_check", get_with(WebExampleFeature::health_check, WebExampleFeature::health_check_docs))
     }
 
     async fn run_loop(&mut self) {}

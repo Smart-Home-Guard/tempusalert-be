@@ -11,6 +11,7 @@ use web::WebTask;
 mod config;
 mod iot;
 mod web;
+mod doc;
 
 pub type AppResult<T = ()> = std::result::Result<T, AppError>;
 
