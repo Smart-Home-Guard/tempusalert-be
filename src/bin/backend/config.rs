@@ -56,10 +56,10 @@ impl MqttClientConfig {
 
     pub fn read_broker_config() -> Self {
         let mqtt_client_hostname =
-            Self::parse_env_var("MQTT_CLIENT_HOSTNAME", "0.0.0.0".to_string());
-        let mqtt_client_port = Self::parse_env_var("MQTT_CLIENT_PORT", 1883);
-        let mqtt_client_capacity = Self::parse_env_var("MQTT_CLIENT_CAPACITY", 100);
-        let mqtt_client_keep_alive_sec = Self::parse_env_var("MQTT_CLIENT_KEEP_ALIVE_SEC", 60);
+            Self::parse_env_var("APP_MQTT_CLIENT_HOSTNAME", "0.0.0.0".to_string());
+        let mqtt_client_port = Self::parse_env_var("APP_MQTT_CLIENT_PORT", 1883);
+        let mqtt_client_capacity = Self::parse_env_var("APP_MQTT_CLIENT_CAPACITY", 100);
+        let mqtt_client_keep_alive_sec = Self::parse_env_var("APP_MQTT_CLIENT_KEEP_ALIVE_SEC", 60);
 
         MqttClientConfig {
             hostname: mqtt_client_hostname,
@@ -88,7 +88,7 @@ impl AppConfig {
         let profile_filename = format!("{profile}.toml");
 
         let database_url =
-            dotenv::var("DATABASE_URL").expect("DATABASE_URL not found in .env file");
+            dotenv::var("APP_DATABASE_URL").expect("DATABASE_URL not found in .env file");
         let database_config = DatabaseConfig { uri: database_url };
 
         let mqtt_client_config = MqttClientConfig::read_broker_config();
