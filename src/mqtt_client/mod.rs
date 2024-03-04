@@ -1,6 +1,8 @@
 use rumqttc::{AsyncClient, EventLoop, MqttOptions};
 use std::time::Duration;
+use serde::Deserialize;
 
+#[derive(Debug, Deserialize, Clone)]
 pub struct ClientConfig<'a> {
     pub client_id: &'a str,
     pub broker_hostname: &'a str,

@@ -32,9 +32,50 @@ impl WebConfig {
 pub struct IotConfig {}
 
 #[derive(Debug, Deserialize, Clone)]
+pub struct DatabaseConfig {
+    pub uri: String,
+}
+
+// FIXME: bad implementation
+// but if use the original ClientConfig, return referenced str out of block will be invalid
+#[derive(Debug, Deserialize, Clone)]
+pub struct MqttClientConfig {
+    pub hostname: String,
+    pub port: u16,
+    pub capacity: usize,
+    pub keep_alive_sec: u64,
+}
+
+impl MqttClientConfig {
+    fn parse_env_var<T: std::str::FromStr>(var_name: &str, default: T) -> T {
+        dotenv::var(var_name)
+            .ok()
+            .and_then(|val| val.parse().ok())
+            .unwrap_or(default)
+    }
+
+    pub fn read_broker_config() -> Self {
+        let mqtt_client_hostname =
+            Self::parse_env_var("MQTT_CLIENT_HOSTNAME", "0.0.0.0".to_string());
+        let mqtt_client_port = Self::parse_env_var("MQTT_CLIENT_PORT", 1883);
+        let mqtt_client_capacity = Self::parse_env_var("MQTT_CLIENT_CAPACITY", 100);
+        let mqtt_client_keep_alive_sec = Self::parse_env_var("MQTT_CLIENT_KEEP_ALIVE_SEC", 60);
+
+        MqttClientConfig {
+            hostname: mqtt_client_hostname,
+            port: mqtt_client_port,
+            capacity: mqtt_client_capacity,
+            keep_alive_sec: mqtt_client_keep_alive_sec,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone)]
 pub struct AppConfig {
     pub server: WebConfig,
     pub iot: IotConfig,
+    pub database: DatabaseConfig,
+    pub mqtt_client: MqttClientConfig,
 }
 
 impl AppConfig {
@@ -45,11 +86,23 @@ impl AppConfig {
             .and_then(|env| Profile::from_str(&env).ok())
             .unwrap_or(Profile::Dev);
         let profile_filename = format!("{profile}.toml");
+
+        let database_url =
+            dotenv::var("DATABASE_URL").expect("DATABASE_URL not found in .env file");
+        let database_config = DatabaseConfig { uri: database_url };
+
+        let mqtt_client_config = MqttClientConfig::read_broker_config();
+
         let config = config::Config::builder()
             .add_source(config::File::from(config_dir.join(profile_filename)))
             .add_source(env_src)
             .build()?;
-        config.try_deserialize()
+
+        let mut config: AppConfig = config.try_deserialize()?;
+        config.database = database_config;
+        config.mqtt_client = mqtt_client_config;
+
+        Ok(config)
     }
 }
 

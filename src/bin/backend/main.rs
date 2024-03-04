@@ -1,23 +1,19 @@
-use std::sync::Arc;
-
 use config::CONFIG;
 use dotenv::dotenv;
 use futures::FutureExt;
 use iot::IotTask;
 use tempusalert_be::{
-    backend_core::features::{
-        IotFeature, WebFeature,
-    },
+    database_client,
     errors::AppError,
+    mqtt_client::{self, ClientConfig},
 };
-use tokio::sync::Mutex;
 use web::WebTask;
 
 mod config;
 mod doc;
 mod iot;
-mod web;
 mod macros;
+mod web;
 
 pub type AppResult<T = ()> = std::result::Result<T, AppError>;
 
@@ -56,6 +52,18 @@ async fn main() -> AppResult {
     dotenv().ok();
     let config = CONFIG.clone();
     let (web_feats, iot_feats) = (vec![], vec![]);
+    let _database_client_ = database_client::init(config.database.uri).await?;
+
+    //TODO: add logic to get client id
+    let mqtt_client_id = "hard code client id";
+    let mqtt_client_config = ClientConfig {
+        client_id: mqtt_client_id,
+        broker_hostname: config.mqtt_client.hostname.as_str(),
+        broker_port: config.mqtt_client.port,
+        capacity: config.mqtt_client.capacity,
+        keep_alive_sec: config.mqtt_client.keep_alive_sec,
+    };
+    let _mqtt_client_ = mqtt_client::init(mqtt_client_config);
 
     let web_task = WebTask::create(config.server, web_feats).await?;
     let iot_task = IotTask::create(config.iot, iot_feats).await?;
