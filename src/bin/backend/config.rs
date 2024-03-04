@@ -10,6 +10,7 @@ use serde::Deserialize;
 
 pub const ENV_PREFIX: &str = "APP";
 
+//FIXME: unwrap() raise missing field database
 pub static CONFIG: Lazy<AppConfig> =
     Lazy::new(|| AppConfig::read(get_env_source(ENV_PREFIX)).unwrap());
 
