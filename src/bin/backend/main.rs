@@ -2,6 +2,7 @@ use config::CONFIG;
 use dotenv::dotenv;
 use futures::FutureExt;
 use iot::IotTask;
+use rumqttc::{AsyncClient, EventLoop};
 use tempusalert_be::{
     database_client,
     errors::AppError,
@@ -47,24 +48,43 @@ pub async fn join_all(tasks: Vec<Task>) -> AppResult {
     }
 }
 
+fn parse_env_var<T: std::str::FromStr>(var_name: &str) -> T {
+    dotenv::var(var_name)
+        .ok()
+        .and_then(|val| val.parse().ok())
+        .expect(format!("{var_name} not found in environment variables").as_str())
+}
+
+async fn init_database() -> Option<mongodb::Client> {
+    let database_url = parse_env_var("DATABASE_URL");
+    database_client::init(database_url).await.ok()
+}
+
+async fn init_mqtt_client(client_id: &str) -> (AsyncClient, EventLoop) {
+    let mqtt_client_id = client_id;
+    let mqtt_client_hostname: String = parse_env_var("MQTT_CLIENT_HOSTNAME");
+    let mqtt_client_port = parse_env_var("MQTT_CLIENT_PORT");
+    let mqtt_client_capacity = parse_env_var("MQTT_CLIENT_CAPACITY");
+    let mqtt_client_keep_alive_sec = parse_env_var("MQTT_CLIENT_KEEP_ALIVE_SEC");
+    let mqtt_client_config = ClientConfig {
+        client_id: mqtt_client_id,
+        broker_hostname: mqtt_client_hostname.as_str(),
+        broker_port: mqtt_client_port,
+        capacity: mqtt_client_capacity,
+        keep_alive_sec: mqtt_client_keep_alive_sec,
+    };
+    mqtt_client::init(mqtt_client_config)
+}
+
 #[tokio::main]
 async fn main() -> AppResult {
     dotenv().ok();
     let config = CONFIG.clone();
     let (web_feats, iot_feats) = (vec![], vec![]);
-    let _database_client_ = database_client::init(config.database.uri).await?;
+    let mqtt_client_id = "hard code mqtt client id";
 
-    //TODO: add logic to get client id
-    let mqtt_client_id = "hard code client id";
-    let mqtt_client_config = ClientConfig {
-        client_id: mqtt_client_id,
-        broker_hostname: config.mqtt_client.hostname.as_str(),
-        broker_port: config.mqtt_client.port,
-        capacity: config.mqtt_client.capacity,
-        keep_alive_sec: config.mqtt_client.keep_alive_sec,
-    };
-    let _mqtt_client_ = mqtt_client::init(mqtt_client_config);
-
+    let database_client = init_database().await.expect("Fail to initialize database.");
+    let mqtt_client = init_mqtt_client(mqtt_client_id).await;
     let web_task = WebTask::create(config.server, web_feats).await?;
     let iot_task = IotTask::create(config.iot, iot_feats).await?;
 
