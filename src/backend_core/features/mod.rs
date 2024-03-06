@@ -32,9 +32,11 @@ pub trait IotFeature {
         let mongoc = self.get_mongoc();
 
         //TODO: update the correct database and colection name
-        let collection = mongoc
-            .database("database name")
-            .collection("colection name");
+        let database_name: String = dotenv::var("MONGO_INITDB_DATABASE")
+            .ok()
+            .and_then(|val| val.parse().ok())
+            .expect("MONGO_INITDB_DATABASE not found in environment variables");
+        let collection = mongoc.database(database_name.as_str()).collection("users");
 
         let change_stream_options = ChangeStreamOptions::builder()
             .full_document(Some(mongodb::options::FullDocumentType::UpdateLookup))
@@ -57,7 +59,7 @@ pub trait IotFeature {
                     }) {
                         let feature_id = self.id();
 
-                        let mqtt_topic = format!("{}/{}", updated_user_id, feature_id);
+                        let mqtt_topic = format!("{}/{}-metrics", updated_user_id, feature_id);
 
                         if let Err(error) =
                             mqttc.subscribe(mqtt_topic, rumqttc::QoS::AtLeastOnce).await
