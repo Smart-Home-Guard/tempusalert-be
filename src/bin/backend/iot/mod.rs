@@ -1,7 +1,4 @@
-use std::sync::Arc;
-
 use tempusalert_be::backend_core::features::IotFeature;
-use tokio::sync::Mutex;
 
 use crate::{config::IotConfig, AppResult};
 

@@ -8,7 +8,6 @@ use aide::{
 use crate::{config::WebConfig, doc::docs_routes, AppResult};
 use axum::Extension;
 use tempusalert_be::backend_core::features::WebFeature;
-use tokio::sync::Mutex;
 
 pub struct WebTask {
     pub config: WebConfig,
