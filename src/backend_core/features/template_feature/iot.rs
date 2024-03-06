@@ -9,11 +9,20 @@ impl IotExampleFeature {}
 
 #[async_trait]
 impl IotFeature for IotExampleFeature {
-    fn create<ExampleIotNotification, ExampleWebNotification>(mqttc: rumqttc::AsyncClient, mqtt_event_loop: rumqttc::EventLoop, mongoc: mongodb::Client, web_tx: Sender<ExampleIotNotification>, web_rx: Receiver<ExampleWebNotification>) -> Self {
+    fn create<ExampleIotNotification, ExampleWebNotification>(
+        mqttc: rumqttc::AsyncClient,
+        mqtt_event_loop: rumqttc::EventLoop,
+        mongoc: mongodb::Client,
+        web_tx: Sender<ExampleIotNotification>,
+        web_rx: Receiver<ExampleWebNotification>,
+    ) -> Self {
         IotExampleFeature
     }
 
-    fn name() -> String where Self: Sized {
+    fn name() -> String
+    where
+        Self: Sized,
+    {
         "feature_example".into()
     }
 

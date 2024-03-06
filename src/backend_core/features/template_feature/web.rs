@@ -44,7 +44,10 @@ impl WebFeature for WebExampleFeature {
         WebExampleFeature
     }
 
-    fn name() -> String where Self: Sized {
+    fn name() -> String
+    where
+        Self: Sized,
+    {
         "feature_example".into()
     }
 
