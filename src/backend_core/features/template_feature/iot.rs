@@ -3,7 +3,10 @@ use tokio::sync::mpsc::{Receiver, Sender};
 
 use crate::backend_core::features::IotFeature;
 
-pub struct IotExampleFeature;
+pub struct IotExampleFeature {
+    mqttc: rumqttc::AsyncClient,
+    mongoc: mongodb::Client,
+}
 
 impl IotExampleFeature {}
 
@@ -16,7 +19,7 @@ impl IotFeature for IotExampleFeature {
         web_tx: Sender<ExampleIotNotification>,
         web_rx: Receiver<ExampleWebNotification>,
     ) -> Self {
-        IotExampleFeature
+        IotExampleFeature { mqttc, mongoc }
     }
 
     fn name() -> String
@@ -28,6 +31,14 @@ impl IotFeature for IotExampleFeature {
 
     fn id(&self) -> String {
         "feature_example".into()
+    }
+
+    fn get_mqttc(&mut self) -> rumqttc::AsyncClient {
+        self.mqttc.clone()
+    }
+
+    fn get_mongoc(&mut self) -> mongodb::Client {
+        self.mongoc.clone()
     }
 
     async fn run_loop(&mut self) {}

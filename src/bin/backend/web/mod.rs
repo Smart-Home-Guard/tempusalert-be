@@ -52,7 +52,9 @@ impl WebTask {
             .nest_api_service("/auth/web", auth_apis::web_auth_routes());
 
         for feat in &mut self.features {
-            self.router = self.router.nest_api_service(format!("/api/{}", feat.id()).as_str(), feat.create_router())
+            self.router = self
+                .router
+                .nest_api_service(format!("/api/{}", feat.id()).as_str(), feat.create_router())
         }
 
         let router = self
