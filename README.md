@@ -6,4 +6,5 @@ Each feature module must export the following components with these exact names:
  * IotFeature
  * WebNotification
  * IotNotification
+
 in order for the macro `create_features!` to work properly!
