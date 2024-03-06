@@ -8,6 +8,7 @@ pub trait IotFeature {
     where
         Self: Sized;
     fn name() -> String where Self: Sized;
+    fn id(&self) -> String;
     async fn run_loop(&mut self);
 }
 
@@ -17,6 +18,7 @@ pub trait WebFeature {
     where
         Self: Sized;
     fn name() -> String where Self: Sized;
+    fn id(&self) -> String;
     fn create_router(&mut self) -> ApiRouter;
     async fn run_loop(&mut self);
 }

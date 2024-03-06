@@ -17,5 +17,9 @@ impl IotFeature for IotExampleFeature {
         "feature_example".into()
     }
 
+    fn id(&self) -> String {
+        "feature_example".into()
+    }
+
     async fn run_loop(&mut self) {}
 }
