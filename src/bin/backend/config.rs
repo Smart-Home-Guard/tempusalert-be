@@ -13,6 +13,8 @@ pub const ENV_PREFIX: &str = "APP";
 pub static CONFIG: Lazy<AppConfig> =
     Lazy::new(|| AppConfig::read(get_env_source(ENV_PREFIX)).unwrap());
 
+pub static JWT_KEY: Lazy<String> = Lazy::new(|| std::env::var("JWT_KEY").unwrap());
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct WebConfig {
     pub addr: String,

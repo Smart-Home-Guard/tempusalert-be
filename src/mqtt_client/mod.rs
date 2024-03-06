@@ -1,6 +1,6 @@
 use rumqttc::{AsyncClient, EventLoop, MqttOptions};
-use std::time::Duration;
 use serde::Deserialize;
+use std::time::Duration;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct ClientConfig<'a> {

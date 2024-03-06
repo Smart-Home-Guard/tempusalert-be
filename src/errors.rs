@@ -37,6 +37,13 @@ pub enum AppError {
     UnknownError(#[from] anyhow::Error),
 }
 
+pub enum AuthError {
+    InvalidToken,
+    WrongCredentials,
+    TokenCreation,
+    MissingCredentials,
+}
+
 #[derive(Error, Debug)]
 #[error("Bad Request")]
 pub struct BadRequest {}
@@ -138,5 +145,20 @@ impl IntoResponse for AppError {
         let body = Json(json!({ "status": status, "message": message }));
 
         (status_code, body).into_response()
+    }
+}
+
+impl IntoResponse for AuthError {
+    fn into_response(self) -> Response {
+        let (status, error_message) = match self {
+            AuthError::WrongCredentials => (StatusCode::UNAUTHORIZED, "Wrong credentials"),
+            AuthError::MissingCredentials => (StatusCode::BAD_REQUEST, "Missing credentials"),
+            AuthError::TokenCreation => (StatusCode::INTERNAL_SERVER_ERROR, "Token creation error"),
+            AuthError::InvalidToken => (StatusCode::BAD_REQUEST, "Invalid token"),
+        };
+        let body = Json(json!({
+            "error": error_message,
+        }));
+        (status, body).into_response()
     }
 }
