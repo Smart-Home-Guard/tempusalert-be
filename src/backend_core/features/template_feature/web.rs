@@ -57,7 +57,7 @@ impl WebFeature for WebExampleFeature {
 
     fn create_router(&mut self) -> ApiRouter {
         ApiRouter::new().api_route(
-            "/api/example",
+            "/",
             get_with(WebExampleFeature::example, WebExampleFeature::example_docs),
         )
     }

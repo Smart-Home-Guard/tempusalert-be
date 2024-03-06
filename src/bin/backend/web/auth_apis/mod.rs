@@ -69,9 +69,64 @@ async fn iot_auth_handler(Json(body): Json<IotAuthBody>) -> impl IntoApiResponse
 
 pub fn iot_auth_routes() -> ApiRouter {
     ApiRouter::new().api_route(
-        "/iot",
+        "/",
         post_with(iot_auth_handler, |op| {
             op.description("Iot authentication api")
+                .tag("Authentication")
+                .response::<200, Json<String>>()
+                .response::<400, Json<String>>()
+                .response::<500, Json<String>>()
+        }),
+    )
+}
+
+#[derive(Deserialize, JsonSchema)]
+struct WebAuthBody {
+    username: String,
+    password: String,
+}
+
+#[derive(Serialize)]
+struct WebClientClaim {
+    username: String,
+    nonce: String,
+}
+
+async fn web_auth_handler(Json(body): Json<WebAuthBody>) -> impl IntoApiResponse {
+    let mongoc = MONGOC.get_or_init(init_database).await;
+    let user_coll: Collection<User> = mongoc
+        .database(parse_env_var::<String>("MONGO_INITDB_DATABASE").as_str())
+        .collection("users");
+
+    if let Some(_) = user_coll
+        .find_one(
+            doc! { "username": body.username.clone(), "password": body.password },
+            None,
+        )
+        .await
+        .ok()
+    {
+        let client_claim = WebClientClaim {
+            username: body.username,
+            nonce: uuid::Uuid::new_v4().into(),
+        };
+        let token = auth::sign_jwt(JWT_KEY.as_str(), &client_claim);
+
+        if let Some(token) = token {
+            (StatusCode::OK, Json(Token::Some(token)))
+        } else {
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(Token::None))
+        }
+    } else {
+        (StatusCode::BAD_REQUEST, Json(Token::None))
+    }
+}
+
+pub fn web_auth_routes() -> ApiRouter {
+    ApiRouter::new().api_route(
+        "/",
+        post_with(web_auth_handler, |op| {
+            op.description("Web authentication api")
                 .tag("Authentication")
                 .response::<200, Json<String>>()
                 .response::<400, Json<String>>()
