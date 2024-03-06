@@ -45,6 +45,10 @@ impl WebFeature for WebExampleFeature {
         "feature_example".into()
     }
 
+    fn id(&self) -> String {
+        "feature_example".into()
+    }
+
     fn create_router(&mut self) -> ApiRouter {
         ApiRouter::new().api_route(
             "/api/example",
