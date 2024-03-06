@@ -4,15 +4,14 @@ use futures::FutureExt;
 use iot::IotTask;
 use rumqttc::{AsyncClient, EventLoop};
 use tempusalert_be::{
-    database_client,
-    errors::AppError,
-    mqtt_client::{self, ClientConfig},
+    backend_core::features::{template_feature, IotFeature, WebFeature}, database_client, errors::AppError, mqtt_client::{self, ClientConfig}
 };
 use web::WebTask;
 
 mod config;
 mod doc;
 mod iot;
+#[macro_use]
 mod macros;
 mod web;
 
@@ -80,11 +79,8 @@ async fn init_mqtt_client(client_id: &str) -> (AsyncClient, EventLoop) {
 async fn main() -> AppResult {
     dotenv().ok();
     let config = CONFIG.clone();
-    let (web_feats, iot_feats) = (vec![], vec![]);
-    let mqtt_client_id = "hard code mqtt client id";
-
-    let database_client = init_database().await.expect("Fail to initialize database.");
-    let mqtt_client = init_mqtt_client(mqtt_client_id).await;
+    let mongoc = init_database().await.expect("Fail to initialize database.");
+    let (web_feats, iot_feats) = create_features!(mongoc.clone(), init_mqtt_client, template_feature);
     let web_task = WebTask::create(config.server, web_feats).await?;
     let iot_task = IotTask::create(config.iot, iot_feats).await?;
 

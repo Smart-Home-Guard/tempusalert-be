@@ -41,8 +41,8 @@ impl WebFeature for WebExampleFeature {
         WebExampleFeature
     }
 
-    fn name(&mut self) -> String {
-        "Feature Example".into()
+    fn name() -> String where Self: Sized {
+        "feature_example".into()
     }
 
     fn create_router(&mut self) -> ApiRouter {
