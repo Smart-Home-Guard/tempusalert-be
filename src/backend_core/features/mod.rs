@@ -31,7 +31,6 @@ pub trait IotFeature {
         let mqttc = self.get_mqttc();
         let mongoc = self.get_mongoc();
 
-        //TODO: update the correct database and colection name
         let database_name: String = dotenv::var("MONGO_INITDB_DATABASE")
             .ok()
             .and_then(|val| val.parse().ok())
