@@ -2786,7 +2786,6 @@ version = "0.1.0"
 dependencies = [
  "aide",
  "anyhow",
- "async-trait",
  "axum 0.7.4",
  "axum-jsonschema",
  "axum-macros",

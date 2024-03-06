@@ -1,10 +1,9 @@
 use aide::axum::routing::get_with;
 use aide::axum::{ApiRouter, IntoApiResponse};
 use aide::transform::TransformOperation;
-use async_trait::async_trait;
-use axum::http::StatusCode;
+use axum::{async_trait, http::StatusCode};
 use schemars::JsonSchema;
-use serde::{Serialize};
+use serde::Serialize;
 use tokio::sync::mpsc::{Receiver, Sender};
 
 use crate::backend_core::features::WebFeature;
@@ -37,7 +36,11 @@ impl WebExampleFeature {
 
 #[async_trait]
 impl WebFeature for WebExampleFeature {
-    fn create<ExampleWebNotification, ExampleIotNotification>(mongoc: mongodb::Client, iot_tx: Sender<ExampleWebNotification>, iot_rx: Receiver<ExampleIotNotification>) -> Self {
+    fn create<ExampleWebNotification, ExampleIotNotification>(
+        mongoc: mongodb::Client,
+        iot_tx: Sender<ExampleWebNotification>,
+        iot_rx: Receiver<ExampleIotNotification>,
+    ) -> Self {
         WebExampleFeature
     }
 

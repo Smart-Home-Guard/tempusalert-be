@@ -1,14 +1,16 @@
 use config::CONFIG;
+use database_client::{init_database, MONGOC};
 use dotenv::dotenv;
 use futures::FutureExt;
 use iot::IotTask;
 use rumqttc::{AsyncClient, EventLoop};
 use tempusalert_be::{
-    backend_core::features::{template_feature, IotFeature, WebFeature}, database_client, errors::AppError, mqtt_client::{self, ClientConfig}
+    backend_core::features::{template_feature, IotFeature, WebFeature}, errors::AppError, mqtt_client::{self, ClientConfig}
 };
 use web::WebTask;
 
 mod config;
+mod database_client;
 mod doc;
 mod iot;
 #[macro_use]
@@ -54,11 +56,6 @@ fn parse_env_var<T: std::str::FromStr>(var_name: &str) -> T {
         .expect(format!("{var_name} not found in environment variables").as_str())
 }
 
-async fn init_database() -> Option<mongodb::Client> {
-    let database_url = parse_env_var("DATABASE_URL");
-    database_client::init(database_url).await.ok()
-}
-
 async fn init_mqtt_client(client_id: &str) -> (AsyncClient, EventLoop) {
     let mqtt_client_id = client_id;
     let mqtt_server_hostname: String = parse_env_var("MQTT_SERVER_HOSTNAME");
@@ -79,7 +76,8 @@ async fn init_mqtt_client(client_id: &str) -> (AsyncClient, EventLoop) {
 async fn main() -> AppResult {
     dotenv().ok();
     let config = CONFIG.clone();
-    let mongoc = init_database().await.expect("Fail to initialize database.");
+    let mongoc = MONGOC.get_or_init(init_database).await;
+
     let (web_feats, iot_feats) = create_features!(mongoc.clone(), init_mqtt_client, template_feature);
     let web_task = WebTask::create(config.server, web_feats).await?;
     let iot_task = IotTask::create(config.iot, iot_feats).await?;

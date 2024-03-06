@@ -1,5 +1,5 @@
 use aide::axum::ApiRouter;
-use async_trait::async_trait;
+use axum::async_trait;
 use tokio::sync::mpsc::{Receiver, Sender};
 
 #[async_trait]

@@ -1,3 +1,5 @@
+mod auth_apis;
+
 use std::sync::Arc;
 
 use aide::{
@@ -41,6 +43,9 @@ impl WebTask {
         aide::gen::extract_schemas(true);
 
         let mut api = OpenApi::default();
+
+        // iot authentication route
+        self.router = self.router.nest_api_service("/auth", auth_apis::iot_auth_routes());
 
         for feat in &mut self.features {
             self.router = self

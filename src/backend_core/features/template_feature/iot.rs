@@ -1,4 +1,4 @@
-use async_trait::async_trait;
+use axum::async_trait;
 use tokio::sync::mpsc::{Receiver, Sender};
 
 use crate::backend_core::features::IotFeature;
