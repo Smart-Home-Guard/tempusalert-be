@@ -36,12 +36,12 @@ impl WebExampleFeature {
 
 #[async_trait]
 impl WebFeature for WebExampleFeature {
-    fn create<ExampleWebNotification, ExampleIotNotification>(
+    fn create<W: 'static, I: 'static>(
         mongoc: mongodb::Client,
-        iot_tx: Sender<ExampleWebNotification>,
-        iot_rx: Receiver<ExampleIotNotification>,
-    ) -> Self {
-        WebExampleFeature
+        iot_tx: Sender<W>,
+        iot_rx: Receiver<I>,
+    ) -> Option<Self> {
+        Some(WebExampleFeature)
     }
 
     fn name() -> String
@@ -51,7 +51,7 @@ impl WebFeature for WebExampleFeature {
         "feature_example".into()
     }
 
-    fn id(&self) -> String {
+    fn get_module_name(&self) -> String {
         "feature_example".into()
     }
 

@@ -12,14 +12,14 @@ impl IotExampleFeature {}
 
 #[async_trait]
 impl IotFeature for IotExampleFeature {
-    fn create<ExampleIotNotification, ExampleWebNotification>(
+    fn create<I: 'static, W: 'static>(
         mqttc: rumqttc::AsyncClient,
         mqtt_event_loop: rumqttc::EventLoop,
         mongoc: mongodb::Client,
-        web_tx: Sender<ExampleIotNotification>,
-        web_rx: Receiver<ExampleWebNotification>,
-    ) -> Self {
-        IotExampleFeature { mqttc, mongoc }
+        web_tx: Sender<I>,
+        web_rx: Receiver<W>,
+    ) -> Option<Self> {
+        Some(IotExampleFeature { mqttc, mongoc })
     }
 
     fn name() -> String
@@ -29,7 +29,7 @@ impl IotFeature for IotExampleFeature {
         "feature_example".into()
     }
 
-    fn id(&self) -> String {
+    fn get_module_name(&self) -> String {
         "feature_example".into()
     }
 

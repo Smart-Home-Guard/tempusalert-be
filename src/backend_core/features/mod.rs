@@ -6,13 +6,13 @@ use tokio::sync::mpsc::{Receiver, Sender};
 
 #[async_trait]
 pub trait IotFeature {
-    fn create<I, W>(
+    fn create<I: 'static, W: 'static>(
         mqttc: rumqttc::AsyncClient,
         mqttc_event_loop: rumqttc::EventLoop,
         mongoc: mongodb::Client,
         web_tx: Sender<I>,
         web_rx: Receiver<W>,
-    ) -> Self
+    ) -> Option<Self>
     where
         Self: Sized;
 
@@ -20,14 +20,14 @@ pub trait IotFeature {
     where
         Self: Sized;
 
-    fn id(&self) -> String;
+    fn get_module_name(&self) -> String;
 
     async fn run_loop(&mut self);
 
     fn get_mqttc(&mut self) -> rumqttc::AsyncClient;
     fn get_mongoc(&mut self) -> mongodb::Client;
 
-    async fn watch_users(&mut self) {
+    async fn watch_users(&mut self) where Self: Sized {
         let mqttc = self.get_mqttc();
         let mongoc = self.get_mongoc();
 
@@ -56,7 +56,7 @@ pub trait IotFeature {
                             .and_then(|id| id.as_str())
                             .map(|s| s.to_owned())
                     }) {
-                        let feature_id = self.id();
+                        let feature_id = self.get_module_name();
 
                         let mqtt_topic = format!("{}/{}-metrics", updated_user_id, feature_id);
 
@@ -77,16 +77,21 @@ pub trait IotFeature {
 
 #[async_trait]
 pub trait WebFeature {
-    fn create<W, I>(mongoc: mongodb::Client, iot_tx: Sender<W>, iot_rx: Receiver<I>) -> Self
+    fn create<W: 'static, I: 'static>(
+        mongoc: mongodb::Client,
+        iot_tx: Sender<W>,
+        iot_rx: Receiver<I>,
+    ) -> Option<Self>
     where
         Self: Sized;
     fn name() -> String
     where
         Self: Sized;
-    fn id(&self) -> String;
+    fn get_module_name(&self) -> String;
     fn create_router(&mut self) -> ApiRouter;
     async fn run_loop(&mut self);
 }
 
 // Features
+pub mod device_status_feature;
 pub mod template_feature;
