@@ -93,5 +93,4 @@ pub trait WebFeature {
 }
 
 // Features
-pub mod device_status_feature;
 pub mod template_feature;
