@@ -54,7 +54,7 @@ impl WebTask {
         for feat in &mut self.features {
             self.router = self
                 .router
-                .nest_api_service(format!("/api/{}", feat.id()).as_str(), feat.create_router())
+                .nest_api_service(format!("/api/{}", feat.get_module_name()).as_str(), feat.create_router())
         }
 
         let router = self
