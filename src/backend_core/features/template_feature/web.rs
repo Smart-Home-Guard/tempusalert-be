@@ -9,7 +9,7 @@ use tokio::sync::mpsc::{Receiver, Sender};
 use crate::backend_core::features::WebFeature;
 use crate::backend_core::utils::non_primitive_cast;
 use crate::json::Json;
-use super::notifications::{ExampleWebNotification, ExampleIotNotification}
+use super::notifications::{ExampleWebNotification, ExampleIotNotification};
 
 #[derive(Serialize, JsonSchema)]
 pub struct GenericResponse {
