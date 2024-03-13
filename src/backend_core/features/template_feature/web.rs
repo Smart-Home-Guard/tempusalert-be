@@ -7,7 +7,9 @@ use serde::Serialize;
 use tokio::sync::mpsc::{Receiver, Sender};
 
 use crate::backend_core::features::WebFeature;
+use crate::backend_core::utils::non_primitive_cast;
 use crate::json::Json;
+use super::notifications::{ExampleWebNotification, ExampleIotNotification}
 
 #[derive(Serialize, JsonSchema)]
 pub struct GenericResponse {
@@ -15,7 +17,11 @@ pub struct GenericResponse {
     pub message: String,
 }
 
-pub struct WebExampleFeature;
+pub struct WebExampleFeature {
+    mongoc: mongodb::Client,
+    iot_tx: Sender<ExampleWebNotification>,
+    iot_rx: Receiver<ExampleIotNotification>,
+}
 
 impl WebExampleFeature {
     async fn example() -> impl IntoApiResponse {
@@ -41,7 +47,11 @@ impl WebFeature for WebExampleFeature {
         iot_tx: Sender<W>,
         iot_rx: Receiver<I>,
     ) -> Option<Self> {
-        Some(WebExampleFeature)
+        Some(WebExampleFeature {
+            mongoc,
+            iot_tx: non_primitive_cast(iot_tx)?,
+            iot_rx: non_primitive_cast(iot_rx)?,
+        })
     }
 
     fn name() -> String
