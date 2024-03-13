@@ -1,11 +1,16 @@
 use axum::async_trait;
 use tokio::sync::mpsc::{Receiver, Sender};
 
-use crate::backend_core::features::IotFeature;
+use crate::backend_core::{features::IotFeature, utils::non_primitive_cast};
+
+use super::notifications::{ExampleWebNotification, ExampleIotNotification}
 
 pub struct IotExampleFeature {
     mqttc: rumqttc::AsyncClient,
+    mqtt_event_loop: rumqttc::EventLoop,
     mongoc: mongodb::Client,
+    web_tx: Sender<ExampleIotNotification>,
+    web_rx: Receiver<ExampleWebNotification>,
 }
 
 impl IotExampleFeature {}
@@ -19,7 +24,13 @@ impl IotFeature for IotExampleFeature {
         web_tx: Sender<I>,
         web_rx: Receiver<W>,
     ) -> Option<Self> {
-        Some(IotExampleFeature { mqttc, mongoc })
+        Some(IotExampleFeature { 
+            mqttc,
+            mqtt_event_loop,
+            mongoc,
+            web_tx: non_primitive_cast(web_tx)?,
+            web_rx: non_primitive_cast(web_rx)?, 
+        })
     }
 
     fn name() -> String
