@@ -8,7 +8,6 @@ use tempusalert_be::{auth, json::Json};
 use crate::{
     config::JWT_KEY,
     database_client::{init_database, MONGOC},
-    parse_env_var,
 };
 
 #[derive(Serialize, Deserialize, Debug)]
