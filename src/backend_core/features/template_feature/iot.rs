@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use axum::async_trait;
-use futures::lock::Mutex;
+use tokio::sync::Mutex;
 use tokio::sync::mpsc::{Receiver, Sender};
 
 use crate::backend_core::{features::IotFeature, utils::non_primitive_cast};
