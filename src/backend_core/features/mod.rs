@@ -30,12 +30,8 @@ pub trait IotFeature {
     async fn watch_users(&mut self) where Self: Sized {
         let mqttc = self.get_mqttc();
         let mongoc = self.get_mongoc();
-
-        let database_name: String = dotenv::var("MONGO_INITDB_DATABASE")
-            .ok()
-            .and_then(|val| val.parse().ok())
-            .expect("MONGO_INITDB_DATABASE not found in environment variables");
-        let collection = mongoc.database(database_name.as_str()).collection("users");
+ 
+        let collection = mongoc.default_database().unwrap().collection("users");
         
         let mut user_stream = collection.find(None, None).await.unwrap();
 
