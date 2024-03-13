@@ -22,9 +22,9 @@ impl IotTask {
         let mut join_handles = vec![];
         for feat in self.features {
             let feat_cloned = feat.clone();
-            join_handles.push(tokio::spawn(async move { feat_cloned.as_ref().lock().await.run_loop().await }));
+            join_handles.push(tokio::spawn(async move { feat_cloned.lock().await.run_loop().await }));
             let feat_cloned = feat.clone();
-            join_handles.push(tokio::spawn(async move { feat_cloned.clone().as_ref().lock().await.watch_users().await }));
+            join_handles.push(tokio::spawn(async move { feat_cloned.clone().lock().await.watch_users().await }));
         }
         for handle in join_handles {
             handle.await.unwrap()
