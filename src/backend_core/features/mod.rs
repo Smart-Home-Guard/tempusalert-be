@@ -69,9 +69,9 @@ pub trait IotFeature {
                             .and_then(|id| id.as_str())
                             .map(|s| s.to_owned())
                     }) {
-                        let feature_id = self.get_module_name();
+                        let feature_name = self.get_module_name();
 
-                        let mqtt_topic = format!("{}/{}-metrics", new_client_id, feature_id);
+                        let mqtt_topic = format!("{}/{}-metrics", new_client_id, feature_name);
 
                         if let Err(error) =
                             mqttc.subscribe(mqtt_topic, rumqttc::QoS::AtLeastOnce).await
@@ -125,3 +125,4 @@ pub trait WebFeature {
 
 // Features
 pub mod template_feature;
+pub mod device_status_feature;
