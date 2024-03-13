@@ -7,6 +7,7 @@ use aide::{
     openapi::{OpenApi, Tag},
     transform::TransformOpenApi,
 };
+use tokio::sync::Mutex;
 
 use crate::{config::WebConfig, doc::docs_routes, AppResult};
 use axum::Extension;
@@ -15,14 +16,14 @@ use tempusalert_be::backend_core::features::WebFeature;
 pub struct WebTask {
     pub config: WebConfig,
     tcp: tokio::net::TcpListener,
-    features: Vec<Box<dyn WebFeature + Send + Sync>>,
+    features: Vec<Arc<Mutex<dyn WebFeature + Send + Sync>>>,
     router: ApiRouter,
 }
 
 impl WebTask {
     pub async fn create(
         mut config: WebConfig,
-        features: Vec<Box<dyn WebFeature + Send + Sync>>,
+        features: Vec<Arc<Mutex<dyn WebFeature + Send + Sync>>>,
     ) -> AppResult<Self> {
         let tcp = tokio::net::TcpListener::bind(config.get_socket_addr()?).await?;
         let addr = tcp.local_addr()?;
@@ -54,7 +55,7 @@ impl WebTask {
         for feat in &mut self.features {
             self.router = self
                 .router
-                .nest_api_service(format!("/api/{}", feat.get_module_name()).as_str(), feat.create_router())
+                .nest_api_service(format!("/api/{}", feat.clone().lock().await.get_module_name()).as_str(), feat.lock().await.create_router())
         }
 
         let router = self
@@ -75,8 +76,8 @@ impl WebTask {
             axum::serve(self.tcp, router).await
         });
         let mut join_handles = vec![];
-        for mut feat in self.features {
-            join_handles.push(tokio::spawn(async move { feat.run_loop().await }));
+        for feat in self.features {
+            join_handles.push(tokio::spawn(async move { feat.lock().await.run_loop().await }));
         }
         for handle in join_handles {
             handle.await.unwrap()

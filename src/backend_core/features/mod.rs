@@ -27,7 +27,7 @@ pub trait IotFeature {
     fn get_mqttc(&mut self) -> rumqttc::AsyncClient;
     fn get_mongoc(&mut self) -> mongodb::Client;
 
-    async fn watch_users(&mut self) where Self: Sized {
+    async fn watch_users(&mut self) {
         let mqttc = self.get_mqttc();
         let mongoc = self.get_mongoc();
  
