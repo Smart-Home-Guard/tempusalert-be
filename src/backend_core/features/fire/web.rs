@@ -1,7 +1,14 @@
+use std::sync::Arc;
+
 use aide::axum::routing::get_with;
 use aide::axum::{ApiRouter, IntoApiResponse};
 use aide::transform::TransformOperation;
+use axum::extract::State;
 use axum::{async_trait, http::StatusCode};
+use futures::TryStreamExt;
+use mongodb::bson::{document, Document};
+use mongodb::error::Error as MongoError;
+use mongodb::Collection;
 use schemars::JsonSchema;
 use serde::Serialize;
 use tokio::sync::mpsc::{Receiver, Sender};
@@ -12,9 +19,13 @@ use crate::backend_core::utils::non_primitive_cast;
 use crate::json::Json;
 
 #[derive(Serialize, JsonSchema)]
-pub struct GenericResponse {
+pub struct FireResponse {
     pub status: String,
     pub message: String,
+}
+
+struct FireAppState {
+    mongoc: mongodb::Client,
 }
 
 pub struct WebFireFeature {
@@ -24,19 +35,54 @@ pub struct WebFireFeature {
 }
 
 impl WebFireFeature {
-    async fn example() -> impl IntoApiResponse {
-        let response_json = GenericResponse {
-            status: "success".to_string(),
-            message: "Example API".into(),
+    async fn messages(state: State<Arc<FireAppState>>) -> impl IntoApiResponse {
+        let database_name = match dotenv::var("MONGO_INITDB_DATABASE") {
+            Ok(name) => name,
+            Err(_) => {
+                eprintln!("MONGO_INITDB_DATABASE not found in environment variables");
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(FireResponse {
+                        status: "error".to_string(),
+                        message: "Database name not found in environment variables".into(),
+                    }),
+                );
+            }
         };
+        let collection_name = "fireMessages";
 
-        (StatusCode::OK, Json(response_json))
+        let database = state.mongoc.database(&database_name);
+
+        let collection = database.collection(collection_name);
+
+        // Assuming you have a function to retrieve all records from the collection
+        match retrieve_all_records(&collection).await {
+            Ok(records) => {
+                (
+                    StatusCode::OK,
+                    Json(FireResponse {
+                        status: "success".to_string(),
+                        message: "Retrieved records successfully".into(),
+                    }),
+                )
+            }
+            Err(err) => {
+                eprintln!("Failed to retrieve records: {:?}", err);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(FireResponse {
+                        status: "error".to_string(),
+                        message: "Failed to retrieve records".into(),
+                    }),
+                )
+            }
+        }
     }
 
-    pub fn example_docs(op: TransformOperation) -> TransformOperation {
+    pub fn messages_docs(op: TransformOperation) -> TransformOperation {
         op.description("Example api")
             .tag("Demo")
-            .response::<200, Json<GenericResponse>>()
+            .response::<200, Json<FireResponse>>()
     }
 }
 
@@ -58,19 +104,36 @@ impl WebFeature for WebFireFeature {
     where
         Self: Sized,
     {
-        "feature_example".into()
+        "fire".into()
     }
 
     fn get_module_name(&self) -> String {
-        "feature_example".into()
+        "fire".into()
     }
 
     fn create_router(&mut self) -> ApiRouter {
+        let appState = Arc::new(FireAppState {
+            mongoc: self.mongoc.clone(),
+        });
+
         ApiRouter::new().api_route(
-            "/",
-            get_with(WebFireFeature::example, WebFireFeature::example_docs),
+            "/messages",
+            get_with(WebFireFeature::messages, WebFireFeature::messages_docs).with_state(appState),
         )
     }
 
     async fn run_loop(&mut self) {}
+}
+
+async fn retrieve_all_records(
+    collection: &Collection<Document>,
+) -> Result<Vec<Document>, MongoError> {
+    let mut cursor = collection.find(None, None).await?;
+    let mut records = Vec::new();
+
+    while let Some(document) = cursor.try_next().await? {
+        records.push(document)
+    }
+
+    Ok(records)
 }
