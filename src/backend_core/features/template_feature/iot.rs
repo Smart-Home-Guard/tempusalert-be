@@ -55,5 +55,5 @@ impl IotFeature for IotExampleFeature {
         self.mongoc.clone()
     }
 
-    async fn run_loop(&mut self) {}
+    async fn process_next_mqtt_message(&mut self) {}
 }
