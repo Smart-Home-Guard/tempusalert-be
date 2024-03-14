@@ -1,6 +1,5 @@
 use axum::async_trait;
 use mongodb::bson::{doc, Document};
-use mongodb::error::Error as MongoError;
 use std::sync::Arc;
 use tokio::sync::{
     mpsc::{Receiver, Sender},
@@ -43,11 +42,11 @@ impl IotFeature for IotFireFeature {
     where
         Self: Sized,
     {
-        "feature_Fire".into()
+        "fire".into()
     }
 
     fn get_module_name(&self) -> String {
-        "feature_Fire".into()
+        "fire".into()
     }
 
     fn get_mqttc(&mut self) -> rumqttc::AsyncClient {
@@ -59,26 +58,24 @@ impl IotFeature for IotFireFeature {
     }
 
     async fn run_loop(&mut self) {
-        let database_name = match dotenv::var("MONGO_INITDB_DATABASE") {
-            Ok(name) => name,
-            Err(_) => {
-                eprintln!("MONGO_INITDB_DATABASE not found in environment variables");
-                return; // Abort loop if database name is not available
-            }
-        };
+        let mqtt_topic = format!(
+            "974a4ab2-85cb-4eaa-b9dc-6414f32e8dfa/{}-metrics",
+            self.get_module_name()
+        );
+        // FIXME: temporary use for testing, remove when watch_user block run_loop is solved
+        if let Err(error) = self
+            .mqttc
+            .subscribe(mqtt_topic.clone(), rumqttc::QoS::AtLeastOnce)
+            .await
+        {
+            eprintln!("Failed to subscribe to MQTT topic: {}", error);
+        }
 
-        let collection_name = "fireMessages";
-        let collection =
-            match create_or_get_collection(&self.mongoc, &database_name, collection_name).await {
-                Ok(coll) => coll,
-                Err(err) => {
-                    eprintln!(
-                        "Failed to create or get 'fireMessages' collection: {:?}",
-                        err
-                    );
-                    return; // Abort loop if collection creation or retrieval failed
-                }
-            };
+        let collection = self
+            .mongoc
+            .default_database()
+            .unwrap()
+            .collection("fireMessages");
 
         let mqtt_event_loop = self.mqtt_event_loop.clone();
         loop {
@@ -110,21 +107,4 @@ impl IotFeature for IotFireFeature {
             }
         }
     }
-}
-
-async fn create_or_get_collection(
-    mongoc: &mongodb::Client,
-    database_name: &str,
-    collection_name: &str,
-) -> Result<mongodb::Collection<Document>, MongoError> {
-    let database = mongoc.database(database_name);
-
-    let collections = database.list_collection_names(None).await?;
-
-    if !collections.contains(&collection_name.to_string()) {
-        database.create_collection(collection_name, None).await?;
-        println!("Created collection '{}'", collection_name);
-    }
-
-    Ok(database.collection(collection_name))
 }

@@ -8,7 +8,6 @@ use tempusalert_be::{auth, json::Json};
 use crate::{
     config::JWT_KEY,
     database_client::{init_database, MONGOC},
-    parse_env_var,
 };
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -40,7 +39,7 @@ enum Token {
 async fn iot_auth_handler(Json(body): Json<IotAuthBody>) -> impl IntoApiResponse {
     let mongoc = MONGOC.get_or_init(init_database).await;
     let user_coll: Collection<User> = mongoc
-        .database(parse_env_var::<String>("MONGO_INITDB_DATABASE").as_str())
+        .default_database().unwrap()
         .collection("users");
 
     if let Some(_) = user_coll
@@ -95,7 +94,7 @@ struct WebClientClaim {
 async fn web_auth_handler(Json(body): Json<WebAuthBody>) -> impl IntoApiResponse {
     let mongoc = MONGOC.get_or_init(init_database).await;
     let user_coll: Collection<User> = mongoc
-        .database(parse_env_var::<String>("MONGO_INITDB_DATABASE").as_str())
+        .default_database().unwrap()
         .collection("users");
 
     if let Some(_) = user_coll

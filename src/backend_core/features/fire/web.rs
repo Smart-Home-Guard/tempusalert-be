@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::sync::Arc;
 
 use aide::axum::routing::get_with;
@@ -36,34 +37,35 @@ pub struct WebFireFeature {
 
 impl WebFireFeature {
     async fn messages(state: State<Arc<FireAppState>>) -> impl IntoApiResponse {
-        let database_name = match dotenv::var("MONGO_INITDB_DATABASE") {
-            Ok(name) => name,
-            Err(_) => {
-                eprintln!("MONGO_INITDB_DATABASE not found in environment variables");
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(FireResponse {
-                        status: "error".to_string(),
-                        message: "Database name not found in environment variables".into(),
-                    }),
-                );
-            }
-        };
-        let collection_name = "fireMessages";
-
-        let database = state.mongoc.database(&database_name);
-
-        let collection = database.collection(collection_name);
+        let collection = state
+            .mongoc
+            .default_database()
+            .unwrap()
+            .collection("fireMessages");
 
         // Assuming you have a function to retrieve all records from the collection
         match retrieve_all_records(&collection).await {
-            Ok(records) => (
-                StatusCode::OK,
-                Json(FireResponse {
-                    status: "success".to_string(),
-                    message: "Retrieved records successfully".into(),
-                }),
-            ),
+            Ok(records) => {
+                // Extract messages from records and combine them
+                let combined_message: String = records
+                    .iter()
+                    .filter_map(|record| record.get_str("message").ok())
+                    .collect::<HashSet<_>>()
+                    .into_iter()
+                    .collect::<Vec<_>>()
+                    .join(", ");
+
+                (
+                    StatusCode::OK,
+                    Json(FireResponse {
+                        status: "success".to_string(),
+                        message: format!(
+                            "Retrieved records successfully. Messages: {}",
+                            combined_message
+                        ),
+                    }),
+                )
+            }
             Err(err) => {
                 eprintln!("Failed to retrieve records: {:?}", err);
                 (

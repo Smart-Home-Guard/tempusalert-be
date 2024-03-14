@@ -31,18 +31,11 @@ pub trait IotFeature {
     fn get_mqttc(&mut self) -> rumqttc::AsyncClient;
     fn get_mongoc(&mut self) -> mongodb::Client;
 
-    async fn watch_users(&mut self)
-    where
-        Self: Sized,
-    {
+    async fn watch_users(&mut self) {
         let mqttc = self.get_mqttc();
         let mongoc = self.get_mongoc();
 
-        let database_name: String = dotenv::var("MONGO_INITDB_DATABASE")
-            .ok()
-            .and_then(|val| val.parse().ok())
-            .expect("MONGO_INITDB_DATABASE not found in environment variables");
-        let collection = mongoc.database(database_name.as_str()).collection("users");
+        let collection = mongoc.default_database().unwrap().collection("users");
 
         let mut user_stream = collection.find(None, None).await.unwrap();
 
@@ -56,10 +49,14 @@ pub trait IotFeature {
 
                 let mqtt_topic = format!("{}/{}-metrics", cur_client_id, feature_id);
 
-                if let Err(error) = mqttc.subscribe(mqtt_topic, rumqttc::QoS::AtLeastOnce).await {
+                if let Err(error) = mqttc
+                    .subscribe(mqtt_topic.clone(), rumqttc::QoS::AtLeastOnce)
+                    .await
+                {
                     eprintln!("Failed to subscribe to MQTT topic: {}", error);
                 }
             }
+        }
 
         // Watch on user insertion and user deletion
         let change_stream_options = ChangeStreamOptions::builder()
