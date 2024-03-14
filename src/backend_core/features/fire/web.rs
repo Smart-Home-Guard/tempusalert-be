@@ -57,15 +57,13 @@ impl WebFireFeature {
 
         // Assuming you have a function to retrieve all records from the collection
         match retrieve_all_records(&collection).await {
-            Ok(records) => {
-                (
-                    StatusCode::OK,
-                    Json(FireResponse {
-                        status: "success".to_string(),
-                        message: "Retrieved records successfully".into(),
-                    }),
-                )
-            }
+            Ok(records) => (
+                StatusCode::OK,
+                Json(FireResponse {
+                    status: "success".to_string(),
+                    message: "Retrieved records successfully".into(),
+                }),
+            ),
             Err(err) => {
                 eprintln!("Failed to retrieve records: {:?}", err);
                 (
@@ -80,8 +78,8 @@ impl WebFireFeature {
     }
 
     pub fn messages_docs(op: TransformOperation) -> TransformOperation {
-        op.description("Example api")
-            .tag("Demo")
+        op.description("Retrieve all fire metric messages")
+            .tag("FIRE")
             .response::<200, Json<FireResponse>>()
     }
 }
@@ -112,13 +110,13 @@ impl WebFeature for WebFireFeature {
     }
 
     fn create_router(&mut self) -> ApiRouter {
-        let appState = Arc::new(FireAppState {
+        let app_state = Arc::new(FireAppState {
             mongoc: self.mongoc.clone(),
         });
 
         ApiRouter::new().api_route(
             "/messages",
-            get_with(WebFireFeature::messages, WebFireFeature::messages_docs).with_state(appState),
+            get_with(WebFireFeature::messages, WebFireFeature::messages_docs).with_state(app_state),
         )
     }
 

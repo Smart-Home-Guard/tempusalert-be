@@ -60,7 +60,6 @@ pub trait IotFeature {
                     eprintln!("Failed to subscribe to MQTT topic: {}", error);
                 }
             }
-        }
 
         // Watch on user insertion and user deletion
         let change_stream_options = ChangeStreamOptions::builder()

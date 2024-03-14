@@ -12,7 +12,7 @@ services:
     volumes:
       - mongo:/data/db
     ports:
-      - '6000:6000'
+      - '6000:27017'
 
   adminer:
     image: adminer

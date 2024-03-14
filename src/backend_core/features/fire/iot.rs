@@ -95,6 +95,7 @@ impl IotFeature for IotFireFeature {
                                 continue; // Skip processing this message
                             }
                         };
+
                         let doc = Document::from(doc! { "message": payload_str });
 
                         if let Err(err) = collection.insert_one(doc, None).await {
