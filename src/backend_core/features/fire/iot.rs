@@ -60,7 +60,6 @@ impl IotFeature for IotFireFeature {
     }
 
     async fn process_next_mqtt_message(&mut self) {
-        ("mqtt");
         let mut mqtt_event_loop = self.mqtt_event_loop.lock().await;
         match mqtt_event_loop.poll().await {
             Ok(event) => match event {

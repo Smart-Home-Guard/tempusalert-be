@@ -7,7 +7,7 @@ use aide::transform::TransformOperation;
 use axum::extract::State;
 use axum::{async_trait, http::StatusCode};
 use futures::TryStreamExt;
-use mongodb::bson::{document, Document};
+use mongodb::bson::Document;
 use mongodb::error::Error as MongoError;
 use mongodb::Collection;
 use schemars::JsonSchema;
