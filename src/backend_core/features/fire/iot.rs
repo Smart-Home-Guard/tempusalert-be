@@ -1,5 +1,5 @@
 use axum::async_trait;
-use mongodb::bson::{doc, Document};
+use mongodb::{bson::{doc, Document}, Collection};
 use std::sync::Arc;
 use tokio::sync::{
     mpsc::{Receiver, Sender},
@@ -16,6 +16,7 @@ pub struct IotFireFeature {
     mongoc: mongodb::Client,
     web_tx: Sender<FireIotNotification>,
     web_rx: Receiver<FireWebNotification>,
+    fire_collection: Collection<Document>,
 }
 
 impl IotFireFeature {}
@@ -32,9 +33,10 @@ impl IotFeature for IotFireFeature {
         Some(IotFireFeature {
             mqttc,
             mqtt_event_loop: Arc::new(Mutex::new(mqtt_event_loop)),
-            mongoc,
-            web_tx: non_primitive_cast(web_tx).unwrap(),
-            web_rx: non_primitive_cast(web_rx).unwrap(),
+            mongoc: mongoc.clone(),
+            web_tx: non_primitive_cast(web_tx)?,
+            web_rx: non_primitive_cast(web_rx)?,
+            fire_collection: mongoc.clone().default_database().unwrap().collection("Fire"),
         })
     }
 
@@ -57,53 +59,33 @@ impl IotFeature for IotFireFeature {
         self.mongoc.clone()
     }
 
-    async fn run_loop(&mut self) {
-        let mqtt_topic = format!(
-            "974a4ab2-85cb-4eaa-b9dc-6414f32e8dfa/{}-metrics",
-            self.get_module_name()
-        );
-        // FIXME: temporary use for testing, remove when watch_user block run_loop is solved
-        if let Err(error) = self
-            .mqttc
-            .subscribe(mqtt_topic.clone(), rumqttc::QoS::AtLeastOnce)
-            .await
-        {
-            eprintln!("Failed to subscribe to MQTT topic: {}", error);
-        }
-
-        let collection = self
-            .mongoc
-            .default_database()
-            .unwrap()
-            .collection("fireMessages");
-
-        let mqtt_event_loop = self.mqtt_event_loop.clone();
-        loop {
-            match mqtt_event_loop.lock().await.poll().await {
-                Ok(event) => match event {
-                    rumqttc::Event::Incoming(rumqttc::Incoming::Publish(publish)) => {
-                        let payload_str = match std::str::from_utf8(&publish.payload) {
-                            Ok(s) => s,
-                            Err(e) => {
-                                eprintln!(
-                                    "Error converting payload bytes to UTF-8 string: {:?}",
-                                    e
-                                );
-                                continue; // Skip processing this message
-                            }
-                        };
-
-                        let doc = Document::from(doc! { "message": payload_str });
-
-                        if let Err(err) = collection.insert_one(doc, None).await {
-                            eprintln!("Failed to insert message into MongoDB: {:?}", err);
+    async fn process_next_mqtt_message(&mut self) {
+        ("mqtt");
+        let mut mqtt_event_loop = self.mqtt_event_loop.lock().await;
+        match mqtt_event_loop.poll().await {
+            Ok(event) => match event {
+                rumqttc::Event::Incoming(rumqttc::Incoming::Publish(publish)) => {
+                    let payload_str = match std::str::from_utf8(&publish.payload) {
+                        Ok(s) => s,
+                        Err(e) => {
+                            eprintln!(
+                                "Error converting payload bytes to UTF-8 string: {:?}",
+                                e
+                            );
+                            return;
                         }
+                    };
+
+                    let doc = Document::from(doc! { "message": payload_str });
+
+                    if let Err(err) = self.fire_collection.insert_one(doc, None).await {
+                        eprintln!("Failed to insert message into MongoDB: {:?}", err);
                     }
-                    _ => {}
-                },
-                Err(err) => {
-                    eprintln!("Error occurred while polling MQTT event loop: {:?}", err);
                 }
+                _ => {}
+            },
+            Err(err) => {
+                eprintln!("Error occurred while polling MQTT event loop: {:?}", err);
             }
         }
     }
