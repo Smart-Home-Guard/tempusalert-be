@@ -48,7 +48,7 @@ impl WebFeature for WebExampleFeature {
         iot_rx: Receiver<I>,
     ) -> Option<Self> {
         Some(WebExampleFeature {
-            _mongoc,
+            _mongoc: mongoc,
             _iot_tx: non_primitive_cast(iot_tx)?,
             _iot_rx: non_primitive_cast(iot_rx)?,
         })
