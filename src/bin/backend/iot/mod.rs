@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use futures::{StreamExt, TryStreamExt};
+use futures::StreamExt;
 use mongodb::{bson::Document, change_stream::event::{ChangeStreamEvent, OperationType}, options::ChangeStreamOptions};
 use tempusalert_be::backend_core::features::IotFeature;
 use tokio::sync::Mutex;
