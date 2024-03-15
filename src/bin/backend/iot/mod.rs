@@ -50,14 +50,14 @@ async fn watch_users(feat: Arc<Mutex<dyn IotFeature + Send + Sync>>) {
     };
     let collection = mongoc.default_database().unwrap().collection("users");
 
-    let mut user_stream = collection.find(None, None).await.unwrap();
-    while let Ok(user_doc) = user_stream.try_next().await {
-        if let Some(cur_client_id) = user_doc.and_then(|doc: Document| {
+    let mut user_cursor = collection.find(None, None).await.unwrap();
+    while let Ok(_) = user_cursor.advance().await {
+        let user_doc = user_cursor.deserialize_current();
+        if let Some(cur_client_id) = user_doc.ok().and_then(|doc: Document| {
             doc.get("client_id")
             .and_then(|id| id.as_str())
             .map(|s| s.to_owned())
         }) {
-            println!("{cur_client_id}");
             let mqtt_topic = format!("{}/{}-metrics", cur_client_id, feature_id);
 
             if let Err(error) = mqttc
