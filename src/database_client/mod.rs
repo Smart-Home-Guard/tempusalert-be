@@ -1,8 +1,13 @@
 use mongodb::{options::{ClientOptions, Credential, ServerAddress}, Client};
 
+pub struct MongocReplicaMember {
+    pub hostname: String,
+    pub port: u16,
+}
+
 pub struct MongocConfig {
-    pub server_hostname: String,
-    pub server_port: u16,
+    pub replica_members: Vec<MongocReplicaMember>,
+    pub replica_set_name: String,
     pub username: String,
     pub password: String,
     pub default_db: String,
@@ -10,9 +15,10 @@ pub struct MongocConfig {
 }
 
 pub async fn init(config: MongocConfig) -> mongodb::error::Result<Client> {
+    let replica_members: Vec<ServerAddress> = config.replica_members.iter().map(|m| ServerAddress::Tcp { host: m.hostname.clone(), port: Some(m.port) }).collect();
     let client_options = ClientOptions::builder()
-        .direct_connection(true)
-        .hosts(vec![ServerAddress::Tcp { host: config.server_hostname, port: Some(config.server_port) }])
+        .repl_set_name(config.replica_set_name)
+        .hosts(replica_members)
         .credential(Credential::builder()
             .username(config.username)
             .password(config.password)

@@ -10,10 +10,10 @@ use super::notifications::{ExampleWebNotification, ExampleIotNotification};
 
 pub struct IotExampleFeature {
     mqttc: rumqttc::AsyncClient,
-    mqtt_event_loop: Arc<Mutex<rumqttc::EventLoop>>,
+    _mqtt_event_loop: Arc<Mutex<rumqttc::EventLoop>>,
     mongoc: mongodb::Client,
-    web_tx: Sender<ExampleIotNotification>,
-    web_rx: Receiver<ExampleWebNotification>,
+    _web_tx: Sender<ExampleIotNotification>,
+    _web_rx: Receiver<ExampleWebNotification>,
 }
 
 impl IotExampleFeature {}
@@ -29,10 +29,10 @@ impl IotFeature for IotExampleFeature {
     ) -> Option<Self> {
         Some(IotExampleFeature { 
             mqttc,
-            mqtt_event_loop: Arc::new(Mutex::new(mqtt_event_loop)),
+            _mqtt_event_loop: Arc::new(Mutex::new(mqtt_event_loop)),
             mongoc,
-            web_tx: non_primitive_cast(web_tx)?,
-            web_rx: non_primitive_cast(web_rx)?, 
+            _web_tx: non_primitive_cast(web_tx)?,
+            _web_rx: non_primitive_cast(web_rx)?, 
         })
     }
 
