@@ -15,6 +15,7 @@ mod config;
 mod database_client;
 mod doc;
 mod iot;
+
 #[macro_use]
 mod macros;
 mod web;
