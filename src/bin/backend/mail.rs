@@ -4,7 +4,8 @@ use once_cell::sync::Lazy;
 use crate::parse_env_var;
 
 const SENDER_EMAIL: Lazy<String> = Lazy::new(|| parse_env_var("SMTP_USERNAME"));
-const SENDER_PASSWORD: Lazy<String> = Lazy::new(|| parse_env_var("SMTP_PASSWORD"));
+const SMTP_ID: Lazy<String> = Lazy::new(|| parse_env_var("SMTP_ID"));
+const SMTP_SECRET: Lazy<String> = Lazy::new(|| parse_env_var("SMTP_SECRET"));
 const SMTP_SERVER: Lazy<String> = Lazy::new(|| parse_env_var("SMTP_SERVER"));
 
 pub fn send_mail(receiver_email: String, title: String, body: String) -> Option<()> {
@@ -15,7 +16,7 @@ pub fn send_mail(receiver_email: String, title: String, body: String) -> Option<
         .body(body)
         .ok()?; 
 
-    let creds = Credentials::new(SENDER_EMAIL.to_owned(), SENDER_PASSWORD.to_string()); 
+    let creds = Credentials::new(SMTP_ID.to_owned(), SMTP_SECRET.to_string()); 
 
     // Open a remote connection to gmail 
     let mailer = SmtpTransport::relay(SMTP_SERVER.as_str()) 
