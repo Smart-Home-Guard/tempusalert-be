@@ -16,13 +16,13 @@ use super::mqtt_messages::{
     ConnectDeviceData, DeviceStatusMQTTMessage, DisconnectDeviceData, ReadBatteryData,
     ReadDeviceErrorData,
 };
-use crate::backend_core::{
+use crate::{auth::get_username_from_token, backend_core::{
     features::{
         device_status_feature::models::{BatteryStatus, Component, ComponentStatus, DeviceError},
         IotFeature,
     },
     utils,
-};
+}};
 
 pub struct IotDeviceStatusFeature {
     mqttc: rumqttc::AsyncClient,
@@ -30,6 +30,7 @@ pub struct IotDeviceStatusFeature {
     mongoc: mongodb::Client,
     web_tx: Sender<DeviceStatusIotNotification>,
     web_rx: Receiver<DeviceStatusWebNotification>,
+    jwt_key: String,
 }
 
 impl IotDeviceStatusFeature {}
@@ -42,6 +43,7 @@ impl IotFeature for IotDeviceStatusFeature {
         mongoc: mongodb::Client,
         web_tx: Sender<I>,
         web_rx: Receiver<W>,
+        jwt_key: String,
     ) -> Option<Self>
     where
         Self: Sized,
@@ -52,6 +54,7 @@ impl IotFeature for IotDeviceStatusFeature {
             mqtt_event_loop: Arc::new(Mutex::new(mqtt_event_loop)),
             web_tx: utils::non_primitive_cast(web_tx)?,
             web_rx: utils::non_primitive_cast(web_rx)?,
+            jwt_key,
         })
     }
 
@@ -75,7 +78,7 @@ impl IotFeature for IotDeviceStatusFeature {
     }
 
     async fn process_next_mqtt_message(&mut self) {
-        let mongoc = self.get_mongoc();
+        let mut mongoc = self.get_mongoc();
         let mut mqtt_event_loop = self.mqtt_event_loop.lock().await;
         if let Ok(Event::Incoming(Incoming::Publish(Publish { payload, .. }))) =
             mqtt_event_loop.poll().await
@@ -88,67 +91,83 @@ impl IotFeature for IotDeviceStatusFeature {
             {
                 match message {
                     DeviceStatusMQTTMessage::ReadBattery { token, data } => {
-                        let device_coll: Collection<Document> =
-                            mongoc.default_database().unwrap().collection("devices");
-                        for ReadBatteryData { id, value: battery } in data {
-                            if let Err(_) = device_coll.find_one_and_update(doc! { "id": id }, doc! { "$push": { "battery_logs": to_bson(&BatteryStatus { battery, timestamp: SystemTime::now() }).unwrap() } }, None).await {
-                                eprint!("Failed to process read battery data");
+                        if let Some(username) = get_username_from_token(self.jwt_key.as_str(), token, &mut mongoc).await {
+                            let device_coll: Collection<Document> =
+                                mongoc.default_database().unwrap().collection("devices");
+                            for ReadBatteryData { id, value: battery } in data {
+                                if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone() }, doc! { "$push": { "battery_logs": to_bson(&BatteryStatus { battery, timestamp: SystemTime::now() }).unwrap() } }, None).await {
+                                    eprint!("Failed to process read battery data");
+                                }
                             }
+                        } else {
+                            eprintln!("Invalid token");
                         }
                     }
                     DeviceStatusMQTTMessage::ReadDeviceError { token, data } => {
-                        let device_coll: Collection<Document> =
-                            mongoc.default_database().unwrap().collection("devices");
-                        for ReadDeviceErrorData { id, component } in data {
-                            if let Err(_) = device_coll.find_one_and_update(doc! { "id": id }, doc! { "$push": { "error_logs": to_bson(&DeviceError { id, component, timestamp: SystemTime::now() }).unwrap() } }, None).await {
-                                eprint!("Failed to process read device error data");
+                        if let Some(username) = get_username_from_token(self.jwt_key.as_str(), token, &mut mongoc).await {
+                            let device_coll: Collection<Document> =
+                                mongoc.default_database().unwrap().collection("devices");
+                            for ReadDeviceErrorData { id, component } in data {
+                                if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone() }, doc! { "$push": { "error_logs": to_bson(&DeviceError { id, component, timestamp: SystemTime::now() }).unwrap() } }, None).await {
+                                    eprint!("Failed to process read device error data");
+                                }
                             }
+                        } else {
+                            eprintln!("Invalid token");
                         }
                     }
                     DeviceStatusMQTTMessage::ConnectDevice { token, data } => {
-                        let device_coll: Collection<Document> =
-                            mongoc.default_database().unwrap().collection("devices");
-                        for ConnectDeviceData { id, component } in data {
-                            match device_coll.find_one(doc! { "id": id }, None).await {
-                                Ok(Some(_)) => {
-                                    if let Ok(None) = device_coll.find_one_and_update(doc! { "id": id, "components": { "$elemMatch": { "id": component } } }, doc! { "components": { "logs": { "$push": to_bson(&ComponentStatus::Connect { timestamp: SystemTime::now() }).unwrap() } } }, None).await {
-                                        if let Err(_) = device_coll.find_one_and_update(doc! { "id": id }, doc! { "$push": { "components": to_bson(&Component { id, logs: vec![ComponentStatus::Connect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
+                        if let Some(username) = get_username_from_token(self.jwt_key.as_str(), token, &mut mongoc).await {
+                            let device_coll: Collection<Document> =
+                                mongoc.default_database().unwrap().collection("devices");
+                            for ConnectDeviceData { id, component } in data {
+                                match device_coll.find_one(doc! { "id": id, "owner_name": username.clone() }, None).await {
+                                    Ok(Some(_)) => {
+                                        if let Ok(None) = device_coll.find_one_and_update(doc! { "id": id, "components": { "$elemMatch": { "id": component } } }, doc! { "components": { "logs": { "$push": to_bson(&ComponentStatus::Connect { timestamp: SystemTime::now() }).unwrap() } } }, None).await {
+                                            if let Err(_) = device_coll.find_one_and_update(doc! { "id": id }, doc! { "$push": { "components": to_bson(&Component { id, logs: vec![ComponentStatus::Connect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
+                                                eprintln!("Failed to process connect device data");
+                                            }
+                                        }
+                                    }
+                                    Ok(None) => {
+                                        if let Err(_) = device_coll.insert_one(doc! { "id": id, "battery_logs": to_bson(&vec![] as &Vec<BatteryStatus>).unwrap(), "error_logs": to_bson(&vec![] as &Vec<DeviceError>).unwrap(), "components": to_bson(&vec![] as &Vec<Component>).unwrap() }, None).await {
+                                            eprintln!("Failed to process connect device data");
+                                        } else if let Err(_) = device_coll.find_one_and_update(doc! { "id": id }, doc! { "$push": { "components": to_bson(&Component { id, logs: vec![ComponentStatus::Connect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
                                             eprintln!("Failed to process connect device data");
                                         }
                                     }
-                                }
-                                Ok(None) => {
-                                    if let Err(_) = device_coll.insert_one(doc! { "id": id, "battery_logs": to_bson(&vec![] as &Vec<BatteryStatus>).unwrap(), "error_logs": to_bson(&vec![] as &Vec<DeviceError>).unwrap(), "components": to_bson(&vec![] as &Vec<Component>).unwrap() }, None).await {
-                                        eprintln!("Failed to process connect device data");
-                                    } else if let Err(_) = device_coll.find_one_and_update(doc! { "id": id }, doc! { "$push": { "components": to_bson(&Component { id, logs: vec![ComponentStatus::Connect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
-                                        eprintln!("Failed to process connect device data");
+                                    Err(_) => {
+                                        eprintln!("Unexpected error while finding devices with id {id}");
                                     }
-                                }
-                                Err(_) => {
-                                    eprintln!("Unexpected error while finding devices with id {id}");
-                                }
-                            };
+                                };
+                            }
+                        } else {
+                            eprintln!("Invalid token");
                         }
                     }
                     DeviceStatusMQTTMessage::DisconnectDevice { token, data } => {
-                        let device_coll: Collection<Document> =
-                            mongoc.default_database().unwrap().collection("devices");
-                        for DisconnectDeviceData { id, component } in data {
-                            match device_coll.find_one(doc! { "id": id }, None).await {
-                                Ok(Some(_)) => {
-                                    if let Ok(None) = device_coll.find_one_and_update(doc! { "id": id, "components": { "$elemMatch": { "id": component } } }, doc! { "components": { "logs": { "$push": to_bson(&ComponentStatus::Disconnect { timestamp: SystemTime::now() }).unwrap() } } }, None).await {
-                                        if let Err(_) = device_coll.find_one_and_update(doc! { "id": id }, doc! { "$push": { "components": to_bson(&Component { id, logs: vec![ComponentStatus::Disconnect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
-                                            eprintln!("Failed to process disconnect device data");
+                        if let Some(username) = get_username_from_token(self.jwt_key.as_str(), token, &mut mongoc).await {
+                            let device_coll: Collection<Document> =
+                                mongoc.default_database().unwrap().collection("devices");
+                            for DisconnectDeviceData { id, component } in data {
+                                match device_coll.find_one(doc! { "id": id, "owner_name": username.clone() }, None).await {
+                                    Ok(Some(_)) => {
+                                        if let Ok(None) = device_coll.find_one_and_update(doc! { "id": id, "components": { "$elemMatch": { "id": component } } }, doc! { "components": { "logs": { "$push": to_bson(&ComponentStatus::Disconnect { timestamp: SystemTime::now() }).unwrap() } } }, None).await {
+                                            if let Err(_) = device_coll.find_one_and_update(doc! { "id": id }, doc! { "$push": { "components": to_bson(&Component { id, logs: vec![ComponentStatus::Disconnect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
+                                                eprintln!("Failed to process disconnect device data");
+                                            }
                                         }
                                     }
-                                }
-                                Ok(None) => {
-                                    eprintln!("Device {id} did not exist");
-                                }
-                                Err(_) => {
-                                    eprintln!("Unexpected error while finding devices with id {id}");
-                                }
-                            };
+                                    Ok(None) => {
+                                        eprintln!("Device {id} did not exist");
+                                    }
+                                    Err(_) => {
+                                        eprintln!("Unexpected error while finding devices with id {id}");
+                                    }
+                                };
+                            }
+                        } else {
+                            eprintln!("Invalid token");
                         }
                     }
                 }

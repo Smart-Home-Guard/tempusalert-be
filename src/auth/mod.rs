@@ -22,7 +22,7 @@ pub fn get_client_id_from_token(key: &str, token: String) -> Option<String> {
 pub async fn get_username_from_token(
     key: &str,
     token: String,
-    mongoc: mongodb::Client,
+    mongoc: &mut mongodb::Client,
 ) -> Option<String> {
     let claim = decrypt_jwt::<IotClientClaim>(key, token.as_str())?;
     mongoc

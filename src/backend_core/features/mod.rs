@@ -10,6 +10,7 @@ pub trait IotFeature {
         mongoc: mongodb::Client,
         web_tx: Sender<I>,
         web_rx: Receiver<W>,
+        jwt_key: String,
     ) -> Option<Self>
     where
         Self: Sized;
@@ -33,6 +34,7 @@ pub trait WebFeature {
         mongoc: mongodb::Client,
         iot_tx: Sender<W>,
         iot_rx: Receiver<I>,
+        jwt_key: String,
     ) -> Option<Self>
     where
         Self: Sized;
