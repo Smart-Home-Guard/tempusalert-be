@@ -17,6 +17,7 @@ mod doc;
 mod iot;
 mod globals;
 mod models;
+mod mail;
 
 #[macro_use]
 mod macros;
