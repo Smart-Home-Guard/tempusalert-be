@@ -12,3 +12,9 @@ Each feature module must export the following components with these exact names:
  * IotNotification
 
 in order for the macro `create_features!` to work properly!
+
+## Generate a .pem file for push api
+```bash
+openssl req -new -newkey rsa:4096 -nodes -keyout tempusalert.key -out tempusalert.csr
+openssl x509 -req -sha256 -days 365 -in tempusalert.csr -signkey tempusalert.key -out tempusalert.pem
+```

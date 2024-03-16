@@ -21,7 +21,7 @@ struct PushCredentialResponse {
 async fn push_handler(Json(body): Json<PushCredentialBody>) -> impl IntoApiResponse {
     let mongoc = MONGOC.get_or_init(init_database).await;
     let push_cred_coll: Collection<Document> = mongoc.default_database().unwrap().collection("push_credentials");
-    if let Err(_) = push_cred_coll.insert_one(doc! { "credential": to_bson(&body.credential).unwrap(), "username": body.username }, None).await {
+    if let Err(_) = push_cred_coll.insert_one(doc! { "endpoint": body.credential.endpoint, "key": to_bson(&body.credential.key).unwrap(), "username": body.username }, None).await {
         (StatusCode::INTERNAL_SERVER_ERROR, Json(PushCredentialResponse{ message: String::from("Failed to add subscription") }))
     } else {
         (StatusCode::OK, Json(PushCredentialResponse{ message: String::from("Successfully add user subscription") }))

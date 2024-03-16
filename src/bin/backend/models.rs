@@ -17,10 +17,11 @@ pub struct User {
 pub struct PushCredential {
     pub endpoint: String,
     pub key: PushKey, 
+    pub username: String,
 }
 
 #[derive(Serialize, Deserialize, JsonSchema)]
-struct PushKey {
+pub struct PushKey {
     pub p256dh: String,
     pub auth: String,
 }
