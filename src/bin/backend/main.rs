@@ -18,6 +18,7 @@ mod globals;
 mod iot;
 mod mail;
 mod models;
+mod push_notifcation;
 
 #[macro_use]
 mod macros;

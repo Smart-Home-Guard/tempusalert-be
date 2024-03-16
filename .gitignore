@@ -37,3 +37,8 @@ dist-ssr
 
 #/target
 rumqttd.toml
+
+#/push pem file
+*.csr
+*.key
+*.pem
