@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
-#[cfg_attr(test, derive(std::cmp::Eq, std::cmp::PartialEq, Debug))]
+#[cfg_attr(test, derive(std::cmp::PartialEq, Debug))]
 #[serde(tag = "kind", content = "data")]
 pub enum DeviceStatusMQTTMessage {
     #[serde(rename = "0")]
@@ -15,28 +15,28 @@ pub enum DeviceStatusMQTTMessage {
 }
 
 #[derive(Deserialize, Serialize)]
-#[cfg_attr(test, derive(std::cmp::Eq, std::cmp::PartialEq, Debug))]
+#[cfg_attr(test, derive(std::cmp::PartialEq, Debug))]
 pub struct ReadBatteryData {
     id: u32,
     value: u8,
 }
 
 #[derive(Deserialize, Serialize)]
-#[cfg_attr(test, derive(std::cmp::Eq, std::cmp::PartialEq, Debug))]
+#[cfg_attr(test, derive(std::cmp::PartialEq, Debug))]
 pub struct ReadDeviceErrorData {
     id: u32,
     component: u8,
 }
 
 #[derive(Deserialize, Serialize)]
-#[cfg_attr(test, derive(std::cmp::Eq, std::cmp::PartialEq, Debug))]
+#[cfg_attr(test, derive(std::cmp::PartialEq, Debug))]
 pub struct ConnectDeviceData {
     id: u32,
     component: u8,
 }
 
 #[derive(Deserialize, Serialize)]
-#[cfg_attr(test, derive(std::cmp::Eq, std::cmp::PartialEq, Debug))]
+#[cfg_attr(test, derive(std::cmp::PartialEq, Debug))]
 pub struct DisconnectDeviceData {
     id: u32,
     component: u8,   
