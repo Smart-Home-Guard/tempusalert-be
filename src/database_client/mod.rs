@@ -1,13 +1,8 @@
-use mongodb::{options::{ClientOptions, Credential, ServerAddress}, Client};
-
-pub struct MongocReplicaMember {
-    pub hostname: String,
-    pub port: u16,
-}
+use mongodb::{bson::doc, options::{ClientOptions, Credential, ServerAddress}, Client};
 
 pub struct MongocConfig {
-    pub replica_members: Vec<MongocReplicaMember>,
-    pub replica_set_name: String,
+    pub server_hostname: String,
+    pub server_port: u16,
     pub username: String,
     pub password: String,
     pub default_db: String,
@@ -15,10 +10,9 @@ pub struct MongocConfig {
 }
 
 pub async fn init(config: MongocConfig) -> mongodb::error::Result<Client> {
-    let replica_members: Vec<ServerAddress> = config.replica_members.iter().map(|m| ServerAddress::Tcp { host: m.hostname.clone(), port: Some(m.port) }).collect();
     let client_options = ClientOptions::builder()
-        .repl_set_name(config.replica_set_name)
-        .hosts(replica_members)
+        .direct_connection(true)
+        .hosts(vec![ServerAddress::Tcp { host: config.server_hostname, port: Some(config.server_port) }])
         .credential(Credential::builder()
             .username(config.username)
             .password(config.password)
@@ -29,6 +23,8 @@ pub async fn init(config: MongocConfig) -> mongodb::error::Result<Client> {
         .build();
 
     let client = Client::with_options(client_options)?;
+
+    client.default_database().unwrap().run_command(doc! { "ping": 1 }, None).await?;
 
     println!("✅ Database connected successfully");
 

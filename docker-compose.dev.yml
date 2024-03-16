@@ -1,9 +1,8 @@
 version: "3.8"
 services:
-  mongo1:
+  mongo:
     image: mongo:latest
-    container_name: mongo1
-    command: ["--replSet", "my-replica-set", "--keyFile", "/data/replica.key", "--bind_ip_all", "--port", "30001"]
+    container_name: mongo
     env_file:
       - ./.env
     environment:
@@ -11,50 +10,9 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
       MONGO_INITDB_DATABASE: ${MONGO_DEFAULT_DATABASE}
     volumes:
-      - mongo-1:/data/db
-      - ./.docker/mongo/replica.key:/data/replica.key
+      - mongo:/data/db
     ports:
-      - "30001:30001"
-    healthcheck:
-      test: test $$(echo "rs.initiate({_id:'my-replica-set',members:[{_id:0,host:\"mongo1:30001\"},{_id:1,host:\"mongo2:30002\"},{_id:2,host:\"mongo3:30003\"}]}).ok || rs.status().ok" | mongosh --port 30001 -u $${MONGO_INITDB_ROOT_USERNAME} -p $${MONGO_INITDB_ROOT_PASSWORD} --authenticationDatabase admin --quiet) -eq 1
-      interval: 10s
-      start_period: 30s
-    restart: always
-
-  mongo2:
-    image: mongo:latest
-    container_name: mongo2
-    command: ["--replSet", "my-replica-set", "--keyFile", "/data/replica.key", "--bind_ip_all", "--port", "30002"]
-    env_file:
-      - ./.env
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-      MONGO_INITDB_DATABASE: ${MONGO_DEFAULT_DATABASE}
-    volumes:
-      - mongo-2:/data/db
-      - ./.docker/mongo/replica.key:/data/replica.key
-    ports:
-      - "30002:30002"
-    restart: always
-
-  mongo3:
-    image: mongo:latest
-    container_name: mongo3
-    command: ["--replSet", "my-replica-set", "--keyFile", "/data/replica.key", "--bind_ip_all", "--port", "30003"]
-    env_file:
-      - ./.env
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-      MONGO_INITDB_DATABASE: ${MONGO_DEFAULT_DATABASE}
-    volumes:
-      - mongo-3:/data/db
-      - ./.docker/mongo/replica.key:/data/replica.key
-    ports:
-      - "30003:30003"
+      - "6000:27017"
     restart: always
 volumes:
-  mongo-1:
-  mongo-2:
-  mongo-3:
+  mongo:
