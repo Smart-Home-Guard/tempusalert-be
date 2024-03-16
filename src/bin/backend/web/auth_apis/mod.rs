@@ -7,16 +7,10 @@ use tempusalert_be::{auth, json::Json};
 
 use crate::{
     config::JWT_KEY,
-    database_client::{init_database, MONGOC},
+    database_client::{init_database, MONGOC}, models::User,
 };
 
-#[derive(Serialize, Deserialize, Debug)]
-struct User {
-    username: String,
-    password: String,
-    client_id: String,
-    client_secret: String,
-}
+use super::utils::verify_hashed_password;
 
 #[derive(Deserialize, JsonSchema)]
 struct IotAuthBody {
@@ -72,9 +66,9 @@ pub fn iot_auth_routes() -> ApiRouter {
         post_with(iot_auth_handler, |op| {
             op.description("Iot authentication api")
                 .tag("Authentication")
-                .response::<200, Json<String>>()
-                .response::<400, Json<String>>()
-                .response::<500, Json<String>>()
+                .response::<200, Json<Token>>()
+                .response::<400, Json<Token>>()
+                .response::<500, Json<Token>>()
         }),
     )
 }
@@ -97,24 +91,28 @@ async fn web_auth_handler(Json(body): Json<WebAuthBody>) -> impl IntoApiResponse
         .default_database().unwrap()
         .collection("users");
 
-    if let Some(_) = user_coll
+    if let Some(Some(User{ hashed_password, salt , .. })) = user_coll
         .find_one(
-            doc! { "username": body.username.clone(), "password": body.password },
+            doc! { "username": body.username.clone() },
             None,
         )
         .await
         .ok()
     {
-        let client_claim = WebClientClaim {
-            username: body.username,
-            nonce: uuid::Uuid::new_v4().into(),
-        };
-        let token = auth::sign_jwt(JWT_KEY.as_str(), &client_claim);
-
-        if let Some(token) = token {
-            (StatusCode::OK, Json(Token::Some(token)))
+        if !verify_hashed_password(body.password, hashed_password, salt) {
+            (StatusCode::BAD_REQUEST, Json(Token::None))
         } else {
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(Token::None))
+            let client_claim = WebClientClaim {
+                username: body.username,
+                nonce: uuid::Uuid::new_v4().into(),
+            };
+            let token = auth::sign_jwt(JWT_KEY.as_str(), &client_claim);
+
+            if let Some(token) = token {
+                (StatusCode::OK, Json(Token::Some(token)))
+            } else {
+                (StatusCode::INTERNAL_SERVER_ERROR, Json(Token::None))
+            }
         }
     } else {
         (StatusCode::BAD_REQUEST, Json(Token::None))
@@ -127,9 +125,9 @@ pub fn web_auth_routes() -> ApiRouter {
         post_with(web_auth_handler, |op| {
             op.description("Web authentication api")
                 .tag("Authentication")
-                .response::<200, Json<String>>()
-                .response::<400, Json<String>>()
-                .response::<500, Json<String>>()
+                .response::<200, Json<Token>>()
+                .response::<400, Json<Token>>()
+                .response::<500, Json<Token>>()
         }),
     )
 }

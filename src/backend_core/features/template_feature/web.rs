@@ -18,9 +18,9 @@ pub struct GenericResponse {
 }
 
 pub struct WebExampleFeature {
-    mongoc: mongodb::Client,
-    iot_tx: Sender<ExampleWebNotification>,
-    iot_rx: Receiver<ExampleIotNotification>,
+    _mongoc: mongodb::Client,
+    _iot_tx: Sender<ExampleWebNotification>,
+    _iot_rx: Receiver<ExampleIotNotification>,
 }
 
 impl WebExampleFeature {
@@ -48,9 +48,9 @@ impl WebFeature for WebExampleFeature {
         iot_rx: Receiver<I>,
     ) -> Option<Self> {
         Some(WebExampleFeature {
-            mongoc,
-            iot_tx: non_primitive_cast(iot_tx)?,
-            iot_rx: non_primitive_cast(iot_rx)?,
+            _mongoc: mongoc,
+            _iot_tx: non_primitive_cast(iot_tx)?,
+            _iot_rx: non_primitive_cast(iot_rx)?,
         })
     }
 

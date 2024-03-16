@@ -5,7 +5,7 @@ use futures::FutureExt;
 use iot::IotTask;
 use rumqttc::{AsyncClient, EventLoop};
 use tempusalert_be::{
-    backend_core::features::{device_status_feature, template_feature, IotFeature, WebFeature},
+    backend_core::features::{device_status_feature, fire, IotFeature, WebFeature},
     errors::AppError,
     mqtt_client::{self, ClientConfig},
 };
@@ -15,6 +15,10 @@ mod config;
 mod database_client;
 mod doc;
 mod iot;
+mod globals;
+mod models;
+mod mail;
+
 #[macro_use]
 mod macros;
 mod web;
@@ -40,7 +44,6 @@ pub async fn join_all(tasks: Vec<Task>) -> AppResult {
                         .send(e)
                         .await
                         .unwrap_or_else(|_| unreachable!("This channel never closed."));
-                } else {
                 }
             }
         });
@@ -81,7 +84,8 @@ async fn main() -> AppResult {
     let mongoc = MONGOC.get_or_init(init_database).await;
 
     let (web_feats, iot_feats) =
-        create_features!(mongoc.clone(), init_mqtt_client, template_feature, device_status_feature);
+        create_features!(mongoc.clone(), init_mqtt_client, fire, device_status_feature);
+
     let web_task = WebTask::create(config.server, web_feats).await?;
     let iot_task = IotTask::create(config.iot, iot_feats).await?;
 
