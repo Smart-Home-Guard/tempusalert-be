@@ -15,6 +15,7 @@ mod config;
 mod database_client;
 mod doc;
 mod iot;
+mod globals;
 
 #[macro_use]
 mod macros;
@@ -41,7 +42,6 @@ pub async fn join_all(tasks: Vec<Task>) -> AppResult {
                         .send(e)
                         .await
                         .unwrap_or_else(|_| unreachable!("This channel never closed."));
-                } else {
                 }
             }
         });
