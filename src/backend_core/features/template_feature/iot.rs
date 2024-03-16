@@ -16,6 +16,7 @@ pub struct IotExampleFeature {
     mongoc: mongodb::Client,
     _web_tx: Sender<ExampleIotNotification>,
     _web_rx: Receiver<ExampleWebNotification>,
+    _jwt_key: String,
 }
 
 impl IotExampleFeature {}
@@ -28,6 +29,7 @@ impl IotFeature for IotExampleFeature {
         mongoc: mongodb::Client,
         web_tx: Sender<I>,
         web_rx: Receiver<W>,
+        jwt_key: String,
     ) -> Option<Self> {
         Some(IotExampleFeature {
             mqttc,
@@ -35,6 +37,7 @@ impl IotFeature for IotExampleFeature {
             mongoc,
             _web_tx: non_primitive_cast(web_tx)?,
             _web_rx: non_primitive_cast(web_rx)?,
+            _jwt_key: jwt_key,
         })
     }
 

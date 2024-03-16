@@ -19,6 +19,7 @@ pub struct IotFireFeature {
     mongoc: mongodb::Client,
     web_tx: Sender<FireIotNotification>,
     web_rx: Receiver<FireWebNotification>,
+    jwt_key: String,
     fire_collection: Collection<Document>,
 }
 
@@ -32,6 +33,7 @@ impl IotFeature for IotFireFeature {
         mongoc: mongodb::Client,
         web_tx: Sender<I>,
         web_rx: Receiver<W>,
+        jwt_key: String,
     ) -> Option<Self> {
         Some(IotFireFeature {
             mqttc,
@@ -39,6 +41,7 @@ impl IotFeature for IotFireFeature {
             mongoc: mongoc.clone(),
             web_tx: non_primitive_cast(web_tx)?,
             web_rx: non_primitive_cast(web_rx)?,
+            jwt_key,
             fire_collection: mongoc
                 .clone()
                 .default_database()

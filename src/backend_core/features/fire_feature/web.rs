@@ -33,6 +33,7 @@ pub struct WebFireFeature {
     mongoc: mongodb::Client,
     iot_tx: Sender<FireWebNotification>,
     iot_rx: Receiver<FireIotNotification>,
+    jwt_key: String,
 }
 
 impl WebFireFeature {
@@ -92,11 +93,13 @@ impl WebFeature for WebFireFeature {
         mongoc: mongodb::Client,
         iot_tx: Sender<W>,
         iot_rx: Receiver<I>,
+        jwt_key: String,
     ) -> Option<Self> {
         Some(WebFireFeature {
             mongoc,
             iot_tx: non_primitive_cast(iot_tx)?,
             iot_rx: non_primitive_cast(iot_rx)?,
+            jwt_key,
         })
     }
 

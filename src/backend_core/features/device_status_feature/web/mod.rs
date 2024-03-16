@@ -1,6 +1,5 @@
-use aide::axum::{ApiRouter, IntoApiResponse};
-use aide::transform::TransformOperation;
-use axum::{async_trait, http::StatusCode};
+use aide::axum::ApiRouter;
+use axum::async_trait;
 use schemars::JsonSchema;
 use serde::Serialize;
 use tokio::sync::mpsc::{Receiver, Sender};
@@ -21,6 +20,7 @@ pub struct WebDeviceStatusFeature {
     mongoc: mongodb::Client,
     iot_tx: Sender<DeviceStatusWebNotification>,
     iot_rx: Receiver<DeviceStatusIotNotification>,
+    jwt_key: String,
 }
 
 #[async_trait]
@@ -29,11 +29,13 @@ impl WebFeature for WebDeviceStatusFeature {
         mongoc: mongodb::Client,
         iot_tx: Sender<W>,
         iot_rx: Receiver<I>,
+        jwt_key: String,
     ) -> Option<Self> {
         Some(WebDeviceStatusFeature {
             mongoc,
             iot_tx: non_primitive_cast(iot_tx)?,
             iot_rx: non_primitive_cast(iot_rx)?,
+            jwt_key,
         })
     }
 

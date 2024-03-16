@@ -3,7 +3,7 @@ use axum::http::StatusCode;
 use mongodb::{bson::doc, Collection};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use tempusalert_be::{auth, json::Json};
+use tempusalert_be::{auth::{self, IotClientClaim, WebClientClaim}, json::Json};
 
 use crate::{
     config::JWT_KEY,
@@ -17,12 +17,6 @@ use super::utils::verify_hashed_password;
 struct IotAuthBody {
     client_id: String,
     client_secret: String,
-}
-
-#[derive(Serialize)]
-struct IotClientClaim {
-    client_id: String,
-    nonce: String,
 }
 
 #[derive(Serialize, JsonSchema)]
@@ -76,12 +70,6 @@ pub fn iot_auth_routes() -> ApiRouter {
 struct WebAuthBody {
     username: String,
     password: String,
-}
-
-#[derive(Serialize)]
-struct WebClientClaim {
-    username: String,
-    nonce: String,
 }
 
 async fn web_auth_handler(Json(body): Json<WebAuthBody>) -> impl IntoApiResponse {
