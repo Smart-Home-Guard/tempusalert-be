@@ -56,16 +56,20 @@ async fn register_handler(Json(body): Json<RegisterBody>) -> impl IntoApiRespons
         if let None = send_mail(
             body.email.clone(),
             String::from("Your gateway credential"),
-            format!(
-                "Please config the given credential at your gateway
-    id: {},
-    secret: {},
-Thanks for choosing our service!
+            format!("
+                <p> Please config the given credential at your gateway:
+                    <ul>
+                        <li> id: {client_id} </li>
+                        <li> secret: {client_secret} </li>
+                    </ul>
+                </p>
+                <p>Thanks for choosing our service!<p>
 
-Best wishes,
-Tempusalert team",
-                client_id, client_secret
-            ),
+                <footer>
+                    <p>Best wishes,<p>
+                    <p>Tempusalert team<p>
+                </footer>
+            "),
         ) {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
