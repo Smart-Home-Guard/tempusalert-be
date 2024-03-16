@@ -1,5 +1,6 @@
 mod auth_apis;
 mod register_api;
+mod push_api;
 mod utils;
 
 use std::sync::Arc;
@@ -53,7 +54,8 @@ impl WebTask {
             .router
             .nest_api_service("/auth/iot", auth_apis::iot_auth_routes())
             .nest_api_service("/auth/web", auth_apis::web_auth_routes())
-            .nest_api_service("/auth/register", register_api::register_routes());
+            .nest_api_service("/auth/register", register_api::register_routes())
+            .nest_api_service("/push/credential", push_api::push_routes());
 
         for feat in &mut self.features {
             self.router = self.router.nest_api_service(
