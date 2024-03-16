@@ -87,7 +87,7 @@ impl IotFeature for IotDeviceStatusFeature {
                 })
             {
                 match message {
-                    DeviceStatusMQTTMessage::ReadBattery(data) => {
+                    DeviceStatusMQTTMessage::ReadBattery { token, data } => {
                         let device_coll: Collection<Document> =
                             mongoc.default_database().unwrap().collection("devices");
                         for ReadBatteryData { id, value: battery } in data {
@@ -96,7 +96,7 @@ impl IotFeature for IotDeviceStatusFeature {
                             }
                         }
                     }
-                    DeviceStatusMQTTMessage::ReadDeviceError(data) => {
+                    DeviceStatusMQTTMessage::ReadDeviceError { token, data } => {
                         let device_coll: Collection<Document> =
                             mongoc.default_database().unwrap().collection("devices");
                         for ReadDeviceErrorData { id, component } in data {
@@ -105,7 +105,7 @@ impl IotFeature for IotDeviceStatusFeature {
                             }
                         }
                     }
-                    DeviceStatusMQTTMessage::ConnectDevice(data) => {
+                    DeviceStatusMQTTMessage::ConnectDevice { token, data } => {
                         let device_coll: Collection<Document> =
                             mongoc.default_database().unwrap().collection("devices");
                         for ConnectDeviceData { id, component } in data {
@@ -130,7 +130,7 @@ impl IotFeature for IotDeviceStatusFeature {
                             };
                         }
                     }
-                    DeviceStatusMQTTMessage::DisconnectDevice(data) => {
+                    DeviceStatusMQTTMessage::DisconnectDevice { token, data } => {
                         let device_coll: Collection<Document> =
                             mongoc.default_database().unwrap().collection("devices");
                         for DisconnectDeviceData { id, component } in data {

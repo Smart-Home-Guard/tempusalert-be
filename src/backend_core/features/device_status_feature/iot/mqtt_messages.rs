@@ -1,17 +1,31 @@
 use serde::{Deserialize, Serialize};
 
+type Token = String;
+
 #[derive(Deserialize, Serialize)]
 #[cfg_attr(test, derive(std::cmp::PartialEq, Debug))]
-#[serde(tag = "kind", content = "data")]
+#[serde(tag = "kind", content = "payload")]
 pub enum DeviceStatusMQTTMessage {
     #[serde(rename = "0")]
-    ReadBattery(Vec<ReadBatteryData>),
+    ReadBattery {
+        token: Token,
+        data: Vec<ReadBatteryData>,
+    },
     #[serde(rename = "1")]
-    ReadDeviceError(Vec<ReadDeviceErrorData>),
+    ReadDeviceError {
+        token: Token,
+        data: Vec<ReadDeviceErrorData>,
+    },
     #[serde(rename = "2")]
-    ConnectDevice(Vec<ConnectDeviceData>),
+    ConnectDevice {
+        token: Token,
+        data: Vec<ConnectDeviceData>,
+    },
     #[serde(rename = "3")]
-    DisconnectDevice(Vec<DisconnectDeviceData>),
+    DisconnectDevice {
+        token: Token,
+        data: Vec<DisconnectDeviceData>,
+    },
 }
 
 #[derive(Deserialize, Serialize)]
@@ -46,45 +60,52 @@ pub struct DisconnectDeviceData {
 mod deserialize_tests {
     use super::{
         ConnectDeviceData, DeviceStatusMQTTMessage, DisconnectDeviceData, ReadBatteryData,
-        ReadDeviceErrorData,
+        ReadDeviceErrorData, Token,
     };
 
     #[test]
     fn deserialize_readbattery() {
         let input = r#"{
             "kind": "0",
-            "data": [
-                {
-                    "id": 0,
-                    "value": 30
-                },
-                {
-                    "id": 1,
-                    "value": 50
-                },
-                {
-                    "id": 2,
-                    "value": 50
-                },
-                {
-                    "id": 3,
-                    "value": 100
-                },
-                {
-                    "id": 4,
-                    "value": 0
-                }
-            ]
+            "payload": {
+                "token": "abcd",
+                "data": [
+                    {
+                        "id": 0,
+                        "value": 30
+                    },
+                    {
+                        "id": 1,
+                        "value": 50
+                    },
+                    {
+                        "id": 2,
+                        "value": 50
+                    },
+                    {
+                        "id": 3,
+                        "value": 100
+                    },
+                    {
+                        "id": 4,
+                        "value": 0
+                    }
+                ]
+            }
         }"#;
 
         let result: DeviceStatusMQTTMessage = serde_json::from_str(input).unwrap();
-        let expected = DeviceStatusMQTTMessage::ReadBattery(vec![
-            ReadBatteryData { id: 0, value: 30 },
-            ReadBatteryData { id: 1, value: 50 },
-            ReadBatteryData { id: 2, value: 50 },
-            ReadBatteryData { id: 3, value: 100 },
-            ReadBatteryData { id: 4, value: 0 },
-        ]);
+        println!("{:?}", result);
+        let expected = DeviceStatusMQTTMessage::ReadBattery {
+            token: Token::from("abcd"),
+            data: vec![
+                ReadBatteryData { id: 0, value: 30 },
+                ReadBatteryData { id: 1, value: 50 },
+                ReadBatteryData { id: 2, value: 50 },
+                ReadBatteryData { id: 3, value: 100 },
+                ReadBatteryData { id: 4, value: 0 },
+            ],
+        };
 
         assert_eq!(result, expected);
     }
@@ -93,19 +114,25 @@ mod deserialize_tests {
     fn deserialize_readdeviceerror() {
         let input = r#"{
             "kind": "1",
-            "data": [
-                {
-                    "id": 0,
-                    "component": 8 
-                }
-            ]
+            "payload": {
+                "token": "abcd",
+                "data": [
+                    {
+                        "id": 0,
+                        "component": 8 
+                    }
+                ]
+            }
         }"#;
 
         let result: DeviceStatusMQTTMessage = serde_json::from_str(input).unwrap();
-        let expected = DeviceStatusMQTTMessage::ReadDeviceError(vec![ReadDeviceErrorData {
-            id: 0,
-            component: 8,
-        }]);
+        let expected = DeviceStatusMQTTMessage::ReadDeviceError {
+            token: Token::from("abcd"),
+            data: vec![ReadDeviceErrorData {
+                id: 0,
+                component: 8,
+            }],
+        };
 
         assert_eq!(result, expected);
     }
@@ -114,19 +141,25 @@ mod deserialize_tests {
     fn deserialize_readconnectdevice() {
         let input = r#"{
             "kind": "2",
-            "data": [
-                {
-                    "id": 0,
-                    "component": 1 
-                }
-            ]
+            "payload": {
+                "token": "abcd",
+                "data":  [
+                    {
+                        "id": 0,
+                        "component": 1 
+                    }
+                ]
+            }
         }"#;
 
         let result: DeviceStatusMQTTMessage = serde_json::from_str(input).unwrap();
-        let expected = DeviceStatusMQTTMessage::ConnectDevice(vec![ConnectDeviceData {
-            id: 0,
-            component: 1,
-        }]);
+        let expected = DeviceStatusMQTTMessage::ConnectDevice {
+            token: Token::from("abcd"),
+            data: vec![ConnectDeviceData {
+                id: 0,
+                component: 1,
+            }],
+        };
 
         assert_eq!(result, expected);
     }
@@ -135,19 +168,25 @@ mod deserialize_tests {
     fn deserialize_readdisconnectdevice() {
         let input = r#"{
             "kind": "3",
-            "data": [
-                {
-                    "id": 0,
-                    "component": 1 
-                }
-            ]
+            "payload": {
+                "token": "abcd",
+                "data": [
+                    {
+                        "id": 0,
+                        "component": 1 
+                    }
+                ]
+            }
         }"#;
 
         let result: DeviceStatusMQTTMessage = serde_json::from_str(input).unwrap();
-        let expected = DeviceStatusMQTTMessage::DisconnectDevice(vec![DisconnectDeviceData {
-            id: 0,
-            component: 1,
-        }]);
+        let expected = DeviceStatusMQTTMessage::DisconnectDevice {
+            token: Token::from("abcd"),
+            data: vec![DisconnectDeviceData {
+                id: 0,
+                component: 1,
+            }],
+        };
 
         assert_eq!(result, expected);
     }
@@ -157,46 +196,52 @@ mod deserialize_tests {
 mod serialize_tests {
     use super::{
         ConnectDeviceData, DeviceStatusMQTTMessage, DisconnectDeviceData, ReadBatteryData,
-        ReadDeviceErrorData,
+        ReadDeviceErrorData, Token,
     };
 
     #[test]
     fn serialize_readbattery() {
-        let input = DeviceStatusMQTTMessage::ReadBattery(vec![
-            ReadBatteryData { id: 0, value: 30 },
-            ReadBatteryData { id: 1, value: 50 },
-            ReadBatteryData { id: 2, value: 50 },
-            ReadBatteryData { id: 3, value: 100 },
-            ReadBatteryData { id: 4, value: 0 },
-        ]);
+        let input = DeviceStatusMQTTMessage::ReadBattery {
+            token: Token::from("abcd"),
+            data: vec![
+                ReadBatteryData { id: 0, value: 30 },
+                ReadBatteryData { id: 1, value: 50 },
+                ReadBatteryData { id: 2, value: 50 },
+                ReadBatteryData { id: 3, value: 100 },
+                ReadBatteryData { id: 4, value: 0 },
+            ],
+        };
         let result = serde_json::to_string(&input)
             .unwrap()
             .parse::<serde_json::Value>()
             .unwrap();
         let expected = r#"{
             "kind": "0",
-            "data": [
-                {
-                    "id": 0,
-                    "value": 30
-                },
-                {
-                    "id": 1,
-                    "value": 50
-                },
-                {
-                    "id": 2,
-                    "value": 50
-                },
-                {
-                    "id": 3,
-                    "value": 100
-                },
-                {
-                    "id": 4,
-                    "value": 0
-                }
-            ]
+            "payload": {
+                "token": "abcd",
+                "data": [
+                    {
+                        "id": 0,
+                        "value": 30
+                    },
+                    {
+                        "id": 1,
+                        "value": 50
+                    },
+                    {
+                        "id": 2,
+                        "value": 50
+                    },
+                    {
+                        "id": 3,
+                        "value": 100
+                    },
+                    {
+                        "id": 4,
+                        "value": 0
+                    }
+                ]
+            }
         }"#
         .parse::<serde_json::Value>()
         .unwrap();
@@ -206,22 +251,28 @@ mod serialize_tests {
 
     #[test]
     fn serialize_readdeviceerror() {
-        let input = DeviceStatusMQTTMessage::ReadDeviceError(vec![ReadDeviceErrorData {
-            id: 0,
-            component: 8,
-        }]);
+        let input = DeviceStatusMQTTMessage::ReadDeviceError {
+            token: Token::from("abcd"),
+            data: vec![ReadDeviceErrorData {
+                id: 0,
+                component: 8,
+            }],
+        };
         let result = serde_json::to_string(&input)
             .unwrap()
             .parse::<serde_json::Value>()
             .unwrap();
         let expected = r#"{
             "kind": "1",
-            "data": [
-                {
-                    "id": 0,
-                    "component": 8 
-                }
-            ]
+            "payload": {
+                "token": "abcd",
+                "data": [
+                    {
+                        "id": 0,
+                        "component": 8 
+                    }
+                ]
+            }
         }"#
         .parse::<serde_json::Value>()
         .unwrap();
@@ -231,10 +282,13 @@ mod serialize_tests {
 
     #[test]
     fn serialize_readconnectdevice() {
-        let input = DeviceStatusMQTTMessage::ConnectDevice(vec![ConnectDeviceData {
-            id: 0,
-            component: 1,
-        }]);
+        let input = DeviceStatusMQTTMessage::ConnectDevice {
+            token: Token::from("abcd"),
+            data: vec![ConnectDeviceData {
+                id: 0,
+                component: 1,
+            }],
+        };
         let result = serde_json::to_string(&input)
             .unwrap()
             .parse::<serde_json::Value>()
@@ -242,12 +296,15 @@ mod serialize_tests {
 
         let expected = r#"{
             "kind": "2",
-            "data": [
-                {
-                    "id": 0,
-                    "component": 1 
-                }
-            ]
+            "payload": {
+                "token": "abcd",
+                "data": [
+                    {
+                        "id": 0,
+                        "component": 1 
+                    }
+                ]
+            }
         }"#
         .parse::<serde_json::Value>()
         .unwrap();
@@ -257,10 +314,13 @@ mod serialize_tests {
 
     #[test]
     fn serialize_readdisconnectdevice() {
-        let input = DeviceStatusMQTTMessage::DisconnectDevice(vec![DisconnectDeviceData {
-            id: 0,
-            component: 1,
-        }]);
+        let input = DeviceStatusMQTTMessage::DisconnectDevice {
+            token: Token::from("abcd"),
+            data: vec![DisconnectDeviceData {
+                id: 0,
+                component: 1,
+            }],
+        };
         let result = serde_json::to_string(&input)
             .unwrap()
             .parse::<serde_json::Value>()
@@ -268,12 +328,15 @@ mod serialize_tests {
 
         let expected = r#"{
             "kind": "3",
-            "data": [
-                {
-                    "id": 0,
-                    "component": 1 
-                }
-            ]
+            "payload": {
+                "token": "abcd",
+                "data": [
+                    {
+                        "id": 0,
+                        "component": 1 
+                    }
+                ]
+            }
         }"#
         .parse::<serde_json::Value>()
         .unwrap();
