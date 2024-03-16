@@ -44,5 +44,5 @@ pub trait WebFeature {
 }
 
 // Features
-pub mod fire;
+pub mod fire_feature;
 pub mod template_feature;
