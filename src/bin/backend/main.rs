@@ -14,10 +14,10 @@ use web::WebTask;
 mod config;
 mod database_client;
 mod doc;
-mod iot;
 mod globals;
-mod models;
+mod iot;
 mod mail;
+mod models;
 
 #[macro_use]
 mod macros;
@@ -83,8 +83,12 @@ async fn main() -> AppResult {
     let config = CONFIG.clone();
     let mongoc = MONGOC.get_or_init(init_database).await;
 
-    let (web_feats, iot_feats) =
-        create_features!(mongoc.clone(), init_mqtt_client, fire_feature, device_status_feature);
+    let (web_feats, iot_feats) = create_features!(
+        mongoc.clone(),
+        init_mqtt_client,
+        fire_feature,
+        device_status_feature
+    );
 
     let web_task = WebTask::create(config.server, web_feats).await?;
     let iot_task = IotTask::create(config.iot, iot_feats).await?;

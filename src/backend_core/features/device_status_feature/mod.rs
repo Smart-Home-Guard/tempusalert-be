@@ -1,7 +1,7 @@
 mod iot;
+mod models;
 mod notifications;
 mod web;
-mod models;
 
 pub use iot::IotDeviceStatusFeature as IotFeature;
 pub use notifications::DeviceStatusIotNotification as IotNotification;

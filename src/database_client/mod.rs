@@ -1,4 +1,8 @@
-use mongodb::{bson::doc, options::{ClientOptions, Credential, ServerAddress}, Client};
+use mongodb::{
+    bson::doc,
+    options::{ClientOptions, Credential, ServerAddress},
+    Client,
+};
 
 pub struct MongocConfig {
     pub server_hostname: String,
@@ -12,19 +16,27 @@ pub struct MongocConfig {
 pub async fn init(config: MongocConfig) -> mongodb::error::Result<Client> {
     let client_options = ClientOptions::builder()
         .direct_connection(true)
-        .hosts(vec![ServerAddress::Tcp { host: config.server_hostname, port: Some(config.server_port) }])
-        .credential(Credential::builder()
-            .username(config.username)
-            .password(config.password)
-            .source(config.auth_source)
-            .build()
+        .hosts(vec![ServerAddress::Tcp {
+            host: config.server_hostname,
+            port: Some(config.server_port),
+        }])
+        .credential(
+            Credential::builder()
+                .username(config.username)
+                .password(config.password)
+                .source(config.auth_source)
+                .build(),
         )
         .default_database(config.default_db)
         .build();
 
     let client = Client::with_options(client_options)?;
 
-    client.default_database().unwrap().run_command(doc! { "ping": 1 }, None).await?;
+    client
+        .default_database()
+        .unwrap()
+        .run_command(doc! { "ping": 1 }, None)
+        .await?;
 
     println!("✅ Database connected successfully");
 

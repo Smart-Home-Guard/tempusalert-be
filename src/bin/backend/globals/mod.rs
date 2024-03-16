@@ -1,6 +1,9 @@
 pub mod channels {
     use once_cell::sync::Lazy;
-    use tokio::sync::{broadcast::{Sender, Receiver}, Mutex};
+    use tokio::sync::{
+        broadcast::{Receiver, Sender},
+        Mutex,
+    };
 
     pub type Publisher<T> = Sender<T>;
     pub type Subscriber<T> = Receiver<T>;
@@ -17,7 +20,8 @@ pub mod channels {
         pub client_id: String,
     }
 
-    static USER_CHANNEL: Lazy<Mutex<Sender<UserEvent>>> = Lazy::new(|| Mutex::new(tokio::sync::broadcast::channel::<UserEvent>(100).0));
+    static USER_CHANNEL: Lazy<Mutex<Sender<UserEvent>>> =
+        Lazy::new(|| Mutex::new(tokio::sync::broadcast::channel::<UserEvent>(100).0));
 
     pub async fn get_user_publisher() -> Publisher<UserEvent> {
         let channel = USER_CHANNEL.lock().await;

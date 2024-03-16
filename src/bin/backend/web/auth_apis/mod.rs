@@ -7,7 +7,8 @@ use tempusalert_be::{auth, json::Json};
 
 use crate::{
     config::JWT_KEY,
-    database_client::{init_database, MONGOC}, models::User,
+    database_client::{init_database, MONGOC},
+    models::User,
 };
 
 use super::utils::verify_hashed_password;
@@ -32,9 +33,7 @@ enum Token {
 
 async fn iot_auth_handler(Json(body): Json<IotAuthBody>) -> impl IntoApiResponse {
     let mongoc = MONGOC.get_or_init(init_database).await;
-    let user_coll: Collection<User> = mongoc
-        .default_database().unwrap()
-        .collection("users");
+    let user_coll: Collection<User> = mongoc.default_database().unwrap().collection("users");
 
     if let Some(_) = user_coll
         .find_one(
@@ -87,15 +86,14 @@ struct WebClientClaim {
 
 async fn web_auth_handler(Json(body): Json<WebAuthBody>) -> impl IntoApiResponse {
     let mongoc = MONGOC.get_or_init(init_database).await;
-    let user_coll: Collection<User> = mongoc
-        .default_database().unwrap()
-        .collection("users");
+    let user_coll: Collection<User> = mongoc.default_database().unwrap().collection("users");
 
-    if let Some(Some(User{ hashed_password, salt , .. })) = user_coll
-        .find_one(
-            doc! { "username": body.username.clone() },
-            None,
-        )
+    if let Some(Some(User {
+        hashed_password,
+        salt,
+        ..
+    })) = user_coll
+        .find_one(doc! { "username": body.username.clone() }, None)
         .await
         .ok()
     {

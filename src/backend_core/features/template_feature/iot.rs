@@ -34,7 +34,7 @@ impl IotFeature for IotExampleFeature {
             _mqtt_event_loop: Arc::new(Mutex::new(mqtt_event_loop)),
             mongoc,
             _web_tx: non_primitive_cast(web_tx)?,
-            _web_rx: non_primitive_cast(web_rx)?, 
+            _web_rx: non_primitive_cast(web_rx)?,
         })
     }
 
@@ -58,4 +58,5 @@ impl IotFeature for IotExampleFeature {
     }
 
     async fn process_next_mqtt_message(&mut self) {}
+    async fn process_next_web_push_message(&mut self) {}
 }
