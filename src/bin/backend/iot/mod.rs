@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
 use futures::StreamExt;
-use mongodb::{bson::Document, change_stream::event::{ChangeStreamEvent, OperationType}, options::ChangeStreamOptions};
+use mongodb::{bson::{doc, Document}, change_stream::event::{ChangeStreamEvent, OperationType}, options::ChangeStreamOptions};
 use tempusalert_be::backend_core::features::IotFeature;
 use tokio::sync::Mutex;
 
-use crate::{config::IotConfig, AppResult};
+use crate::{config::IotConfig, globals::channels::{get_user_subscriber, UserEvent, UserEventKind}, AppResult};
 
 pub struct IotTask {
     pub config: IotConfig,
@@ -70,59 +70,27 @@ async fn watch_users(feat: Arc<Mutex<dyn IotFeature + Send + Sync>>) {
     }
 
     // Watch on user insertion and user deletion
-    let change_stream_options = ChangeStreamOptions::builder()
-        .full_document(Some(mongodb::options::FullDocumentType::UpdateLookup))
-        .build();
-
-    let mut change_stream = collection
-        .watch(None, change_stream_options)
-        .await
-        .expect("Failed to create Change Stream cursor");
-
-    while let Some(change_event) = change_stream.next().await {
-        match change_event {
-            Ok(ChangeStreamEvent {
-                operation_type: OperationType::Insert,
-                full_document,
-                ..
-            }) => {
-                if let Some(new_client_id) = full_document.and_then(|doc: Document| {
-                    doc.get("client_id")
-                        .and_then(|id| id.as_str())
-                        .map(|s| s.to_owned())
-                }) {
-                let mqtt_topic = format!("{}/{}-metrics", new_client_id, feature_id);
-
-                if let Err(error) =
-                    mqttc.subscribe(mqtt_topic, rumqttc::QoS::AtLeastOnce).await
-                {
-                    eprintln!("Failed to subscribe to MQTT topic: {}", error);
+    let mut user_subscriber = get_user_subscriber().await;
+    
+    loop {
+        match user_subscriber.recv().await {
+            Ok(UserEvent{ kind: UserEventKind::JOIN, client_id}) => {
+                let mqtt_topic = format!("{}/{}-metrics", client_id, feature_id);
+                if let Err(e) = mqttc.subscribe(mqtt_topic, rumqttc::QoS::AtLeastOnce).await {
+                    eprintln!("Error subscribing to a new user with client id {}: {}", client_id, e);
                 }
             }
-        }
-            Ok(ChangeStreamEvent {
-                operation_type: OperationType::Delete,
-                full_document_before_change,
-                ..
-            }) => {
-                if let Some(old_client_id) =
-                    full_document_before_change.and_then(|doc: Document| {
-                        doc.get("client_id")
-                            .and_then(|id| id.as_str())
-                            .map(|s| s.to_owned())
-                    })
-                {
-                    let mqtt_topic = format!("{}/{}-metrics", old_client_id, feature_id);
 
-                    if let Err(error) = mqttc.unsubscribe(mqtt_topic).await {
-                        eprintln!("Failed to unsubscribe from MQTT topic: {}", error);
-                    }
+            Ok(UserEvent{ kind: UserEventKind::CANCEL, client_id}) => {
+                let mqtt_topic = format!("{}/{}-metrics", client_id, feature_id);
+                if let Err(e) = mqttc.unsubscribe(mqtt_topic).await {
+                    eprintln!("Error unsubscribing from an old user with client id {}: {}", client_id, e);
                 }
             }
-            Ok(_) => {}
-            Err(error) => {
-                eprintln!("Error processing change event: {}", error);
+
+            Err(e) => {
+                eprintln!("Error when listening on user channel {}", e);
             }
         }
-    }   
+    }
 }
