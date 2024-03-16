@@ -47,11 +47,12 @@ impl WebFeature for WebDeviceStatusFeature {
         iot_tx: Sender<W>,
         iot_rx: Receiver<I>,
     ) -> Option<Self> {
-        Some(WebDeviceStatusFeature {
+        let a = Some(WebDeviceStatusFeature {
             mongoc,
             iot_tx: non_primitive_cast(iot_tx)?,
             iot_rx: non_primitive_cast(iot_rx)?,
-        })
+        });
+        a
     }
 
     fn name() -> String

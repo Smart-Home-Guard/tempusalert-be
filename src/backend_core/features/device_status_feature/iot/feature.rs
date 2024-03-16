@@ -1,14 +1,15 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::SystemTime};
 
 use axum::async_trait;
-use rumqttc::{Event, Incoming, EventLoop};
+use mongodb::{bson::{self, doc, to_bson, Document}, Collection};
+use rumqttc::{Event, EventLoop, Incoming, Publish};
 use tokio::sync::{
     mpsc::{Receiver, Sender},
     Mutex,
 };
 
-use crate::backend_core::{features::IotFeature, utils};
-use super::mqtt_messages::DeviceStatusMQTTMessage;
+use crate::backend_core::{features::{device_status_feature::models::{BatteryStatus, Component, ComponentStatus, DeviceError}, IotFeature}, utils};
+use super::mqtt_messages::{ConnectDeviceData, DeviceStatusMQTTMessage, DisconnectDeviceData, ReadBatteryData, ReadDeviceErrorData};
 use super::super::notifications::{DeviceStatusIotNotification, DeviceStatusWebNotification};
 
 pub struct IotDeviceStatusFeature {
@@ -62,14 +63,75 @@ impl IotFeature for IotDeviceStatusFeature {
     }
 
     async fn process_next_mqtt_message(&mut self) {
+        let mongoc = self.get_mongoc();
         let mut mqtt_event_loop = self.mqtt_event_loop.lock().await;
-        match mqtt_event_loop.poll().await {
-            Ok(Event::Incoming(Incoming::Publish(p))) => {
-                let payload = String::from_utf8_lossy(&p.payload);
-                if let Ok(metrics) = serde_json::from_str::<DeviceStatusMQTTMessage>(&payload) {
+        if let Ok(Event::Incoming(Incoming::Publish(Publish { payload, .. }))) = mqtt_event_loop.poll().await {
+            if let Some(message) = String::from_utf8(payload.to_vec()).ok().and_then(|raw_json| serde_json::from_str::<DeviceStatusMQTTMessage>(raw_json.as_ref()).ok()) {
+                match message {
+                    DeviceStatusMQTTMessage::ReadBattery(data) => {
+                        let device_coll: Collection<Document> = mongoc.default_database().unwrap().collection("devices");
+                        for ReadBatteryData{ id, value: battery } in data {
+                            if let Err(_) = device_coll.find_one_and_update(doc! { "id": id }, doc! { "$push": { "battery_logs": to_bson(&BatteryStatus { battery, timestamp: SystemTime::now() }).unwrap() } }, None).await {
+                                eprint!("Failed to process read battery data");
+                            }
+                        }
+                    }
+                    DeviceStatusMQTTMessage::ReadDeviceError(data) => {
+                        let device_coll: Collection<Document> = mongoc.default_database().unwrap().collection("devices");
+                        for ReadDeviceErrorData{ id, component } in data {
+                            if let Err(_) = device_coll.find_one_and_update(doc! { "id": id }, doc! { "$push": { "error_logs": to_bson(&DeviceError { id, component, timestamp: SystemTime::now() }).unwrap() } }, None).await {
+                                eprint!("Failed to process read device error data");
+                            }
+                        }
+                    }
+                    DeviceStatusMQTTMessage::ConnectDevice(data) => {
+                        let device_coll: Collection<Document> = mongoc.default_database().unwrap().collection("devices");
+                        for ConnectDeviceData{ id, component } in data {
+                            match device_coll.find_one(doc! { "id": id }, None).await {
+                                Ok(Some(_)) => {
+                                    if let Ok(None) = device_coll.find_one_and_update(doc! { "id": id, "components": { "$elemMatch": { "id": component } } }, doc! { "components": { "logs": { "$push": to_bson(&ComponentStatus::Connect { timestamp: SystemTime::now() }).unwrap() } } }, None).await {
+                                        if let Err(_) = device_coll.find_one_and_update(doc! { "id": id }, doc! { "$push": { "components": to_bson(&Component { id, logs: vec![ComponentStatus::Connect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
+                                            eprintln!("Failed to process connect device data");
+                                        }
+                                    }
+                                }
+                                Ok(None) => {
+                                    if let Err(_) = device_coll.insert_one(doc! { "id": id, "battery_logs": to_bson(&vec![] as &Vec<BatteryStatus>).unwrap(), "error_logs": to_bson(&vec![] as &Vec<DeviceError>).unwrap(), "components": to_bson(&vec![] as &Vec<Component>).unwrap() }, None).await {
+                                        eprintln!("Failed to process connect device data");
+                                    } else if let Err(_) = device_coll.find_one_and_update(doc! { "id": id }, doc! { "$push": { "components": to_bson(&Component { id, logs: vec![ComponentStatus::Connect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
+                                        eprintln!("Failed to process connect device data");
+                                    }
+                                }
+                                Err(_) => {
+                                    eprintln!("Unexpected error while finding devices with id {id}");
+                                }
+                            };
+                        }
+                    }
+                    DeviceStatusMQTTMessage::DisconnectDevice(data) => {
+                        let device_coll: Collection<Document> = mongoc.default_database().unwrap().collection("devices");
+                        for DisconnectDeviceData{ id, component } in data {
+                            match device_coll.find_one(doc! { "id": id }, None).await {
+                                Ok(Some(_)) => {
+                                    if let Ok(None) = device_coll.find_one_and_update(doc! { "id": id, "components": { "$elemMatch": { "id": component } } }, doc! { "components": { "logs": { "$push": to_bson(&ComponentStatus::Disconnect { timestamp: SystemTime::now() }).unwrap() } } }, None).await {
+                                        if let Err(_) = device_coll.find_one_and_update(doc! { "id": id }, doc! { "$push": { "components": to_bson(&Component { id, logs: vec![ComponentStatus::Disconnect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
+                                            eprintln!("Failed to process disconnect device data");
+                                        }
+                                    }
+                                }
+                                Ok(None) => {
+                                    eprintln!("Device {id} did not exist");
+                                }
+                                Err(_) => {
+                                    eprintln!("Unexpected error while finding devices with id {id}");
+                                }
+                            };
+                        }
+                    }
                 }
+            } else {
+                eprintln!("Failed to process MQTT message");
             }
-            _=> {}
         }
     }
 }
