@@ -19,9 +19,9 @@ struct IotAuthBody {
     client_secret: String,
 }
 
-#[derive(Serialize)]
-struct IotClientClaim {
-    client_id: String,
+#[derive(Serialize, Deserialize)]
+pub struct IotClientClaim {
+    pub client_id: String,
     nonce: String,
 }
 
