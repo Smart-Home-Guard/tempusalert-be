@@ -51,7 +51,7 @@ async fn watch_users(feat: Arc<Mutex<dyn IotFeature + Send + Sync>>) {
     let collection = mongoc.default_database().unwrap().collection("users");
 
     let mut user_cursor = collection.find(None, None).await.unwrap();
-    while let Ok(_) = user_cursor.advance().await {
+    while let Ok(true) = user_cursor.advance().await {
         let user_doc = user_cursor.deserialize_current();
         if let Some(cur_client_id) = user_doc.ok().and_then(|doc: Document| {
             doc.get("client_id")
