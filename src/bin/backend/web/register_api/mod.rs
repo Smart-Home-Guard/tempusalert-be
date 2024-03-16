@@ -35,11 +35,9 @@ async fn register_handler(Json(body): Json<RegisterBody>) -> impl IntoApiRespons
             None => return (StatusCode::INTERNAL_SERVER_ERROR, Json(RegisterResponse{ message: String::from("Failed to hash password")})),
         };
         let generator = ring::rand::SystemRandom::new();
-        let mut client_id = [0u8; 10];
+        let client_id = uuid::Uuid::new_v4().to_string();
         let mut client_secret = [0u8; 10];
-        if let Err(_) = generator.fill(&mut client_id) {
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(RegisterResponse{ message: String::from("Failed to create account")}))
-        } else if let Err(_) = generator.fill(&mut client_secret) {
+        if let Err(_) = generator.fill(&mut client_secret) {
             (StatusCode::INTERNAL_SERVER_ERROR, Json(RegisterResponse{ message: String::from("Failed to create account")}))
         } else {
             let user = User {
