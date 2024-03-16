@@ -2,7 +2,7 @@ use aide::axum::{routing::get_with, ApiRouter, IntoApiResponse};
 use axum::http::StatusCode;
 use mongodb::{bson::doc, options::FindOptions, Collection};
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 use crate::{backend_core::features::device_status_feature::models::Device, json::Json};
 
