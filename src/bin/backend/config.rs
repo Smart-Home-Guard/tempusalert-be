@@ -19,6 +19,7 @@ pub static JWT_KEY: Lazy<String> = Lazy::new(|| std::env::var("JWT_KEY").unwrap(
 pub struct WebConfig {
     pub addr: String,
     pub port: u16,
+    pub protocol: String,
 }
 
 impl WebConfig {
