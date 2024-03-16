@@ -9,6 +9,7 @@ pub struct Device {
     pub battery_logs: Vec<BatteryStatus>,
     pub error_logs: Vec<DeviceError>,
     pub components: Vec<Component>,
+    pub owner: String, // username in document of collection User
 }
 
 #[derive(Serialize, Deserialize, JsonSchema)]
