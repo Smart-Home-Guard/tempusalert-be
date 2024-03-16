@@ -19,4 +19,3 @@ pub fn create_router(web: &mut WebDeviceStatusFeature) -> ApiRouter {
         .nest("/", get_all_devices::routes())
         .nest("/", get_device_by_id::routes())
 }
-

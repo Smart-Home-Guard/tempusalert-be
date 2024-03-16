@@ -20,16 +20,49 @@ pub struct Params {
     username: String,
 }
 
-async fn handler(Path(Params{ device_id, username }): Path<Params>) -> impl IntoApiResponse {
+async fn handler(
+    Path(Params {
+        device_id,
+        username,
+    }): Path<Params>,
+) -> impl IntoApiResponse {
     let device_coll: Collection<Device> = {
         let mongoc = unsafe { MONGOC.as_ref().clone().unwrap().lock() }.await;
         mongoc.default_database().unwrap().collection("devices")
     };
 
-    match device_coll.find_one(doc! { "id": device_id, "owner_name": username.clone() }, None).await {
-        Ok(Some(device)) => (StatusCode::OK, Json(Response{ device: Some(device), message: format!("Successfully fetch device '{device_id}'") })),
-        Ok(None) => (StatusCode::OK, Json(Response{ device: None, message: format!("No device with id '{}' for user '{}'", device_id, username.clone())})),
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(Response{ device: None, message: format!("Unexpected error while fetching device with id '{device_id}'")})),
+    match device_coll
+        .find_one(
+            doc! { "id": device_id, "owner_name": username.clone() },
+            None,
+        )
+        .await
+    {
+        Ok(Some(device)) => (
+            StatusCode::OK,
+            Json(Response {
+                device: Some(device),
+                message: format!("Successfully fetch device '{device_id}'"),
+            }),
+        ),
+        Ok(None) => (
+            StatusCode::OK,
+            Json(Response {
+                device: None,
+                message: format!(
+                    "No device with id '{}' for user '{}'",
+                    device_id,
+                    username.clone()
+                ),
+            }),
+        ),
+        Err(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(Response {
+                device: None,
+                message: format!("Unexpected error while fetching device with id '{device_id}'"),
+            }),
+        ),
     }
 }
 

@@ -25,26 +25,65 @@ pub struct ResponseDevice {
     components: Vec<u32>,
 }
 
-async fn handler(Path(Params{ username }): Path<Params>) -> impl IntoApiResponse {
+async fn handler(Path(Params { username }): Path<Params>) -> impl IntoApiResponse {
     let device_coll: Collection<Device> = {
         let mongoc = unsafe { MONGOC.as_ref().clone().unwrap().lock() }.await;
         mongoc.default_database().unwrap().collection("devices")
     };
 
-    if let Ok(mut device_cursor) = device_coll.find(doc! { "username": username.clone() }, FindOptions::builder().projection( doc! { "id": 1, "components.id": 1 }).build()).await {
+    if let Ok(mut device_cursor) = device_coll
+        .find(
+            doc! { "username": username.clone() },
+            FindOptions::builder()
+                .projection(doc! { "id": 1, "components.id": 1 })
+                .build(),
+        )
+        .await
+    {
         let mut devices = vec![];
         while let Ok(true) = device_cursor.advance().await {
             let device = device_cursor.deserialize_current();
             match device {
-                Ok(device) => devices.push(ResponseDevice { id: device.id, components: device.components.iter().map(|c| c.id).collect() }),
-                Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(Response{ devices: None, message: format!("Failed to fetch all devices for user '{}'", username.clone()) })),
+                Ok(device) => devices.push(ResponseDevice {
+                    id: device.id,
+                    components: device.components.iter().map(|c| c.id).collect(),
+                }),
+                Err(_) => {
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(Response {
+                            devices: None,
+                            message: format!(
+                                "Failed to fetch all devices for user '{}'",
+                                username.clone()
+                            ),
+                        }),
+                    )
+                }
             }
         }
-        (StatusCode::OK, Json(Response{ devices: Some(devices), message: format!("Successfully fetch all devices for user '{}'", username.clone()) }))
+        (
+            StatusCode::OK,
+            Json(Response {
+                devices: Some(devices),
+                message: format!(
+                    "Successfully fetch all devices for user '{}'",
+                    username.clone()
+                ),
+            }),
+        )
     } else {
-        (StatusCode::INTERNAL_SERVER_ERROR, Json(Response{ devices: None, message: format!("Failed to fetch all devices for user '{}'", username.clone()) }))
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(Response {
+                devices: None,
+                message: format!(
+                    "Failed to fetch all devices for user '{}'",
+                    username.clone()
+                ),
+            }),
+        )
     }
-
 }
 
 pub fn routes() -> ApiRouter {
@@ -58,4 +97,3 @@ pub fn routes() -> ApiRouter {
         }),
     )
 }
-
