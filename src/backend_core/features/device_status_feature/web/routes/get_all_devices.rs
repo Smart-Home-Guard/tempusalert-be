@@ -8,9 +8,6 @@ use crate::{backend_core::features::device_status_feature::models::Device, json:
 
 use super::MONGOC;
 
-#[derive(Deserialize, JsonSchema)]
-struct Body;
-
 #[derive(Serialize, JsonSchema)]
 pub struct Response {
     devices: Option<Vec<ResponseDevice>>,
@@ -23,7 +20,7 @@ pub struct ResponseDevice {
     components: Vec<u32>,
 }
 
-async fn handler(Json(_): Json<Body>) -> impl IntoApiResponse {
+async fn handler() -> impl IntoApiResponse {
     let device_coll: Collection<Device> = {
         let mongoc = unsafe { MONGOC.as_ref().clone().unwrap().lock() }.await;
         mongoc.default_database().unwrap().collection("devices")
