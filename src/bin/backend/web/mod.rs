@@ -56,9 +56,10 @@ impl WebTask {
             .nest_api_service("/auth/register", register_api::register_routes());
 
         for feat in &mut self.features {
-            self.router = self
-                .router
-                .nest_api_service(format!("/api/{}", feat.clone().lock().await.get_module_name()).as_str(), feat.lock().await.create_router())
+            self.router = self.router.nest_api_service(
+                format!("/api/{}", feat.clone().lock().await.get_module_name()).as_str(),
+                feat.lock().await.create_router(),
+            )
         }
 
         let router = self
@@ -80,7 +81,12 @@ impl WebTask {
         });
         let mut join_handles = vec![];
         for feat in self.features {
-            join_handles.push(tokio::spawn(async move { feat.lock().await.run_loop().await }));
+            join_handles.push(tokio::spawn(async move {
+                loop {
+                    let mut feat = feat.lock().await;
+                    feat.process_next_iot_push_message().await;
+                }
+            }));
         }
         for handle in join_handles {
             handle.await.unwrap()

@@ -21,6 +21,7 @@ pub trait IotFeature {
     fn get_module_name(&self) -> String;
 
     async fn process_next_mqtt_message(&mut self);
+    async fn process_next_web_push_message(&mut self);
 
     fn get_mqttc(&mut self) -> rumqttc::AsyncClient;
     fn get_mongoc(&mut self) -> mongodb::Client;
@@ -40,10 +41,10 @@ pub trait WebFeature {
         Self: Sized;
     fn get_module_name(&self) -> String;
     fn create_router(&mut self) -> ApiRouter;
-    async fn run_loop(&mut self);
+    async fn process_next_iot_push_message(&mut self);
 }
 
 // Features
+pub mod device_status_feature;
 pub mod fire_feature;
 pub mod template_feature;
-pub mod device_status_feature;

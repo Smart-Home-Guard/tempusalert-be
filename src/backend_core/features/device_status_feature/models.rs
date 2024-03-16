@@ -1,6 +1,6 @@
 use std::time::SystemTime;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct Device {
@@ -18,12 +18,8 @@ pub struct Component {
 
 #[derive(Serialize, Deserialize)]
 pub enum ComponentStatus {
-    Connect {
-        timestamp: SystemTime,
-    },
-    Disconnect {
-        timestamp: SystemTime,
-    },
+    Connect { timestamp: SystemTime },
+    Disconnect { timestamp: SystemTime },
 }
 
 #[derive(Serialize, Deserialize)]

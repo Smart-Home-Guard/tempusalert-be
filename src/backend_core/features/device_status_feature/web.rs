@@ -6,10 +6,10 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use tokio::sync::mpsc::{Receiver, Sender};
 
+use super::notifications::{DeviceStatusIotNotification, DeviceStatusWebNotification};
 use crate::backend_core::features::WebFeature;
 use crate::backend_core::utils::non_primitive_cast;
 use crate::json::Json;
-use super::notifications::{DeviceStatusIotNotification, DeviceStatusWebNotification};
 
 #[derive(Serialize, JsonSchema)]
 pub struct GenericResponse {
@@ -69,9 +69,12 @@ impl WebFeature for WebDeviceStatusFeature {
     fn create_router(&mut self) -> ApiRouter {
         ApiRouter::new().api_route(
             "/",
-            get_with(WebDeviceStatusFeature::example, WebDeviceStatusFeature::example_docs),
+            get_with(
+                WebDeviceStatusFeature::example,
+                WebDeviceStatusFeature::example_docs,
+            ),
         )
     }
 
-    async fn run_loop(&mut self) {}
+    async fn process_next_iot_push_message(&mut self) {}
 }

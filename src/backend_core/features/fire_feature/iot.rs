@@ -1,5 +1,8 @@
 use axum::async_trait;
-use mongodb::{bson::{doc, Document}, Collection};
+use mongodb::{
+    bson::{doc, Document},
+    Collection,
+};
 use std::sync::Arc;
 use tokio::sync::{
     mpsc::{Receiver, Sender},
@@ -36,7 +39,11 @@ impl IotFeature for IotFireFeature {
             mongoc: mongoc.clone(),
             web_tx: non_primitive_cast(web_tx)?,
             web_rx: non_primitive_cast(web_rx)?,
-            fire_collection: mongoc.clone().default_database().unwrap().collection("Fire"),
+            fire_collection: mongoc
+                .clone()
+                .default_database()
+                .unwrap()
+                .collection("Fire"),
         })
     }
 
@@ -67,10 +74,7 @@ impl IotFeature for IotFireFeature {
                     let payload_str = match std::str::from_utf8(&publish.payload) {
                         Ok(s) => s,
                         Err(e) => {
-                            eprintln!(
-                                "Error converting payload bytes to UTF-8 string: {:?}",
-                                e
-                            );
+                            eprintln!("Error converting payload bytes to UTF-8 string: {:?}", e);
                             return;
                         }
                     };
@@ -88,4 +92,6 @@ impl IotFeature for IotFireFeature {
             }
         }
     }
+
+    async fn process_next_web_push_message(&mut self) {}
 }

@@ -122,7 +122,7 @@ impl WebFeature for WebFireFeature {
         )
     }
 
-    async fn run_loop(&mut self) {}
+    async fn process_next_iot_push_message(&mut self) {}
 }
 
 async fn retrieve_all_records(

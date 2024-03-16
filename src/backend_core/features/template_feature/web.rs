@@ -6,10 +6,10 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use tokio::sync::mpsc::{Receiver, Sender};
 
+use super::notifications::{ExampleIotNotification, ExampleWebNotification};
 use crate::backend_core::features::WebFeature;
 use crate::backend_core::utils::non_primitive_cast;
 use crate::json::Json;
-use super::notifications::{ExampleWebNotification, ExampleIotNotification};
 
 #[derive(Serialize, JsonSchema)]
 pub struct GenericResponse {
@@ -72,5 +72,5 @@ impl WebFeature for WebExampleFeature {
         )
     }
 
-    async fn run_loop(&mut self) {}
+    async fn process_next_iot_push_message(&mut self) {}
 }
