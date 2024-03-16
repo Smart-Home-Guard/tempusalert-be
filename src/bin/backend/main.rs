@@ -5,7 +5,7 @@ use futures::FutureExt;
 use iot::IotTask;
 use rumqttc::{AsyncClient, EventLoop};
 use tempusalert_be::{
-    backend_core::features::{fire_feature, IotFeature, WebFeature},
+    backend_core::features::{device_status_feature, fire_feature, IotFeature, WebFeature},
     errors::AppError,
     mqtt_client::{self, ClientConfig},
 };
@@ -84,7 +84,7 @@ async fn main() -> AppResult {
     let mongoc = MONGOC.get_or_init(init_database).await;
 
     let (web_feats, iot_feats) =
-        create_features!(mongoc.clone(), init_mqtt_client, fire_feature);
+        create_features!(mongoc.clone(), init_mqtt_client, fire_feature, device_status_feature);
 
     let web_task = WebTask::create(config.server, web_feats).await?;
     let iot_task = IotTask::create(config.iot, iot_feats).await?;

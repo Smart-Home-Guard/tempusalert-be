@@ -46,3 +46,4 @@ pub trait WebFeature {
 // Features
 pub mod fire_feature;
 pub mod template_feature;
+pub mod device_status_feature;
