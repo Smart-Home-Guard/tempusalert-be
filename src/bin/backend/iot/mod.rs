@@ -1,11 +1,14 @@
 use std::sync::Arc;
 
-use futures::StreamExt;
-use mongodb::{bson::{doc, Document}, change_stream::event::{ChangeStreamEvent, OperationType}, options::ChangeStreamOptions};
+use mongodb::bson::Document;
 use tempusalert_be::backend_core::features::IotFeature;
 use tokio::sync::Mutex;
 
-use crate::{config::IotConfig, globals::channels::{get_user_subscriber, UserEvent, UserEventKind}, AppResult};
+use crate::{
+    config::IotConfig,
+    globals::channels::{get_user_subscriber, UserEvent, UserEventKind},
+    AppResult,
+};
 
 pub struct IotTask {
     pub config: IotConfig,
@@ -45,8 +48,8 @@ impl IotTask {
 
 async fn watch_users(feat: Arc<Mutex<dyn IotFeature + Send + Sync>>) {
     let (feature_id, mqttc, mongoc) = {
-            let mut feat = feat.lock().await;
-            (feat.get_module_name(), feat.get_mqttc(), feat.get_mongoc())
+        let mut feat = feat.lock().await;
+        (feat.get_module_name(), feat.get_mqttc(), feat.get_mongoc())
     };
     let collection = mongoc.default_database().unwrap().collection("users");
 
@@ -55,14 +58,15 @@ async fn watch_users(feat: Arc<Mutex<dyn IotFeature + Send + Sync>>) {
         let user_doc = user_cursor.deserialize_current();
         if let Some(cur_client_id) = user_doc.ok().and_then(|doc: Document| {
             doc.get("client_id")
-            .and_then(|id| id.as_str())
-            .map(|s| s.to_owned())
+                .and_then(|id| id.as_str())
+                .map(|s| s.to_owned())
         }) {
             let mqtt_topic = format!("{}/{}-metrics", cur_client_id, feature_id);
 
             if let Err(error) = mqttc
                 .subscribe(mqtt_topic.clone(), rumqttc::QoS::AtLeastOnce)
-                .await {
+                .await
+            {
                 eprintln!("Failed to subscribe to MQTT topic: {}", error);
             }
             break;
@@ -71,20 +75,32 @@ async fn watch_users(feat: Arc<Mutex<dyn IotFeature + Send + Sync>>) {
 
     // Watch on user insertion and user deletion
     let mut user_subscriber = get_user_subscriber().await;
-    
+
     loop {
         match user_subscriber.recv().await {
-            Ok(UserEvent{ kind: UserEventKind::JOIN, client_id}) => {
+            Ok(UserEvent {
+                kind: UserEventKind::JOIN,
+                client_id,
+            }) => {
                 let mqtt_topic = format!("{}/{}-metrics", client_id, feature_id);
                 if let Err(e) = mqttc.subscribe(mqtt_topic, rumqttc::QoS::AtLeastOnce).await {
-                    eprintln!("Error subscribing to a new user with client id {}: {}", client_id, e);
+                    eprintln!(
+                        "Error subscribing to a new user with client id {}: {}",
+                        client_id, e
+                    );
                 }
             }
 
-            Ok(UserEvent{ kind: UserEventKind::CANCEL, client_id}) => {
+            Ok(UserEvent {
+                kind: UserEventKind::CANCEL,
+                client_id,
+            }) => {
                 let mqtt_topic = format!("{}/{}-metrics", client_id, feature_id);
                 if let Err(e) = mqttc.unsubscribe(mqtt_topic).await {
-                    eprintln!("Error unsubscribing from an old user with client id {}: {}", client_id, e);
+                    eprintln!(
+                        "Error unsubscribing from an old user with client id {}: {}",
+                        client_id, e
+                    );
                 }
             }
 
