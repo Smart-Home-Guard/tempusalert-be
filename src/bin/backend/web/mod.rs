@@ -1,4 +1,6 @@
 mod auth_apis;
+mod register_api;
+mod utils;
 
 use std::sync::Arc;
 
@@ -50,7 +52,8 @@ impl WebTask {
         self.router = self
             .router
             .nest_api_service("/auth/iot", auth_apis::iot_auth_routes())
-            .nest_api_service("/auth/web", auth_apis::web_auth_routes());
+            .nest_api_service("/auth/web", auth_apis::web_auth_routes())
+            .nest_api_service("/auth/register", register_api::register_routes());
 
         for feat in &mut self.features {
             self.router = self
@@ -66,12 +69,12 @@ impl WebTask {
             .into_make_service();
         tokio::spawn(async move {
             println!(
-                "Web server ready to server on {}:{}",
-                self.config.addr, self.config.port
+                "Web server ready to server on {}://{}:{}",
+                self.config.protocol, self.config.addr, self.config.port
             );
             println!(
-                "Check web server doc at {}:{}/docs",
-                self.config.addr, self.config.port
+                "Check web server doc at {}://{}:{}/docs",
+                self.config.protocol, self.config.addr, self.config.port
             );
             axum::serve(self.tcp, router).await
         });

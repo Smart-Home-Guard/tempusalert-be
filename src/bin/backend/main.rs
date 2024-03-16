@@ -16,6 +16,7 @@ mod database_client;
 mod doc;
 mod iot;
 mod globals;
+mod models;
 
 #[macro_use]
 mod macros;
