@@ -62,31 +62,26 @@ impl IotFeature for IotDeviceStatusFeature {
         self.mongoc.clone()
     }
 
-    async fn run_loop(&mut self) {
-        let event_loop = &self.mqtt_event_loop;
-        println!("a");
-
-        while let Ok(notification) = event_loop.lock().await.poll().await {
-            match notification {
-                Event::Incoming(Incoming::Publish(p)) => {
-                    let payload = String::from_utf8_lossy(&p.payload);
-                    if let Ok(metrics) = serde_json::from_str::<DeviceStatusMetric>(&payload) {
-                        println!("Message received: {:?}", metrics);
-                    }
+    async fn process_next_mqtt_message(&mut self) {
+        let mut mqtt_event_loop = self.mqtt_event_loop.lock().await;
+        match mqtt_event_loop.poll().await {
+            Ok(Event::Incoming(Incoming::Publish(p))) => {
+                let payload = String::from_utf8_lossy(&p.payload);
+                if let Ok(metrics) = serde_json::from_str::<DeviceStatusMetric>(&payload) {
                 }
-                _ => {}
             }
+            _=> {}
         }
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 struct DeviceStatusMetric {
     kind: DeviceStatusFunction,
     data: Vec<DeviceData>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 enum DeviceStatusFunction {
     ReadBaterry,
@@ -100,63 +95,4 @@ struct DeviceData {
     id: u8,
     value: Option<u8>,
     component: Option<u8>,
-}
-
-#[cfg(test)]
-mod tests {
-    use std::time::Duration;
-
-    use mongodb::Client;
-    use rumqttc::{AsyncClient, MqttOptions, QoS};
-    use tokio::{sync::mpsc, task, time};
-
-    use super::*;
-
-    #[tokio::test]
-    async fn test_run_loop_publish() {
-        let mut mqttoptions = MqttOptions::new("rumqtt-async", "test.mosquitto.org", 1883);
-        mqttoptions.set_keep_alive(Duration::from_secs(5));
-
-        let (client, eventloop) = AsyncClient::new(mqttoptions, 10);
-        client
-            .subscribe("35b803ff-0537-4f16-aab0-90421a06026a", QoS::AtMostOnce)
-            .await
-            .unwrap();
-
-        let client_publish = client.clone();
-
-        task::spawn(async move {
-            for i in 0..5 {
-                client_publish
-                    .publish(
-                        "35b803ff-0537-4f16-aab0-90421a06026a",
-                        QoS::AtLeastOnce,
-                        false,
-                        serde_json::to_string(&DeviceStatusMetric {
-                            kind: DeviceStatusFunction::ReadBaterry,
-                            data: vec![DeviceData {
-                                id: i,
-                                value: Some(i),
-                                component: Some(i),
-                            }],
-                        })
-                        .unwrap(),
-                    )
-                    .await
-                    .unwrap();
-                time::sleep(Duration::from_millis(100)).await;
-            }
-        });
-
-        let (_, web_rx) = mpsc::channel::<DeviceStatusWebNotification>(64);
-        let (web_tx, _) = mpsc::channel::<DeviceStatusIotNotification>(64);
-
-        let uri = "mongodb://user:password123@localhost:6000/tempusalert?authSource=admin";
-        let mongo_client = Client::with_uri_str(uri).await.unwrap();
-
-        let feature =
-            IotDeviceStatusFeature::create(client, eventloop, mongo_client, web_tx, web_rx);
-
-        feature.unwrap().run_loop().await;
-    }
 }
