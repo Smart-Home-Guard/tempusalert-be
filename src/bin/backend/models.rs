@@ -3,8 +3,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct User {
-    #[serde(with = "serde_bytes")]
-    pub client_id: [u8; 10],
+    pub client_id: String,
     #[serde(with = "serde_bytes")]
     pub client_secret: [u8; 10],
     pub email: String,
