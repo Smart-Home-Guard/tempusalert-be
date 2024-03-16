@@ -8,7 +8,6 @@ use tokio::sync::mpsc::{Receiver, Sender};
 use super::notifications::{DeviceStatusIotNotification, DeviceStatusWebNotification};
 use crate::backend_core::features::WebFeature;
 use crate::backend_core::utils::non_primitive_cast;
-use crate::json::Json;
 
 mod routes;
 
