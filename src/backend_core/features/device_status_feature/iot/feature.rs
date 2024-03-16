@@ -2,15 +2,14 @@ use std::sync::Arc;
 
 use axum::async_trait;
 use rumqttc::{Event, Incoming, EventLoop};
-use serde::{Deserialize, Serialize};
 use tokio::sync::{
     mpsc::{Receiver, Sender},
     Mutex,
 };
 
 use crate::backend_core::{features::IotFeature, utils};
-
-use super::notifications::{DeviceStatusIotNotification, DeviceStatusWebNotification};
+use super::mqtt_messages::DeviceStatusMQTTMessage;
+use super::super::notifications::{DeviceStatusIotNotification, DeviceStatusWebNotification};
 
 pub struct IotDeviceStatusFeature {
     mqttc: rumqttc::AsyncClient,
@@ -67,32 +66,10 @@ impl IotFeature for IotDeviceStatusFeature {
         match mqtt_event_loop.poll().await {
             Ok(Event::Incoming(Incoming::Publish(p))) => {
                 let payload = String::from_utf8_lossy(&p.payload);
-                if let Ok(metrics) = serde_json::from_str::<DeviceStatusMetric>(&payload) {
+                if let Ok(metrics) = serde_json::from_str::<DeviceStatusMQTTMessage>(&payload) {
                 }
             }
             _=> {}
         }
     }
-}
-
-#[derive(Deserialize, Serialize)]
-struct DeviceStatusMetric {
-    kind: DeviceStatusFunction,
-    data: Vec<DeviceData>,
-}
-
-#[derive(Deserialize, Serialize)]
-#[serde(rename_all = "snake_case")]
-enum DeviceStatusFunction {
-    ReadBaterry,
-    ReadError,
-    ConnectDevice,
-    DisconnectDevice,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-struct DeviceData {
-    id: u8,
-    value: Option<u8>,
-    component: Option<u8>,
 }
