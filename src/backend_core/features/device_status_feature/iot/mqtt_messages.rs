@@ -17,29 +17,29 @@ pub enum DeviceStatusMQTTMessage {
 #[derive(Deserialize, Serialize)]
 #[cfg_attr(test, derive(std::cmp::PartialEq, Debug))]
 pub struct ReadBatteryData {
-    id: u32,
-    value: u8,
+    pub id: u32,
+    pub value: u32,
 }
 
 #[derive(Deserialize, Serialize)]
 #[cfg_attr(test, derive(std::cmp::PartialEq, Debug))]
 pub struct ReadDeviceErrorData {
-    id: u32,
-    component: u8,
+    pub id: u32,
+    pub component: u32,
 }
 
 #[derive(Deserialize, Serialize)]
 #[cfg_attr(test, derive(std::cmp::PartialEq, Debug))]
 pub struct ConnectDeviceData {
-    id: u32,
-    component: u8,
+    pub id: u32,
+    pub component: u32,
 }
 
 #[derive(Deserialize, Serialize)]
 #[cfg_attr(test, derive(std::cmp::PartialEq, Debug))]
 pub struct DisconnectDeviceData {
-    id: u32,
-    component: u8,   
+    pub id: u32,
+    pub component: u32,   
 }
 
 #[cfg(test)]
