@@ -57,10 +57,13 @@ async fn register_handler(Json(body): Json<RegisterBody>) -> impl IntoApiRespons
             body.email.clone(),
             String::from("Your gateway credential"),
             format!(
-                "Please config these at your gateway
+                "Please config the given credential at your gateway
     id: {},
     secret: {},
-Thanks for choosing our service",
+Thanks for choosing our service!
+
+Best wishes,
+Tempusalert team",
                 client_id, client_secret
             ),
         ) {
