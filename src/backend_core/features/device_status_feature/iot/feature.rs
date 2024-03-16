@@ -16,13 +16,18 @@ use super::mqtt_messages::{
     ConnectDeviceData, DeviceStatusMQTTMessage, DisconnectDeviceData, ReadBatteryData,
     ReadDeviceErrorData,
 };
-use crate::{auth::get_username_from_token, backend_core::{
-    features::{
-        device_status_feature::models::{BatteryStatus, Component, ComponentStatus, DeviceError},
-        IotFeature,
+use crate::{
+    auth::get_username_from_token,
+    backend_core::{
+        features::{
+            device_status_feature::models::{
+                BatteryStatus, Component, ComponentStatus, DeviceError,
+            },
+            IotFeature,
+        },
+        utils,
     },
-    utils,
-}};
+};
 
 pub struct IotDeviceStatusFeature {
     mqttc: rumqttc::AsyncClient,
@@ -91,7 +96,9 @@ impl IotFeature for IotDeviceStatusFeature {
             {
                 match message {
                     DeviceStatusMQTTMessage::ReadBattery { token, data } => {
-                        if let Some(username) = get_username_from_token(self.jwt_key.as_str(), token, &mut mongoc).await {
+                        if let Some(username) =
+                            get_username_from_token(self.jwt_key.as_str(), token, &mut mongoc).await
+                        {
                             let device_coll: Collection<Document> =
                                 mongoc.default_database().unwrap().collection("devices");
                             for ReadBatteryData { id, value: battery } in data {
@@ -104,7 +111,9 @@ impl IotFeature for IotDeviceStatusFeature {
                         }
                     }
                     DeviceStatusMQTTMessage::ReadDeviceError { token, data } => {
-                        if let Some(username) = get_username_from_token(self.jwt_key.as_str(), token, &mut mongoc).await {
+                        if let Some(username) =
+                            get_username_from_token(self.jwt_key.as_str(), token, &mut mongoc).await
+                        {
                             let device_coll: Collection<Document> =
                                 mongoc.default_database().unwrap().collection("devices");
                             for ReadDeviceErrorData { id, component } in data {
@@ -117,7 +126,9 @@ impl IotFeature for IotDeviceStatusFeature {
                         }
                     }
                     DeviceStatusMQTTMessage::ConnectDevice { token, data } => {
-                        if let Some(username) = get_username_from_token(self.jwt_key.as_str(), token, &mut mongoc).await {
+                        if let Some(username) =
+                            get_username_from_token(self.jwt_key.as_str(), token, &mut mongoc).await
+                        {
                             let device_coll: Collection<Document> =
                                 mongoc.default_database().unwrap().collection("devices");
                             for ConnectDeviceData { id, component } in data {
@@ -146,7 +157,9 @@ impl IotFeature for IotDeviceStatusFeature {
                         }
                     }
                     DeviceStatusMQTTMessage::DisconnectDevice { token, data } => {
-                        if let Some(username) = get_username_from_token(self.jwt_key.as_str(), token, &mut mongoc).await {
+                        if let Some(username) =
+                            get_username_from_token(self.jwt_key.as_str(), token, &mut mongoc).await
+                        {
                             let device_coll: Collection<Document> =
                                 mongoc.default_database().unwrap().collection("devices");
                             for DisconnectDeviceData { id, component } in data {

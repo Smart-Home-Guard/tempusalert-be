@@ -1,4 +1,4 @@
-use ring::{digest::SHA512_OUTPUT_LEN, hmac::Key};
+use ring::digest::SHA512_OUTPUT_LEN;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -16,7 +16,7 @@ pub struct User {
 #[derive(Serialize, Deserialize, JsonSchema)]
 pub struct PushCredential {
     pub endpoint: String,
-    pub key: PushKey, 
+    pub key: PushKey,
     pub username: String,
 }
 

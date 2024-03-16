@@ -51,7 +51,7 @@ impl WebFeature for WebDeviceStatusFeature {
     }
 
     fn create_router(&mut self) -> ApiRouter {
-        routes::create_router(self) 
+        routes::create_router(self)
     }
 
     async fn process_next_iot_push_message(&mut self) {}

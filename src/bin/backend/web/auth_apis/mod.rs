@@ -3,7 +3,10 @@ use axum::http::StatusCode;
 use mongodb::{bson::doc, Collection};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use tempusalert_be::{auth::{self, IotClientClaim, WebClientClaim}, json::Json};
+use tempusalert_be::{
+    auth::{self, IotClientClaim, WebClientClaim},
+    json::Json,
+};
 
 use crate::{
     config::JWT_KEY,
