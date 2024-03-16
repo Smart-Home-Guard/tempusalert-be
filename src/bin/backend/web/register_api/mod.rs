@@ -1,7 +1,7 @@
 use aide::axum::{routing::post_with, ApiRouter, IntoApiResponse};
 use axum::http::StatusCode;
 use mongodb::{bson::doc, Collection};
-use ring::{digest::SHA512_OUTPUT_LEN, rand::SecureRandom};
+use ring::rand::SecureRandom;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use tempusalert_be::json::Json;
@@ -43,7 +43,7 @@ async fn register_handler(Json(body): Json<RegisterBody>) -> impl IntoApiRespons
             let user = User {
                 email: body.email,
                 hashed_password,
-                client_id,
+                client_id: client_id.clone(),
                 client_secret,
                 salt,
             };
@@ -51,9 +51,9 @@ async fn register_handler(Json(body): Json<RegisterBody>) -> impl IntoApiRespons
                 (StatusCode::INTERNAL_SERVER_ERROR, Json(RegisterResponse{ message: String::from("Failed to create account")}))
             } else {
                 let user_publisher = get_user_publisher().await;
-                user_publisher.send(UserEvent {
+                let _ = user_publisher.send(UserEvent {
                     kind: UserEventKind::JOIN,
-                    client_id,
+                    client_id: client_id.clone(),
                 });
                 (StatusCode::OK, Json(RegisterResponse{ message: String::from("Registered successfully") }))
             }
