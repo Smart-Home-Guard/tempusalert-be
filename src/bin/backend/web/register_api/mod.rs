@@ -6,7 +6,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use tempusalert_be::json::Json;
 
-use crate::{database_client::{init_database, MONGOC}, models::User};
+use crate::{database_client::{init_database, MONGOC}, globals::channels::{get_user_publisher, UserEvent, UserEventKind}, models::User};
 
 use super::utils::hash_password;
 
@@ -50,6 +50,11 @@ async fn register_handler(Json(body): Json<RegisterBody>) -> impl IntoApiRespons
             if let Err(_) = user_coll.insert_one(user, None).await {
                 (StatusCode::INTERNAL_SERVER_ERROR, Json(RegisterResponse{ message: String::from("Failed to create account")}))
             } else {
+                let user_publisher = get_user_publisher().await;
+                user_publisher.send(UserEvent {
+                    kind: UserEventKind::JOIN,
+                    client_id,
+                });
                 (StatusCode::OK, Json(RegisterResponse{ message: String::from("Registered successfully") }))
             }
         }
