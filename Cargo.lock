@@ -3008,6 +3008,7 @@ dependencies = [
  "futures",
  "hmac",
  "jwt",
+ "lazy_static",
  "lettre",
  "mongodb",
  "once_cell",

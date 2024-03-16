@@ -1,4 +1,3 @@
-use aide::axum::routing::get_with;
 use aide::axum::{ApiRouter, IntoApiResponse};
 use aide::transform::TransformOperation;
 use axum::{async_trait, http::StatusCode};
@@ -11,6 +10,7 @@ use crate::backend_core::features::WebFeature;
 use crate::backend_core::utils::non_primitive_cast;
 use crate::json::Json;
 
+mod routes;
 
 #[derive(Serialize, JsonSchema)]
 pub struct GenericResponse {
@@ -22,23 +22,6 @@ pub struct WebDeviceStatusFeature {
     mongoc: mongodb::Client,
     iot_tx: Sender<DeviceStatusWebNotification>,
     iot_rx: Receiver<DeviceStatusIotNotification>,
-}
-
-impl WebDeviceStatusFeature {
-    async fn example() -> impl IntoApiResponse {
-        let response_json = GenericResponse {
-            status: "success".to_string(),
-            message: "Example API".into(),
-        };
-
-        (StatusCode::OK, Json(response_json))
-    }
-
-    pub fn example_docs(op: TransformOperation) -> TransformOperation {
-        op.description("Example api")
-            .tag("Demo")
-            .response::<200, Json<GenericResponse>>()
-    }
 }
 
 #[async_trait]
@@ -59,21 +42,15 @@ impl WebFeature for WebDeviceStatusFeature {
     where
         Self: Sized,
     {
-        "feature_example".into()
+        "device-status".into()
     }
 
     fn get_module_name(&self) -> String {
-        "feature_example".into()
+        "device-status".into()
     }
 
     fn create_router(&mut self) -> ApiRouter {
-        ApiRouter::new().api_route(
-            "/",
-            get_with(
-                WebDeviceStatusFeature::example,
-                WebDeviceStatusFeature::example_docs,
-            ),
-        )
+        routes::create_router(self) 
     }
 
     async fn process_next_iot_push_message(&mut self) {}
