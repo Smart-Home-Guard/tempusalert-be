@@ -13,7 +13,6 @@ use web::WebTask;
 
 mod config;
 mod database_client;
-mod doc;
 mod globals;
 mod iot;
 mod mail;
