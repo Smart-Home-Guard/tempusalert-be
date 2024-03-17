@@ -13,13 +13,14 @@ use aide::{
     transform::TransformOpenApi,
 };
 use tokio::sync::Mutex;
+use tower::layer;
 use tower_http::trace::TraceLayer;
 
 use crate::{config::WebConfig, AppResult};
 use axum::{http::{StatusCode, Uri}, Extension, Json};
 use tempusalert_be::backend_core::features::WebFeature;
 
-use self::doc::docs_routes;
+use self::{doc::docs_routes, middlewares::auth_middleware::set_username_from_token_in_request_middleware};
 
 pub struct WebTask {
     pub config: WebConfig,
@@ -79,6 +80,7 @@ impl WebTask {
             .nest_api_service("/docs", docs_routes())
             .finish_api_with(&mut api, WebTask::api_docs)
             .layer(Extension(Arc::new(api)))
+            .layer(axum::middleware::from_fn(set_username_from_token_in_request_middleware))
             .layer(TraceLayer::new_for_http())
             .into_make_service();
         tokio::spawn(async move {
