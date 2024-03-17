@@ -1,4 +1,4 @@
-use aide::{axum::{routing::get_with, ApiRouter, IntoApiResponse}, transform::TransformParameter};
+use aide::{axum::{routing::{get_with, patch_with}, ApiRouter, IntoApiResponse}, transform::TransformParameter};
 use axum::{extract::Path, http::{HeaderMap, StatusCode}};
 use mongodb::{bson::doc, Collection};
 use schemars::JsonSchema;
@@ -16,7 +16,7 @@ async fn get_all_features_handler() -> impl IntoApiResponse {
     (StatusCode::OK, unsafe { Json(AllFeaturesResponse { feature_names: TOGGABLE_FEATURES_NAMES.clone() }) })
 }
 
-#[derive(Serialize, JsonSchema)]
+#[derive(Deserialize, Serialize, JsonSchema)]
 struct FeatureStatus {
     name: String,
     enabled: bool,
@@ -58,6 +58,47 @@ async fn get_all_features_status_handler(headers: HeaderMap, Path(AllFeatureStat
     }   
 }
 
+#[derive(Serialize, JsonSchema)]
+struct UpdateFeatureStatusResponse {
+    message: String,
+}
+
+#[derive(Deserialize, JsonSchema)]
+struct UpdateFeatureStatusParams {
+    email: String,
+}
+
+#[derive(Deserialize, JsonSchema)]
+struct UpdateFeatureStatusBody {
+    new_feature_status: Vec<FeatureStatus>,
+}
+
+async fn update_features_status_handler(headers: HeaderMap, Path(UpdateFeatureStatusParams { email }): Path<UpdateFeatureStatusParams>, Json(UpdateFeatureStatusBody { new_feature_status }): Json<UpdateFeatureStatusBody>) -> impl IntoApiResponse {
+    if headers.get("email").is_none() || headers.get("email").is_some_and(|value| value != email.as_str()) {
+        return (StatusCode::FORBIDDEN, Json(UpdateFeatureStatusResponse { message: String::from("Forbidden") }));
+    }
+    
+    let mongoc = MONGOC.get_or_init(init_database).await;
+    let user_coll = mongoc.default_database().unwrap().collection::<User>("users");
+    match user_coll.find_one(doc! { "email": email.clone() }, None).await {
+        Ok(Some(_)) => {
+            // FIXME: Make this more efficient
+            for new_feat_status in new_feature_status {
+                if new_feat_status.enabled {
+                    if let Ok(None) = user_coll.find_one(doc! { "email": email.clone(), "enabled_features": { "$elemMatch": new_feat_status.name.clone() } }, None).await {
+                        user_coll.find_one_and_update(doc! { "email": email.clone() }, doc! { "$push": { "enabled_features": new_feat_status.name.clone() } }  , None).await;
+                    }
+                } else {
+                    user_coll.find_one_and_update(doc! { "email": email.clone() }, doc! { "$pull": { "enabled_features": new_feat_status.name.clone() } }, None).await;
+                }
+            }
+            (StatusCode::OK, Json(UpdateFeatureStatusResponse { message: String::from("Successfully") }) )
+        },
+        Ok(None) => (StatusCode::BAD_REQUEST, Json(UpdateFeatureStatusResponse { message: format!("No such user with email '{}'", email.clone() ) })),
+        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(UpdateFeatureStatusResponse { message: format!("Failed to find the feature status of {}", email.clone() ) })),
+    } 
+}
+
 pub fn features_route() -> ApiRouter {
     ApiRouter::new()
         .api_route(
@@ -77,5 +118,14 @@ pub fn features_route() -> ApiRouter {
                 .response::<400, Json<AllFeatureStatusResponse>>()
                 .response::<403, Json<AllFeatureStatusResponse>>()
                 .response::<500, Json<AllFeatureStatusResponse>>()
-        }))
+        }).patch_with(get_all_features_status_handler, |op| {
+            op.description("Update the feature status of a given user by email")
+                .tag("Features")
+                .parameter("email", |op: TransformParameter<String>| op.description("The registered email"))
+                .response::<200, Json<UpdateFeatureStatusResponse>>()
+                .response::<400, Json<UpdateFeatureStatusResponse>>()
+                .response::<403, Json<UpdateFeatureStatusResponse>>()
+                .response::<500, Json<UpdateFeatureStatusResponse>>()
+        })
+    )
 }
