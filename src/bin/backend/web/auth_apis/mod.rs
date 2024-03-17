@@ -92,7 +92,7 @@ async fn web_auth_handler(Json(body): Json<WebAuthBody>) -> impl IntoApiResponse
             (StatusCode::BAD_REQUEST, AppendHeaders([(SET_COOKIE, format!("JWT={}", ""))]), Json(Token::None))
         } else {
             let client_claim = WebClientClaim {
-                username: body.email,
+                email: body.email,
                 nonce: uuid::Uuid::new_v4().into(),
             };
             let token = auth::sign_jwt(JWT_KEY.as_str(), &client_claim);
