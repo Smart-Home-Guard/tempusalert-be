@@ -11,6 +11,7 @@ pub struct User {
     pub hashed_password: [u8; SHA512_OUTPUT_LEN],
     #[serde(with = "serde_bytes")]
     pub salt: [u8; SHA512_OUTPUT_LEN],
+    pub enabled_features: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, JsonSchema)]

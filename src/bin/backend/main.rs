@@ -77,18 +77,24 @@ async fn init_mqtt_client(client_id: &str) -> (AsyncClient, EventLoop) {
     mqtt_client::init(mqtt_client_config)
 }
 
+static mut TOGGABLE_FEATURES_NAMES: Vec<String> = vec![]; 
+
 #[tokio::main]
 async fn main() -> AppResult {
     dotenv().ok();
     let config = CONFIG.clone();
     let mongoc = MONGOC.get_or_init(init_database).await;
 
-    let (web_feats, iot_feats) = create_features!(
+    let (web_feats, iot_feats, toggable_feat_names) = create_features!(
         mongoc.clone(),
         init_mqtt_client,
         fire_feature,
         device_status_feature
     );
+
+    unsafe {
+        TOGGABLE_FEATURES_NAMES = toggable_feat_names;
+    }
 
     let web_task = WebTask::create(config.server, web_feats).await?;
     let iot_task = IotTask::create(config.iot, iot_feats).await?;
