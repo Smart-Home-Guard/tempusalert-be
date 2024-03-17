@@ -134,8 +134,8 @@ impl IotFeature for IotDeviceStatusFeature {
                             for ConnectDeviceData { id, component } in data {
                                 match device_coll.find_one(doc! { "id": id, "owner_name": username.clone() }, None).await {
                                     Ok(Some(_)) => {
-                                        if let Ok(None) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone(), "components": { "$elemMatch": { "id": component } } }, doc! { "components": { "logs": { "$push": to_bson(&ComponentStatus::Connect { timestamp: SystemTime::now() }).unwrap() } } }, None).await {
-                                            if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone() }, doc! { "$push": { "components": to_bson(&Component { id, logs: vec![ComponentStatus::Connect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
+                                        if let Ok(None) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone(), "components": { "$elemMatch": { "id": component } } }, doc! { "$push": { "components.$.logs": to_bson(&ComponentStatus::Connect { timestamp: SystemTime::now() }).unwrap() } }, None).await {
+                                            if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone() }, doc! { "$push": { "components": to_bson(&Component { id: component, logs: vec![ComponentStatus::Connect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
                                                 eprintln!("Failed to process connect device data");
                                             }
                                         }
@@ -165,7 +165,7 @@ impl IotFeature for IotDeviceStatusFeature {
                             for DisconnectDeviceData { id, component } in data {
                                 match device_coll.find_one(doc! { "id": id, "owner_name": username.clone() }, None).await {
                                     Ok(Some(_)) => {
-                                        if let Ok(None) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone(), "components": { "$elemMatch": { "id": component } } }, doc! { "components": { "logs": { "$push": to_bson(&ComponentStatus::Disconnect { timestamp: SystemTime::now() }).unwrap() } } }, None).await {
+                                        if let Ok(None) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone(), "components": { "$elemMatch": { "id": component } } }, doc! { "$push": { "components.$.logs": to_bson(&ComponentStatus::Disconnect { timestamp: SystemTime::now() }).unwrap() } }, None).await {
                                             if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "onwer_name": username.clone() }, doc! { "$push": { "components": to_bson(&Component { id, logs: vec![ComponentStatus::Disconnect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
                                                 eprintln!("Failed to process disconnect device data");
                                             }
