@@ -118,7 +118,7 @@ pub fn features_route() -> ApiRouter {
                 .response::<400, Json<AllFeatureStatusResponse>>()
                 .response::<403, Json<AllFeatureStatusResponse>>()
                 .response::<500, Json<AllFeatureStatusResponse>>()
-        }).patch_with(get_all_features_status_handler, |op| {
+        }).patch_with(update_features_status_handler, |op| {
             op.description("Update the feature status of a given user by email")
                 .tag("Features")
                 .parameter("email", |op: TransformParameter<String>| op.description("The registered email"))
