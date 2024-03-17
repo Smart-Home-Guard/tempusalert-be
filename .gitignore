@@ -36,7 +36,6 @@ dist-ssr
 # already existing elements were commented out
 
 #/target
-rumqttd.toml
 
 #/push pem file
 *.csr
