@@ -46,6 +46,8 @@ impl WebTask {
     }
 
     pub async fn run(mut self) -> AppResult {
+        tracing_subscriber::fmt::init();
+
         aide::gen::on_error(|error| {
             println!("{error}");
         });
