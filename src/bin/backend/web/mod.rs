@@ -13,7 +13,10 @@ use aide::{
 use tokio::sync::Mutex;
 
 use crate::{config::WebConfig, doc::docs_routes, AppResult};
-use axum::{http::{StatusCode, Uri}, Extension, Json};
+use axum::{
+    http::{StatusCode, Uri},
+    Extension, Json,
+};
 use tempusalert_be::backend_core::features::WebFeature;
 
 pub struct WebTask {
@@ -52,7 +55,9 @@ impl WebTask {
         // authentication routes
         self.router = self
             .router
-            .fallback(|uri: Uri| async move { (StatusCode::NOT_FOUND, Json(format!("No route for {uri}"))) })
+            .fallback(|uri: Uri| async move {
+                (StatusCode::NOT_FOUND, Json(format!("No route for {uri}")))
+            })
             .nest_api_service("/auth/iot", auth_apis::iot_auth_routes())
             .nest_api_service("/auth/web", auth_apis::web_auth_routes())
             .nest_api_service("/auth/register", register_api::register_routes())
