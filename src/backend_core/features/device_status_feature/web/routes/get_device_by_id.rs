@@ -1,4 +1,4 @@
-use aide::axum::{routing::get_with, ApiRouter, IntoApiResponse};
+use aide::{axum::{routing::get_with, ApiRouter, IntoApiResponse}, transform::TransformParameter};
 use axum::{extract::Path, http::StatusCode};
 use mongodb::{bson::doc, Collection};
 use schemars::JsonSchema;
@@ -72,6 +72,8 @@ pub fn routes() -> ApiRouter {
         get_with(handler, |op| {
             op.description("Get devices by id for a given username")
                 .tag("Device status")
+                .parameter("username", |op: TransformParameter<String>| op.description("The registered username"))
+                .parameter("device_id", |op: TransformParameter<u32>| op.description("The id of a device owned by the user"))
                 .response::<200, Json<Response>>()
                 .response::<500, Json<Response>>()
         }),
