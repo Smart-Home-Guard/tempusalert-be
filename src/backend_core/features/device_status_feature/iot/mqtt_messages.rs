@@ -95,7 +95,7 @@ mod deserialize_tests {
         }"#;
 
         let result: DeviceStatusMQTTMessage = serde_json::from_str(input).unwrap();
-        println!("{:?}", result);
+
         let expected = DeviceStatusMQTTMessage::ReadBattery {
             token: Token::from("abcd"),
             data: vec![
