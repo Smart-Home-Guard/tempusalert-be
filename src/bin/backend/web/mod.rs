@@ -1,6 +1,7 @@
 mod auth_apis;
 mod push_api;
 mod register_api;
+mod feature_toggle_api;
 mod utils;
 
 use std::sync::Arc;
