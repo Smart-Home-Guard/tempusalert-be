@@ -86,6 +86,7 @@ async fn register_handler(Json(body): Json<RegisterBody>) -> impl IntoApiRespons
                 client_id: client_id.clone(),
                 client_secret,
                 salt,
+                enabled_features: vec![],
             };
             if let Err(_) = user_coll.insert_one(user, None).await {
                 (
