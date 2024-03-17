@@ -71,7 +71,7 @@ pub fn iot_auth_routes() -> ApiRouter {
 
 #[derive(Deserialize, JsonSchema)]
 struct WebAuthBody {
-    username: String,
+    email: String,
     password: String,
 }
 
@@ -84,7 +84,7 @@ async fn web_auth_handler(Json(body): Json<WebAuthBody>) -> impl IntoApiResponse
         salt,
         ..
     })) = user_coll
-        .find_one(doc! { "username": body.username.clone() }, None)
+        .find_one(doc! { "email": body.email.clone() }, None)
         .await
         .ok()
     {
@@ -92,7 +92,7 @@ async fn web_auth_handler(Json(body): Json<WebAuthBody>) -> impl IntoApiResponse
             (StatusCode::BAD_REQUEST, AppendHeaders([(SET_COOKIE, format!("JWT={}", ""))]), Json(Token::None))
         } else {
             let client_claim = WebClientClaim {
-                username: body.username,
+                username: body.email,
                 nonce: uuid::Uuid::new_v4().into(),
             };
             let token = auth::sign_jwt(JWT_KEY.as_str(), &client_claim);
