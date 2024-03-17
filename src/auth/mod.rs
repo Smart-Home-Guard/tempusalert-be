@@ -19,18 +19,12 @@ pub fn get_client_id_from_token(key: &str, token: String) -> Option<String> {
     Some(claim.client_id)
 }
 
-pub async fn get_username_from_token(
+pub fn get_email_from_token(
     key: &str,
     token: String,
-    mongoc: &mut mongodb::Client,
 ) -> Option<String> {
-    let claim = decrypt_jwt::<IotClientClaim>(key, token.as_str())?;
-    mongoc
-        .default_database()?
-        .collection("users")
-        .find_one(doc! { "client_id": claim.client_id }, None)
-        .await
-        .ok()?
+    let claim = decrypt_jwt::<WebClientClaim>(key, token.as_str())?;
+    Some(claim.email)
 }
 
 #[derive(Serialize, Deserialize)]
@@ -39,8 +33,8 @@ pub struct IotClientClaim {
     pub nonce: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct WebClientClaim {
-    pub username: String,
+    pub email: String,
     pub nonce: String,
 }
