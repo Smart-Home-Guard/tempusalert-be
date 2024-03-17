@@ -15,7 +15,7 @@ use crate::{
 static PEM_FILE: Lazy<File> =
     Lazy::new(|| File::open(parse_env_var::<String>("PEM_FILE")).unwrap());
 
-pub async fn push_notifcation(username: String, mongoc: &mut mongodb::Client) -> Option<()> {
+pub async fn push_notification(username: String, mongoc: &mut mongodb::Client) -> Option<()> {
     let mut cred_cursor: Cursor<PushCredential> = mongoc
         .default_database()
         .unwrap()
