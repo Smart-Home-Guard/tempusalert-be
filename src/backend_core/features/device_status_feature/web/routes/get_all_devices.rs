@@ -2,7 +2,7 @@ use aide::{
     axum::{routing::get_with, ApiRouter, IntoApiResponse},
     transform::TransformParameter,
 };
-use axum::{extract::Path, http::StatusCode};
+use axum::{extract::Path, http::{HeaderMap, StatusCode}};
 use mongodb::{bson::doc, options::FindOptions, Collection};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -13,7 +13,7 @@ use super::MONGOC;
 
 #[derive(Deserialize, JsonSchema)]
 pub struct Params {
-    username: String,
+    email: String,
 }
 
 #[derive(Serialize, JsonSchema)]
@@ -28,7 +28,10 @@ pub struct ResponseDevice {
     components: Vec<u32>,
 }
 
-async fn handler(Path(Params { username }): Path<Params>) -> impl IntoApiResponse {
+async fn handler(headers: HeaderMap, Path(Params { email }): Path<Params>) -> impl IntoApiResponse {
+    if headers.get("email").is_none() || headers.get("email").is_some_and(|value| value != email.as_str()) {
+        return (StatusCode::FORBIDDEN, Json(Response { message: String::from("Forbidden"), devices: None, }));
+    }
     let device_coll: Collection<Device> = {
         let mongoc = unsafe { MONGOC.as_ref().clone().unwrap().lock() }.await;
         mongoc.default_database().unwrap().collection("devices")
@@ -36,7 +39,7 @@ async fn handler(Path(Params { username }): Path<Params>) -> impl IntoApiRespons
 
     if let Ok(mut device_cursor) = device_coll
         .find(
-            doc! { "username": username.clone() },
+            doc! { "username": email.clone() },
             FindOptions::builder()
                 .projection(doc! { "id": 1, "components.id": 1 })
                 .build(),
@@ -58,7 +61,7 @@ async fn handler(Path(Params { username }): Path<Params>) -> impl IntoApiRespons
                             devices: None,
                             message: format!(
                                 "Failed to fetch all devices for user '{}'",
-                                username.clone()
+                                email.clone()
                             ),
                         }),
                     )
@@ -71,7 +74,7 @@ async fn handler(Path(Params { username }): Path<Params>) -> impl IntoApiRespons
                 devices: Some(devices),
                 message: format!(
                     "Successfully fetch all devices for user '{}'",
-                    username.clone()
+                    email.clone()
                 ),
             }),
         )
@@ -82,7 +85,7 @@ async fn handler(Path(Params { username }): Path<Params>) -> impl IntoApiRespons
                 devices: None,
                 message: format!(
                     "Failed to fetch all devices for user '{}'",
-                    username.clone()
+                    email.clone()
                 ),
             }),
         )
@@ -91,14 +94,15 @@ async fn handler(Path(Params { username }): Path<Params>) -> impl IntoApiRespons
 
 pub fn routes() -> ApiRouter {
     ApiRouter::new().api_route(
-        "/:username/devices",
+        "/:email/devices",
         get_with(handler, |op| {
-            op.description("Get all devices for a given username")
+            op.description("Get all devices for a given user by email")
                 .tag("Device status")
-                .parameter("username", |op: TransformParameter<String>| {
-                    op.description("The registered username")
+                .parameter("email", |op: TransformParameter<String>| {
+                    op.description("The registered email")
                 })
                 .response::<200, Json<Response>>()
+                .response::<403, Json<Response>>()
                 .response::<500, Json<Response>>()
         }),
     )
