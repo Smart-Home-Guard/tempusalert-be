@@ -1,5 +1,8 @@
 use aide::axum::{routing::post_with, ApiRouter, IntoApiResponse};
-use axum::{http::{header::SET_COOKIE, StatusCode}, response::AppendHeaders};
+use axum::{
+    http::{header::SET_COOKIE, StatusCode},
+    response::AppendHeaders,
+};
 use mongodb::{bson::doc, Collection};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -89,7 +92,11 @@ async fn web_auth_handler(Json(body): Json<WebAuthBody>) -> impl IntoApiResponse
         .ok()
     {
         if !verify_hashed_password(body.password, hashed_password, salt) {
-            (StatusCode::BAD_REQUEST, AppendHeaders([(SET_COOKIE, format!("JWT={}", ""))]), Json(Token::None))
+            (
+                StatusCode::BAD_REQUEST,
+                AppendHeaders([(SET_COOKIE, format!("JWT={}", ""))]),
+                Json(Token::None),
+            )
         } else {
             let client_claim = WebClientClaim {
                 email: body.email,
@@ -98,13 +105,25 @@ async fn web_auth_handler(Json(body): Json<WebAuthBody>) -> impl IntoApiResponse
             let token = auth::sign_jwt(JWT_KEY.as_str(), &client_claim);
 
             if let Some(token) = token {
-                (StatusCode::OK, AppendHeaders([(SET_COOKIE, format!("JWT={}", token))]), Json(Token::Some(token)))
+                (
+                    StatusCode::OK,
+                    AppendHeaders([(SET_COOKIE, format!("JWT={}", token))]),
+                    Json(Token::Some(token)),
+                )
             } else {
-                (StatusCode::INTERNAL_SERVER_ERROR, AppendHeaders([(SET_COOKIE, format!("JWT={}", ""))]), Json(Token::None))
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    AppendHeaders([(SET_COOKIE, format!("JWT={}", ""))]),
+                    Json(Token::None),
+                )
             }
         }
     } else {
-        (StatusCode::BAD_REQUEST, AppendHeaders([(SET_COOKIE, format!("JWT={}", ""))]), Json(Token::None))
+        (
+            StatusCode::BAD_REQUEST,
+            AppendHeaders([(SET_COOKIE, format!("JWT={}", ""))]),
+            Json(Token::None),
+        )
     }
 }
 

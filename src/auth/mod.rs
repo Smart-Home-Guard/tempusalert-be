@@ -19,10 +19,7 @@ pub fn get_client_id_from_token(key: &str, token: String) -> Option<String> {
     Some(claim.client_id)
 }
 
-pub fn get_email_from_token(
-    key: &str,
-    token: String,
-) -> Option<String> {
+pub fn get_email_from_token(key: &str, token: String) -> Option<String> {
     let claim = decrypt_jwt::<WebClientClaim>(key, token.as_str())?;
     Some(claim.email)
 }

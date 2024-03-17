@@ -13,12 +13,11 @@ use web::WebTask;
 
 mod config;
 mod database_client;
-mod doc;
 mod globals;
 mod iot;
 mod mail;
 mod models;
-mod push_notifcation;
+mod push_notification;
 
 #[macro_use]
 mod macros;

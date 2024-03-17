@@ -1,6 +1,6 @@
 [server]
-addr = "127.0.0.1"
-port = 0
+addr = "0.0.0.0"
+port = 8080
 protocol = "http"
 
 [iot]

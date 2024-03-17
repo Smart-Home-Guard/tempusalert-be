@@ -18,7 +18,7 @@ pub struct User {
 pub struct PushCredential {
     pub endpoint: String,
     pub key: PushKey,
-    pub username: String,
+    pub email: String,
 }
 
 #[derive(Serialize, Deserialize, JsonSchema)]

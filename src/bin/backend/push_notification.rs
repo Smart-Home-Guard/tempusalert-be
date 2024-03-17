@@ -15,12 +15,12 @@ use crate::{
 static PEM_FILE: Lazy<File> =
     Lazy::new(|| File::open(parse_env_var::<String>("PEM_FILE")).unwrap());
 
-pub async fn push_notifcation(username: String, mongoc: &mut mongodb::Client) -> Option<()> {
+pub async fn push_notification(email: String, mongoc: &mut mongodb::Client) -> Option<()> {
     let mut cred_cursor: Cursor<PushCredential> = mongoc
         .default_database()
         .unwrap()
         .collection("push_credentials")
-        .find(doc! { "username": username }, None)
+        .find(doc! { "email": email }, None)
         .await
         .ok()?;
 

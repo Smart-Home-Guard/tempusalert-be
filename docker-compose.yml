@@ -14,5 +14,29 @@ services:
     ports:
       - "27017:27017"
     restart: always
+    hostname: mongo-server
+    networks:
+      - tempu_net
+
+  tempusalert:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: backend
+    volumes:
+      - .env:/usr/lib/tempusalert-be/.env
+    ports:
+      - "8080:8080"
+    restart: always
+    hostname: backend
+    networks:
+      - tempu_net
+    depends_on:
+      - mongo
+
 volumes:
   mongo:
+
+networks:
+  tempu_net:
+    driver: bridge
