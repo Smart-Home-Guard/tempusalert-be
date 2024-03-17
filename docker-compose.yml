@@ -12,7 +12,7 @@ services:
     volumes:
       - mongo:/data/db
     ports:
-      - "6000:27017"
+      - "27017:27017"
     restart: always
     hostname: mongo-server
     networks:
@@ -31,6 +31,8 @@ services:
     hostname: backend
     networks:
       - tempu_net
+    depends_on:
+      - mongo
 
 volumes:
   mongo:
