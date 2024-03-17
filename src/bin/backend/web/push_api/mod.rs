@@ -13,6 +13,11 @@ use crate::{
     models::PushCredential,
 };
 
+#[derive(Deserialize, JsonSchema)]
+struct Params {
+    email: String,
+}
+
 #[derive(Serialize, Deserialize, JsonSchema)]
 struct PushCredentialBody {
     credential: PushCredential,
@@ -23,7 +28,7 @@ struct PushCredentialResponse {
     message: String,
 }
 
-async fn push_handler(headers: HeaderMap, Path(email): Path<String>, Json(body): Json<PushCredentialBody>) -> impl IntoApiResponse {
+async fn push_handler(headers: HeaderMap, Path(Params { email } ): Path<Params>, Json(body): Json<PushCredentialBody>) -> impl IntoApiResponse {
     if headers.get("email").is_none() || headers.get("email").is_some_and(|value| value != email.as_str()) {
         return (StatusCode::UNAUTHORIZED, Json(PushCredentialResponse{ message: String::from("Unauthorized")}));
     }
