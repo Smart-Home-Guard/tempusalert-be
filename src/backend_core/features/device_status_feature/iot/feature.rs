@@ -83,7 +83,7 @@ impl IotFeature for IotDeviceStatusFeature {
     }
 
     async fn process_next_mqtt_message(&mut self) {
-        let mut mongoc = self.get_mongoc();
+        let mongoc = self.get_mongoc();
         let mut mqtt_event_loop = self.mqtt_event_loop.lock().await;
         if let Ok(Event::Incoming(Incoming::Publish(Publish { payload, .. }))) =
             mqtt_event_loop.poll().await
