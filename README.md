@@ -10,6 +10,8 @@ Each feature module must export the following components with these exact names:
  * IotFeature
  * WebNotification
  * IotNotification
+ * MUST_ON
+See the `template_feature` in `backend-core` for an example exposed module interface.
 
 in order for the macro `create_features!` to work properly!
 
