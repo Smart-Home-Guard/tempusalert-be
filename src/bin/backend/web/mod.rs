@@ -13,7 +13,6 @@ use aide::{
     transform::TransformOpenApi,
 };
 use tokio::sync::Mutex;
-use tower::layer;
 use tower_http::trace::TraceLayer;
 
 use crate::{config::WebConfig, AppResult};
