@@ -39,7 +39,7 @@ async fn handler(headers: HeaderMap, Path(Params { email }): Path<Params>) -> im
 
     if let Ok(mut device_cursor) = device_coll
         .find(
-            doc! { "username": email.clone() },
+            doc! { "owner_name": email.clone() },
             FindOptions::builder()
                 .projection(doc! { "id": 1, "components.id": 1 })
                 .build(),
