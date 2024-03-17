@@ -40,3 +40,4 @@ serde_bytes = "0.11.14"
 lettre = "0.11.4"
 lazy_static = "1.4.0"
 web-push = "0.10.1"
+tower-http = { version = "0.5.2", features = ["trace"] }

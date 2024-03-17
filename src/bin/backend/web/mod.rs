@@ -2,6 +2,8 @@ mod auth_apis;
 mod push_api;
 mod register_api;
 mod utils;
+mod middlewares;
+mod doc;
 
 use std::sync::Arc;
 
@@ -11,10 +13,13 @@ use aide::{
     transform::TransformOpenApi,
 };
 use tokio::sync::Mutex;
+use tower_http::trace::TraceLayer;
 
-use crate::{config::WebConfig, doc::docs_routes, AppResult};
+use crate::{config::WebConfig, AppResult};
 use axum::{http::{StatusCode, Uri}, Extension, Json};
 use tempusalert_be::backend_core::features::WebFeature;
+
+use self::doc::docs_routes;
 
 pub struct WebTask {
     pub config: WebConfig,
@@ -41,6 +46,8 @@ impl WebTask {
     }
 
     pub async fn run(mut self) -> AppResult {
+        tracing_subscriber::fmt::init();
+
         aide::gen::on_error(|error| {
             println!("{error}");
         });
@@ -52,7 +59,9 @@ impl WebTask {
         // authentication routes
         self.router = self
             .router
-            .fallback(|uri: Uri| async move { (StatusCode::NOT_FOUND, Json(format!("No route for {uri}"))) })
+            .fallback(|uri: Uri| async move {
+                (StatusCode::NOT_FOUND, Json(format!("No route for {uri}")))
+            })
             .nest_api_service("/auth/iot", auth_apis::iot_auth_routes())
             .nest_api_service("/auth/web", auth_apis::web_auth_routes())
             .nest_api_service("/auth/register", register_api::register_routes())
@@ -70,6 +79,7 @@ impl WebTask {
             .nest_api_service("/docs", docs_routes())
             .finish_api_with(&mut api, WebTask::api_docs)
             .layer(Extension(Arc::new(api)))
+            .layer(TraceLayer::new_for_http())
             .into_make_service();
         tokio::spawn(async move {
             println!(
