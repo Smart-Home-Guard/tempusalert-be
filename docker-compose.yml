@@ -3,8 +3,6 @@ services:
   mongo:
     image: mongo:latest
     container_name: mongo
-    env_file:
-      - ./.env
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
@@ -13,26 +11,27 @@ services:
       - mongo:/data/db
     ports:
       - "27017:27017"
-    restart: always
     hostname: mongo-server
     networks:
       - tempu_net
+    restart: always
 
   tempusalert:
     build:
       context: .
       dockerfile: ./Dockerfile
+    image: tempusalert-be
     container_name: backend
     volumes:
-      - .env:/usr/lib/tempusalert-be/.env
+      - .env:/tempusalert-be/.env
     ports:
       - "8080:8080"
-    restart: always
+    depends_on:
+      - mongo
     hostname: backend
     networks:
       - tempu_net
-    depends_on:
-      - mongo
+    restart: always
 
 volumes:
   mongo:
