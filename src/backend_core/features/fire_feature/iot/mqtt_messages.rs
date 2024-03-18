@@ -4,8 +4,8 @@ use crate::backend_core::features::fire_feature::models::FireStatus;
 
 type Token = String;
 
-#[derive(Deserialize, Serialize)]
-#[cfg_attr(test, derive(std::cmp::PartialEq, Debug))]
+#[derive(Deserialize, Serialize, Debug, Clone)]
+#[cfg_attr(test, derive(std::cmp::PartialEq))]
 #[serde(tag = "kind", content = "payload")]
 pub enum FireMQTTMessage {
     #[serde(rename = "0")]
@@ -32,8 +32,8 @@ pub enum FireMQTTMessage {
     },
 }
 
-#[derive(Deserialize, Serialize)]
-#[cfg_attr(test, derive(std::cmp::PartialEq, Debug))]
+#[derive(Deserialize, Serialize, Debug, Clone)]
+#[cfg_attr(test, derive(std::cmp::PartialEq))]
 pub struct SensorData {
     pub id: u32,
     pub component: String,

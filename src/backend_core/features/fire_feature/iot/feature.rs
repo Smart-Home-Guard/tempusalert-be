@@ -134,6 +134,7 @@ impl IotFeature for IotFireFeature {
         if let Ok(Event::Incoming(Incoming::Publish(Publish { payload, .. }))) =
             mqtt_event_loop.poll().await
         {
+            println!("hello world");
             if let Ok(raw_json) = String::from_utf8(payload.to_vec()) {
                 if let Some(message) = serde_json::from_str::<FireMQTTMessage>(&raw_json).ok() {
                     match message {
