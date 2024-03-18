@@ -13,7 +13,6 @@ RUN mkdir -p src/bin/backend && echo 'fn main() {}' > src/bin/backend/main.rs
 RUN cargo build --bin backend --release
 RUN rm -rf src
 
-COPY .env ./
 COPY ./settings ./settings
 COPY ./src ./src 
 RUN cargo build --bin backend --release
