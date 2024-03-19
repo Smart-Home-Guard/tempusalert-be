@@ -4,11 +4,11 @@ on:
     push:
         branches: [ main ]
         paths:
-          - */**/*.rs
+          - '*/**/*.rs'
     pull_request:
         branches: [ main ]
         paths:
-          - */**/*.rs
+          - '*/**/*.rs'
 
 jobs:
     test:
