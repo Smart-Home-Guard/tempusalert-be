@@ -69,7 +69,6 @@ async fn watch_users(feat: Arc<Mutex<dyn IotFeature + Send + Sync>>) {
             {
                 eprintln!("Failed to subscribe to MQTT topic: {}", error);
             }
-            break;
         }
     }
 

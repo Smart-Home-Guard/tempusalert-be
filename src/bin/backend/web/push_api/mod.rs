@@ -1,17 +1,20 @@
-use aide::{axum::{routing::post_with, ApiRouter, IntoApiResponse}, transform::TransformParameter};
-use axum::{extract::Path, http::{HeaderMap, StatusCode}};
+use aide::{
+    axum::{routing::post_with, ApiRouter, IntoApiResponse},
+    transform::TransformParameter,
+};
+use axum::{
+    extract::Path,
+    http::{HeaderMap, StatusCode},
+};
 use mongodb::{
     bson::{doc, to_bson, Document},
     Collection,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use tempusalert_be::json::Json;
+use tempusalert_be::{backend_core::models::PushCredential, json::Json};
 
-use crate::{
-    database_client::{init_database, MONGOC},
-    models::PushCredential,
-};
+use crate::database_client::{init_database, MONGOC};
 
 #[derive(Deserialize, JsonSchema)]
 struct Params {
@@ -28,9 +31,22 @@ struct PushCredentialResponse {
     message: String,
 }
 
-async fn push_handler(headers: HeaderMap, Path(Params { email } ): Path<Params>, Json(body): Json<PushCredentialBody>) -> impl IntoApiResponse {
-    if headers.get("email").is_none() || headers.get("email").is_some_and(|value| value != email.as_str()) {
-        return (StatusCode::UNAUTHORIZED, Json(PushCredentialResponse{ message: String::from("Unauthorized")}));
+async fn push_handler(
+    headers: HeaderMap,
+    Path(Params { email }): Path<Params>,
+    Json(body): Json<PushCredentialBody>,
+) -> impl IntoApiResponse {
+    if headers.get("email").is_none()
+        || headers
+            .get("email")
+            .is_some_and(|value| value != email.as_str())
+    {
+        return (
+            StatusCode::UNAUTHORIZED,
+            Json(PushCredentialResponse {
+                message: String::from("Unauthorized"),
+            }),
+        );
     }
     let mongoc = MONGOC.get_or_init(init_database).await;
     let push_cred_coll: Collection<Document> = mongoc
@@ -50,7 +66,9 @@ pub fn push_routes() -> ApiRouter {
         post_with(push_handler, |op| {
             op.description("Add subscription for push notification")
                 .tag("Push notification")
-                .parameter("email", |op: TransformParameter<String>| op.description("The registered user's email"))
+                .parameter("email", |op: TransformParameter<String>| {
+                    op.description("The registered user's email")
+                })
                 .response::<200, Json<PushCredentialResponse>>()
                 .response::<500, Json<PushCredentialResponse>>()
         }),

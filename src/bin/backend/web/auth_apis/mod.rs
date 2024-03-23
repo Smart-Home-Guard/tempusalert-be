@@ -8,13 +8,13 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use tempusalert_be::{
     auth::{self, IotClientClaim, WebClientClaim},
+    backend_core::models::User,
     json::Json,
 };
 
 use crate::{
     config::JWT_KEY,
     database_client::{init_database, MONGOC},
-    models::User,
 };
 
 use super::utils::verify_hashed_password;
