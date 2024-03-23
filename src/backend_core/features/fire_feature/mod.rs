@@ -1,4 +1,5 @@
 mod iot;
+mod models;
 mod notifications;
 mod web;
 
