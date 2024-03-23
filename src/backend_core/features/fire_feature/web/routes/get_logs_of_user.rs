@@ -99,7 +99,7 @@ pub fn routes() -> ApiRouter {
     ApiRouter::new().api_route(
         "/fire/:email",
         get_with(handler, |op| {
-            op.description("Get fire metrix log by user email")
+            op.description("Get fire metrics log by user email")
                 .tag("Device status")
                 .parameter("email", |op: TransformParameter<String>| {
                     op.description("The registered email")
