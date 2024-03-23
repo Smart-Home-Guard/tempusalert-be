@@ -15,14 +15,14 @@ use super::{
     mqtt_messages::FireMQTTMessage,
 };
 use crate::{
-    auth::get_email_from_token,
+    auth::get_email_from_client_token,
     backend_core::{
         features::{
             fire_feature::models::{SensorDataType, SensorLogData},
             IotFeature,
         },
         utils::non_primitive_cast,
-    },
+    }
 };
 
 pub struct IotFireFeature {
@@ -130,11 +130,11 @@ impl IotFeature for IotFireFeature {
     }
 
     async fn process_next_mqtt_message(&mut self) {
+        let mut mongoc = self.get_mongoc();
         let mut mqtt_event_loop = self.mqtt_event_loop.lock().await;
         if let Ok(Event::Incoming(Incoming::Publish(Publish { payload, .. }))) =
             mqtt_event_loop.poll().await
         {
-            println!("hello world");
             if let Ok(raw_json) = String::from_utf8(payload.to_vec()) {
                 if let Some(message) = serde_json::from_str::<FireMQTTMessage>(&raw_json).ok() {
                     match message {
@@ -154,7 +154,9 @@ impl IotFeature for IotFireFeature {
                             heat,
                             fire_button,
                         } => {
-                            if let Some(username) = get_email_from_token(&self.jwt_key, token) {
+                            if let Some(email) =
+                                get_email_from_client_token(&self.jwt_key, token, &mut mongoc).await
+                            {
                                 let sensor_data = vec![
                                     (SensorDataType::Fire, fire_data),
                                     (SensorDataType::Smoke, smoke),
@@ -182,7 +184,7 @@ impl IotFeature for IotFireFeature {
                                         | SensorDataType::Heat
                                         | SensorDataType::FireButton => {
                                             self.process_sensor_data(
-                                                &username,
+                                                &email,
                                                 sensor_logs,
                                                 sensor_type,
                                             )

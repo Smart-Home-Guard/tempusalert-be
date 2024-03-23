@@ -62,7 +62,7 @@ async fn watch_users(feat: Arc<Mutex<dyn IotFeature + Send + Sync>>) {
                 .map(|s| s.to_owned())
         }) {
             let mqtt_topic = format!("{}/{}-metrics", cur_client_id, feature_id);
-            
+
             if let Err(error) = mqttc
                 .subscribe(mqtt_topic.clone(), rumqttc::QoS::AtLeastOnce)
                 .await
