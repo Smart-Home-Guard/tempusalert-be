@@ -16,7 +16,7 @@ mqtt_client.connect('test.mosquitto.org')
 
 mqtt_client.loop_start()
 
-while True:
+for i in range(5):
     message = {}
     mqtt_client.publish(client_metrics_topic, json.dumps({}))
 
