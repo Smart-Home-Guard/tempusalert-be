@@ -16,7 +16,6 @@ mod database_client;
 mod globals;
 mod iot;
 mod mail;
-mod models;
 mod push_notification;
 
 #[macro_use]
@@ -77,7 +76,7 @@ async fn init_mqtt_client(client_id: &str) -> (AsyncClient, EventLoop) {
     mqtt_client::init(mqtt_client_config)
 }
 
-static mut TOGGABLE_FEATURES_NAMES: Vec<String> = vec![]; 
+static mut TOGGABLE_FEATURES_NAMES: Vec<String> = vec![];
 
 #[tokio::main]
 async fn main() -> AppResult {

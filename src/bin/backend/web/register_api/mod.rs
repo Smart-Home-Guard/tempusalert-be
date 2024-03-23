@@ -3,13 +3,12 @@ use axum::http::StatusCode;
 use mongodb::{bson::doc, Collection};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use tempusalert_be::json::Json;
+use tempusalert_be::{backend_core::models::User, json::Json};
 
 use crate::{
     database_client::{init_database, MONGOC},
     globals::channels::{get_user_publisher, UserEvent, UserEventKind},
     mail::send_mail,
-    models::User,
 };
 
 use super::utils::hash_password;

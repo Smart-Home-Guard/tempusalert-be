@@ -2,7 +2,10 @@ use aide::{
     axum::{routing::get_with, ApiRouter, IntoApiResponse},
     transform::TransformParameter,
 };
-use axum::{extract::Path, http::{HeaderMap, StatusCode}};
+use axum::{
+    extract::Path,
+    http::{HeaderMap, StatusCode},
+};
 use mongodb::{bson::doc, Collection};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -25,13 +28,20 @@ pub struct Params {
 
 async fn handler(
     headers: HeaderMap,
-    Path(Params {
-        device_id,
-        email,
-    }): Path<Params>,
+    Path(Params { device_id, email }): Path<Params>,
 ) -> impl IntoApiResponse {
-    if headers.get("email").is_none() || headers.get("email").is_some_and(|value| value != email.as_str()) {
-        return (StatusCode::FORBIDDEN, Json(Response { message: String::from("Forbidden"), device: None, }));
+    if headers.get("email").is_none()
+        || headers
+            .get("email")
+            .is_some_and(|value| value != email.as_str())
+    {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(Response {
+                message: String::from("Forbidden"),
+                device: None,
+            }),
+        );
     }
     let device_coll: Collection<Device> = {
         let mongoc = unsafe { MONGOC.as_ref().clone().unwrap().lock() }.await;
@@ -39,10 +49,7 @@ async fn handler(
     };
 
     match device_coll
-        .find_one(
-            doc! { "id": device_id, "owner_name": email.clone() },
-            None,
-        )
+        .find_one(doc! { "id": device_id, "owner_name": email.clone() }, None)
         .await
     {
         Ok(Some(device)) => (

@@ -17,7 +17,7 @@ use super::mqtt_messages::{
     ReadDeviceErrorData,
 };
 use crate::{
-    auth::get_email_from_token,
+    auth::get_email_from_client_token,
     backend_core::{
         features::{
             device_status_feature::models::{
@@ -83,7 +83,7 @@ impl IotFeature for IotDeviceStatusFeature {
     }
 
     async fn process_next_mqtt_message(&mut self) {
-        let mongoc = self.get_mongoc();
+        let mut mongoc = self.get_mongoc();
         let mut mqtt_event_loop = self.mqtt_event_loop.lock().await;
         if let Ok(Event::Incoming(Incoming::Publish(Publish { payload, .. }))) =
             mqtt_event_loop.poll().await
@@ -96,7 +96,10 @@ impl IotFeature for IotDeviceStatusFeature {
             {
                 match message {
                     DeviceStatusMQTTMessage::ReadBattery { token, data } => {
-                        if let Some(username) = get_email_from_token(self.jwt_key.as_str(), token) {
+                        if let Some(username) =
+                            get_email_from_client_token(self.jwt_key.as_str(), token, &mut mongoc)
+                                .await
+                        {
                             let device_coll: Collection<Document> =
                                 mongoc.default_database().unwrap().collection("devices");
                             for ReadBatteryData { id, value: battery } in data {
@@ -109,7 +112,10 @@ impl IotFeature for IotDeviceStatusFeature {
                         }
                     }
                     DeviceStatusMQTTMessage::ReadDeviceError { token, data } => {
-                        if let Some(username) = get_email_from_token(self.jwt_key.as_str(), token) {
+                        if let Some(username) =
+                            get_email_from_client_token(self.jwt_key.as_str(), token, &mut mongoc)
+                                .await
+                        {
                             let device_coll: Collection<Document> =
                                 mongoc.default_database().unwrap().collection("devices");
                             for ReadDeviceErrorData { id, component } in data {
@@ -122,7 +128,10 @@ impl IotFeature for IotDeviceStatusFeature {
                         }
                     }
                     DeviceStatusMQTTMessage::ConnectDevice { token, data } => {
-                        if let Some(username) = get_email_from_token(self.jwt_key.as_str(), token) {
+                        if let Some(username) =
+                            get_email_from_client_token(self.jwt_key.as_str(), token, &mut mongoc)
+                                .await
+                        {
                             let device_coll: Collection<Document> =
                                 mongoc.default_database().unwrap().collection("devices");
                             for ConnectDeviceData { id, component } in data {
@@ -151,12 +160,26 @@ impl IotFeature for IotDeviceStatusFeature {
                         }
                     }
                     DeviceStatusMQTTMessage::DisconnectDevice { token, data } => {
-                        if let Some(username) = get_email_from_token(self.jwt_key.as_str(), token) {
+                        if let Some(username) =
+                            get_email_from_client_token(self.jwt_key.as_str(), token, &mut mongoc)
+                                .await
+                        {
                             let device_coll: Collection<Document> =
                                 mongoc.default_database().unwrap().collection("devices");
                             for DisconnectDeviceData { id, component } in data {
-                                match device_coll.find_one(doc! { "id": id, "owner_name": username.clone() }, None).await {
+                                match device_coll
+                                    .find_one(
+                                        doc! { "id": id, "owner_name": username.clone() },
+                                        None,
+                                    )
+                                    .await
+                                {
                                     Ok(Some(_)) => {
+                                        println!(
+                                            "DisconnectDeviceData {}, {}",
+                                            id,
+                                            username.clone()
+                                        );
                                         if let Ok(None) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone(), "components": { "$elemMatch": { "id": component } } }, doc! { "$push": { "components.$.logs": to_bson(&ComponentStatus::Disconnect { timestamp: SystemTime::now() }).unwrap() } }, None).await {
                                             if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "onwer_name": username.clone() }, doc! { "$push": { "components": to_bson(&Component { id, logs: vec![ComponentStatus::Disconnect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
                                                 eprintln!("Failed to process disconnect device data");
@@ -164,7 +187,11 @@ impl IotFeature for IotDeviceStatusFeature {
                                         }
                                     }
                                     Ok(None) => {
-                                        eprintln!("Device '{}' did not exist for user '{}'", id, username.clone());
+                                        eprintln!(
+                                            "Device '{}' did not exist for user '{}'",
+                                            id,
+                                            username.clone()
+                                        );
                                     }
                                     Err(_) => {
                                         eprintln!("Unexpected error while finding devices with id '{}' for user '{}", id, username.clone());
