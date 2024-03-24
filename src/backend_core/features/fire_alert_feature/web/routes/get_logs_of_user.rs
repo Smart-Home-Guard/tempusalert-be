@@ -28,7 +28,7 @@ pub struct Response {
     smoke_logs: Option<Vec<SensorLogData>>,
     co_logs: Option<Vec<SensorLogData>>,
     heat_logs: Option<Vec<SensorLogData>>,
-    fire_button_logs: Option<Vec<SensorLogData>>,
+    button_logs: Option<Vec<SensorLogData>>,
     message: String,
 }
 
@@ -46,7 +46,7 @@ async fn handler(headers: HeaderMap, Path(Params { email }): Path<Params>) -> im
                 smoke_logs: None,
                 co_logs: None,
                 heat_logs: None,
-                fire_button_logs: None,
+                button_logs: None,
             }),
         );
     }
@@ -66,7 +66,7 @@ async fn handler(headers: HeaderMap, Path(Params { email }): Path<Params>) -> im
                 smoke_logs: Some(fire_log.smoke_logs),
                 co_logs: Some(fire_log.co_logs),
                 heat_logs: Some(fire_log.heat_logs),
-                fire_button_logs: Some(fire_log.fire_button_logs),
+                button_logs: Some(fire_log.button_logs),
                 message: format!("Successfully fetch fire sensor log data"),
             }),
         ),
@@ -77,7 +77,7 @@ async fn handler(headers: HeaderMap, Path(Params { email }): Path<Params>) -> im
                 smoke_logs: None,
                 co_logs: None,
                 heat_logs: None,
-                fire_button_logs: None,
+                button_logs: None,
                 message: format!("Your fire matrix haven't had any data"),
             }),
         ),
@@ -88,7 +88,7 @@ async fn handler(headers: HeaderMap, Path(Params { email }): Path<Params>) -> im
                 smoke_logs: None,
                 co_logs: None,
                 heat_logs: None,
-                fire_button_logs: None,
+                button_logs: None,
                 message: format!("Unexpected error while fetching fire log data"),
             }),
         ),

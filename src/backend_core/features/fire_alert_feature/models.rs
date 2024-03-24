@@ -33,5 +33,5 @@ pub struct FireLog {
     pub smoke_logs: Vec<SensorLogData>,
     pub co_logs: Vec<SensorLogData>,
     pub heat_logs: Vec<SensorLogData>,
-    pub fire_button_logs: Vec<SensorLogData>,
+    pub button_logs: Vec<SensorLogData>,
 }
