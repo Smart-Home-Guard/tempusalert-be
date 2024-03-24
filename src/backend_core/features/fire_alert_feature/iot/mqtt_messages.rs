@@ -56,7 +56,7 @@ mod deserialize_tests {
                         "id": 0,
                         "component": 8,
                         "value": 460,
-                        "alert": "SAFE"
+                        "alert": 0
                     }
                 ],
                 "smoke": [
@@ -64,31 +64,31 @@ mod deserialize_tests {
                         "id": 0,
                         "component": 0,
                         "value": 120,
-                        "alert": "SAFE"
+                        "alert": 0
                     },
                     {
                         "id": 0,
                         "component": 1,
                         "value": 240,
-                        "alert": "SAFE"
+                        "alert": 0
                     },
                     {
                         "id": 1,
                         "component": 0,
                         "value": 120,
-                        "alert": "SAFE"
+                        "alert": 0
                     },
                     {
                         "id": 2,
                         "component": 0,
                         "value": 120,
-                        "alert": "SAFE"
+                        "alert": 0
                     },
                     {
                         "id": 0,
                         "component": 0,
                         "value": 120,
-                        "alert": "SAFE"
+                        "alert": 0
                     }
                 ],
                 "co": [
@@ -96,13 +96,13 @@ mod deserialize_tests {
                         "id": 0,
                         "component": 4,
                         "value": 460,
-                        "alert": "SAFE"
+                        "alert": 0
                     },
                     {
                         "id": 1,
                         "component": 4,
                         "value": 460,
-                        "alert": "SAFE"
+                        "alert": 0
                     }
                 ],
                 "heat": [
@@ -110,13 +110,13 @@ mod deserialize_tests {
                         "id": 2,
                         "component": 2,
                         "value": 460,
-                        "alert": "SAFE"
+                        "alert": 0
                     },
                     {
                         "id": 3,
                         "component": 2,
                         "value": 460,
-                        "alert": "SAFE"
+                        "alert": 0
                     }
                 ],
                 "fire-button": [
@@ -124,7 +124,7 @@ mod deserialize_tests {
                         "id": 1,
                         "component": 10,
                         "value": 1,
-                        "alert": "SAFE"
+                        "alert": 0
                     }
                 ]
             }
@@ -222,7 +222,7 @@ mod deserialize_tests {
                         "id": 0,
                         "component": 8,
                         "value": 460,
-                        "alert": "UNSAFE"
+                        "alert": 1
                     }
                 ],
                 "smoke": [],
@@ -346,7 +346,7 @@ mod serialize_tests {
                         "id": 0,
                         "component": 8,
                         "value": 460,
-                        "alert": "SAFE"
+                        "alert": 0
                     }
                 ],
                 "smoke": [
@@ -354,31 +354,31 @@ mod serialize_tests {
                         "id": 0,
                         "component": 0,
                         "value": 120,
-                        "alert": "SAFE"
+                        "alert": 0
                     },
                     {
                         "id": 0,
                         "component": 1,
                         "value": 240,
-                        "alert": "SAFE"
+                        "alert": 0
                     },
                     {
                         "id": 1,
                         "component": 0,
                         "value": 120,
-                        "alert": "SAFE"
+                        "alert": 0
                     },
                     {
                         "id": 2,
                         "component": 0,
                         "value": 120,
-                        "alert": "SAFE"
+                        "alert": 0
                     },
                     {
                         "id": 0,
                         "component": 0,
                         "value": 120,
-                        "alert": "SAFE"
+                        "alert": 0
                     }
                 ],
                 "co": [
@@ -386,13 +386,13 @@ mod serialize_tests {
                         "id": 0,
                         "component": 4,
                         "value": 460,
-                        "alert": "SAFE"
+                        "alert": 0
                     },
                     {
                         "id": 1,
                         "component": 4,
                         "value": 460,
-                        "alert": "SAFE"
+                        "alert": 0
                     }
                 ],
                 "heat": [
@@ -400,13 +400,13 @@ mod serialize_tests {
                         "id": 2,
                         "component": 2,
                         "value": 460,
-                        "alert": "SAFE"
+                        "alert": 0
                     },
                     {
                         "id": 3,
                         "component": 2,
                         "value": 460,
-                        "alert": "SAFE"
+                        "alert": 0
                     }
                 ],
                 "fire-button": [
@@ -414,7 +414,7 @@ mod serialize_tests {
                         "id": 1,
                         "component": 10,
                         "value": 1,
-                        "alert": "SAFE"
+                        "alert": 0
                     }
                 ]
             }
@@ -450,7 +450,7 @@ mod serialize_tests {
                         "id": 0,
                         "component": 8,
                         "value": 460,
-                        "alert": "UNSAFE"
+                        "alert": 1
                     }
                 ],
                 "smoke": [],
