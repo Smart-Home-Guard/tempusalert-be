@@ -43,11 +43,11 @@ impl WebFeature for WebDeviceStatusFeature {
     where
         Self: Sized,
     {
-        "device-status".into()
+        "devices-status".into()
     }
 
     fn get_module_name(&self) -> String {
-        "device-status".into()
+        "devices-status".into()
     }
 
     fn create_router(&mut self) -> ApiRouter {
