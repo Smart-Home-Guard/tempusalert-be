@@ -83,7 +83,7 @@ pub struct WebFireFeature {
 //     }
 
 //     pub fn messages_docs(op: TransformOperation) -> TransformOperation {
-//         op.description("Retrieve all fire metric messages")
+//         op.description("Retrieve all fire-alert metric messages")
 //             .tag("FIRE")
 //             .response::<200, Json<FireResponse>>()
 //     }
@@ -109,11 +109,11 @@ impl WebFeature for WebFireFeature {
     where
         Self: Sized,
     {
-        "fire".into()
+        "fire-alert".into()
     }
 
     fn get_module_name(&self) -> String {
-        "fire".into()
+        "fire-alert".into()
     }
 
     fn create_router(&mut self) -> ApiRouter {

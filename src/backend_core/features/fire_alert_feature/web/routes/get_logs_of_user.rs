@@ -11,7 +11,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    backend_core::features::fire_feature::models::{FireCollection, SensorDataType, SensorLogData},
+    backend_core::features::fire_alert_feature::models::{FireCollection, SensorDataType, SensorLogData},
     json::Json,
 };
 

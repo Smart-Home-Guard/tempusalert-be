@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::backend_core::features::fire_feature::models::FireStatus;
+use crate::backend_core::features::fire_alert_feature::models::FireStatus;
 
 type Token = String;
 
