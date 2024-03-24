@@ -157,7 +157,8 @@ async fn update_features_status_handler(
         .default_database()
         .unwrap()
         .collection::<User>("users");
-    match user_coll
+    
+    let res = match user_coll
         .find_one_with_session(doc! { "email": email.clone() }, None, &mut session)
         .await
     {
@@ -197,7 +198,12 @@ async fn update_features_status_handler(
                 message: format!("Failed to find the feature status of {}", email.clone()),
             }),
         ),
-    }
+    };
+
+    session.commit_transaction().await.unwrap();
+
+    res
+
 }
 
 pub fn features_route() -> ApiRouter {
