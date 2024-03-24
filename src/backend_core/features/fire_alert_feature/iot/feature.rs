@@ -167,10 +167,10 @@ impl IotFeature for IotFireFeature {
 
                                 for (sensor_type, data) in sensor_data {
                                     let sensor_logs = data
-                                        .iter()
+                                        .into_iter()
                                         .map(|sensor| SensorLogData {
                                             id: sensor.id,
-                                            component: sensor.component.clone(),
+                                            component: sensor.component,
                                             value: sensor.value,
                                             alert: sensor.alert,
                                             timestamp: SystemTime::now(),
