@@ -11,7 +11,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    backend_core::features::fire_alert_feature::models::{FireCollection, SensorDataType, SensorLogData},
+    backend_core::features::fire_alert_feature::models::{FireLog, SensorLogData},
     json::Json,
 };
 
@@ -50,7 +50,7 @@ async fn handler(headers: HeaderMap, Path(Params { email }): Path<Params>) -> im
             }),
         );
     }
-    let fire_coll: Collection<FireCollection> = {
+    let fire_coll: Collection<FireLog> = {
         let mongoc = unsafe { MONGOC.as_ref().clone().unwrap().lock() }.await;
         mongoc.default_database().unwrap().collection("fire")
     };

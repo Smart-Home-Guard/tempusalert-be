@@ -4,8 +4,8 @@ use crate::backend_core::features::fire_alert_feature::models::FireStatus;
 
 type Token = String;
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
-#[cfg_attr(test, derive(std::cmp::PartialEq))]
+#[derive(Deserialize, Serialize)]
+#[cfg_attr(test, derive(std::cmp::PartialEq, Debug))]
 #[serde(tag = "kind", content = "payload")]
 pub enum FireMQTTMessage {
     #[serde(rename = "0")]
@@ -32,11 +32,11 @@ pub enum FireMQTTMessage {
     },
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
-#[cfg_attr(test, derive(std::cmp::PartialEq))]
+#[derive(Deserialize, Serialize)]
+#[cfg_attr(test, derive(std::cmp::PartialEq, Debug))]
 pub struct SensorData {
     pub id: u32,
-    pub component: String,
+    pub component: u32,
     pub value: u32,
     pub alert: FireStatus,
 }
@@ -54,7 +54,7 @@ mod deserialize_tests {
                 "fire": [
                     {
                         "id": 0,
-                        "component": "FIRE_0",
+                        "component": 8,
                         "value": 460,
                         "alert": "SAFE"
                     }
@@ -62,31 +62,31 @@ mod deserialize_tests {
                 "smoke": [
                     {
                         "id": 0,
-                        "component": "SMOKE_0",
+                        "component": 0,
                         "value": 120,
                         "alert": "SAFE"
                     },
                     {
                         "id": 0,
-                        "component": "SMOKE_1",
+                        "component": 1,
                         "value": 240,
                         "alert": "SAFE"
                     },
                     {
                         "id": 1,
-                        "component": "SMOKE_0",
+                        "component": 0,
                         "value": 120,
                         "alert": "SAFE"
                     },
                     {
                         "id": 2,
-                        "component": "SMOKE_0",
+                        "component": 0,
                         "value": 120,
                         "alert": "SAFE"
                     },
                     {
                         "id": 0,
-                        "component": "SMOKE_0",
+                        "component": 0,
                         "value": 120,
                         "alert": "SAFE"
                     }
@@ -94,13 +94,13 @@ mod deserialize_tests {
                 "co": [
                     {
                         "id": 0,
-                        "component": "CO_0",
+                        "component": 4,
                         "value": 460,
                         "alert": "SAFE"
                     },
                     {
                         "id": 1,
-                        "component": "CO_0",
+                        "component": 4,
                         "value": 460,
                         "alert": "SAFE"
                     }
@@ -108,13 +108,13 @@ mod deserialize_tests {
                 "heat": [
                     {
                         "id": 2,
-                        "component": "HEAT_0",
+                        "component": 2,
                         "value": 460,
                         "alert": "SAFE"
                     },
                     {
                         "id": 3,
-                        "component": "HEAT_0",
+                        "component": 2,
                         "value": 460,
                         "alert": "SAFE"
                     }
@@ -122,7 +122,7 @@ mod deserialize_tests {
                 "fire-button": [
                     {
                         "id": 1,
-                        "component": "BUTTON_0",
+                        "component": 10,
                         "value": 1,
                         "alert": "SAFE"
                     }
@@ -136,38 +136,38 @@ mod deserialize_tests {
             token: Token::from("abcd"),
             fire_data: vec![SensorData {
                 id: 0,
-                component: "FIRE_0".to_string(),
+                component: 8,
                 value: 460,
                 alert: FireStatus::SAFE,
             }],
             smoke: vec![
                 SensorData {
                     id: 0,
-                    component: "SMOKE_0".to_string(),
+                    component: 0,
                     value: 120,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 0,
-                    component: "SMOKE_1".to_string(),
+                    component: 1,
                     value: 240,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 1,
-                    component: "SMOKE_0".to_string(),
+                    component: 0,
                     value: 120,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 2,
-                    component: "SMOKE_0".to_string(),
+                    component: 0,
                     value: 120,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 0,
-                    component: "SMOKE_0".to_string(),
+                    component: 0,
                     value: 120,
                     alert: FireStatus::SAFE,
                 },
@@ -175,13 +175,13 @@ mod deserialize_tests {
             co: vec![
                 SensorData {
                     id: 0,
-                    component: "CO_0".to_string(),
+                    component: 4,
                     value: 460,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 1,
-                    component: "CO_0".to_string(),
+                    component: 4,
                     value: 460,
                     alert: FireStatus::SAFE,
                 },
@@ -189,20 +189,20 @@ mod deserialize_tests {
             heat: vec![
                 SensorData {
                     id: 2,
-                    component: "HEAT_0".to_string(),
+                    component: 2,
                     value: 460,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 3,
-                    component: "HEAT_0".to_string(),
+                    component: 2,
                     value: 460,
                     alert: FireStatus::SAFE,
                 },
             ],
             fire_button: vec![SensorData {
                 id: 1,
-                component: "BUTTON_0".to_string(),
+                component: 10,
                 value: 1,
                 alert: FireStatus::SAFE,
             }],
@@ -220,7 +220,7 @@ mod deserialize_tests {
                 "fire": [
                     {
                         "id": 0,
-                        "component": "FIRE_0",
+                        "component": 8,
                         "value": 460,
                         "alert": "UNSAFE"
                     }
@@ -238,7 +238,7 @@ mod deserialize_tests {
             token: Token::from("efgh"),
             fire_data: vec![SensorData {
                 id: 0,
-                component: "FIRE_0".to_string(),
+                component: 8,
                 value: 460,
                 alert: FireStatus::UNSAFE,
             }],
@@ -265,38 +265,38 @@ mod serialize_tests {
             token: Token::from("abcd"),
             fire_data: vec![SensorData {
                 id: 0,
-                component: "FIRE_0".to_string(),
+                component: 8,
                 value: 460,
                 alert: FireStatus::SAFE,
             }],
             smoke: vec![
                 SensorData {
                     id: 0,
-                    component: "SMOKE_0".to_string(),
+                    component: 0,
                     value: 120,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 0,
-                    component: "SMOKE_1".to_string(),
+                    component: 1,
                     value: 240,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 1,
-                    component: "SMOKE_0".to_string(),
+                    component: 0,
                     value: 120,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 2,
-                    component: "SMOKE_0".to_string(),
+                    component: 0,
                     value: 120,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 0,
-                    component: "SMOKE_0".to_string(),
+                    component: 0,
                     value: 120,
                     alert: FireStatus::SAFE,
                 },
@@ -304,13 +304,13 @@ mod serialize_tests {
             co: vec![
                 SensorData {
                     id: 0,
-                    component: "CO_0".to_string(),
+                    component: 4,
                     value: 460,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 1,
-                    component: "CO_0".to_string(),
+                    component: 4,
                     value: 460,
                     alert: FireStatus::SAFE,
                 },
@@ -318,20 +318,20 @@ mod serialize_tests {
             heat: vec![
                 SensorData {
                     id: 2,
-                    component: "HEAT_0".to_string(),
+                    component: 2,
                     value: 460,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 3,
-                    component: "HEAT_0".to_string(),
+                    component: 2,
                     value: 460,
                     alert: FireStatus::SAFE,
                 },
             ],
             fire_button: vec![SensorData {
                 id: 1,
-                component: "BUTTON_0".to_string(),
+                component: 10,
                 value: 1,
                 alert: FireStatus::SAFE,
             }],
@@ -344,7 +344,7 @@ mod serialize_tests {
                 "fire": [
                     {
                         "id": 0,
-                        "component": "FIRE_0",
+                        "component": 8,
                         "value": 460,
                         "alert": "SAFE"
                     }
@@ -352,31 +352,31 @@ mod serialize_tests {
                 "smoke": [
                     {
                         "id": 0,
-                        "component": "SMOKE_0",
+                        "component": 0,
                         "value": 120,
                         "alert": "SAFE"
                     },
                     {
                         "id": 0,
-                        "component": "SMOKE_1",
+                        "component": 1,
                         "value": 240,
                         "alert": "SAFE"
                     },
                     {
                         "id": 1,
-                        "component": "SMOKE_0",
+                        "component": 0,
                         "value": 120,
                         "alert": "SAFE"
                     },
                     {
                         "id": 2,
-                        "component": "SMOKE_0",
+                        "component": 0,
                         "value": 120,
                         "alert": "SAFE"
                     },
                     {
                         "id": 0,
-                        "component": "SMOKE_0",
+                        "component": 0,
                         "value": 120,
                         "alert": "SAFE"
                     }
@@ -384,13 +384,13 @@ mod serialize_tests {
                 "co": [
                     {
                         "id": 0,
-                        "component": "CO_0",
+                        "component": 4,
                         "value": 460,
                         "alert": "SAFE"
                     },
                     {
                         "id": 1,
-                        "component": "CO_0",
+                        "component": 4,
                         "value": 460,
                         "alert": "SAFE"
                     }
@@ -398,13 +398,13 @@ mod serialize_tests {
                 "heat": [
                     {
                         "id": 2,
-                        "component": "HEAT_0",
+                        "component": 2,
                         "value": 460,
                         "alert": "SAFE"
                     },
                     {
                         "id": 3,
-                        "component": "HEAT_0",
+                        "component": 2,
                         "value": 460,
                         "alert": "SAFE"
                     }
@@ -412,7 +412,7 @@ mod serialize_tests {
                 "fire-button": [
                     {
                         "id": 1,
-                        "component": "BUTTON_0",
+                        "component": 10,
                         "value": 1,
                         "alert": "SAFE"
                     }
@@ -431,7 +431,7 @@ mod serialize_tests {
             token: Token::from("efgh"),
             fire_data: vec![SensorData {
                 id: 0,
-                component: "FIRE_0".to_string(),
+                component: 8,
                 value: 460,
                 alert: FireStatus::UNSAFE,
             }],
@@ -448,7 +448,7 @@ mod serialize_tests {
                 "fire": [
                     {
                         "id": 0,
-                        "component": "FIRE_0",
+                        "component": 8,
                         "value": 460,
                         "alert": "UNSAFE"
                     }
