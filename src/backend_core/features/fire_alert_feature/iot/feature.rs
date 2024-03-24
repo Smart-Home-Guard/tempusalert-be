@@ -60,19 +60,17 @@ impl IotFireFeature {
         session.start_transaction(None).await.ok()?;
 
         if let Ok(None) = fire_log_coll
-            .find_one_with_session(
+            .find_one(
                 doc! { "owner_name": owner_name.clone() },
                 None,
-                &mut session,
+                
             )
             .await
         {
-            fire_log_coll.insert_one_with_session(doc! { "owner_name": owner_name.clone(), "fire_logs": [], "smoke_logs": [], "co_logs": [], "heat_logs": [], "button_logs": [] }, None, &mut session).await.ok()?;
+            fire_log_coll.insert_one(doc! { "owner_name": owner_name.clone(), "fire_logs": [], "smoke_logs": [], "co_logs": [], "heat_logs": [], "button_logs": [] }, None).await.ok()?;
         }
 
-        fire_log_coll.find_one_and_update_with_session(doc! { "owner_name": owner_name.clone() }, doc! { "$push": { field_name: { "$each": sensor_data.iter().map(|data| to_bson(data).unwrap()).collect::<Vec<_>>() }}}, None, &mut session).await.ok()?;
-
-        session.commit_transaction().await.ok()?;
+        fire_log_coll.find_one_and_update(doc! { "owner_name": owner_name.clone() }, doc! { "$push": { field_name: { "$each": sensor_data.iter().map(|data| to_bson(data).unwrap()).collect::<Vec<_>>() }}}, None).await.ok()?;
 
         Some(())
     }

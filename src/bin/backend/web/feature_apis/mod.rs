@@ -159,14 +159,13 @@ async fn update_features_status_handler(
         .await
     {
         Ok(Some(_)) => {
-            // FIXME: Make this more efficient
             for new_feat_status in new_feature_status {
                 if new_feat_status.enabled {
                     if let Ok(None) = user_coll.find_one(doc! { "email": email.clone(), "enabled_features": { "$elemMatch": new_feat_status.name.clone() } }, None).await {
-                        user_coll.find_one_and_update(doc! { "email": email.clone() }, doc! { "$push": { "enabled_features": new_feat_status.name.clone() } }  , None).await;
+                        let _ = user_coll.find_one_and_update(doc! { "email": email.clone() }, doc! { "$push": { "enabled_features": new_feat_status.name.clone() } }  , None).await;
                     }
                 } else {
-                    user_coll
+                    let _ = user_coll
                         .find_one_and_update(
                             doc! { "email": email.clone() },
                             doc! { "$pull": { "enabled_features": new_feat_status.name.clone() } },
