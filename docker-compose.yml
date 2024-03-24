@@ -20,7 +20,7 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
-    image: tempusalert-be
+    image: ghcr.io/smart-home-guard/tempusalert-be
     container_name: backend
     volumes:
       - .env:/tempusalert-be/.env
