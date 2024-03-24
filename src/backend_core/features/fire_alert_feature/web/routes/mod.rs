@@ -14,6 +14,5 @@ pub fn create_router(web: &mut WebFireFeature) -> ApiRouter {
         MONGOC = Some(Arc::new(Mutex::new(web.mongoc.clone())));
     }
 
-    ApiRouter::new()
-        .nest("/", get_logs_of_user::routes())
+    ApiRouter::new().nest("/", get_logs_of_user::routes())
 }

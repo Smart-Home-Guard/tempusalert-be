@@ -94,6 +94,9 @@ impl IotFeature for IotDeviceStatusFeature {
                     serde_json::from_str::<DeviceStatusMQTTMessage>(raw_json.as_ref()).ok()
                 })
             {
+                let mut session = self.mongoc.clone().start_session(None).await.unwrap();
+                session.start_transaction(None).await.unwrap();
+
                 match message {
                     DeviceStatusMQTTMessage::ReadBattery { token, data } => {
                         if let Some(username) =
@@ -103,7 +106,7 @@ impl IotFeature for IotDeviceStatusFeature {
                             let device_coll: Collection<Document> =
                                 mongoc.default_database().unwrap().collection("devices");
                             for ReadBatteryData { id, value: battery } in data {
-                                if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone() }, doc! { "$push": { "battery_logs": to_bson(&BatteryStatus { battery, timestamp: SystemTime::now() }).unwrap() } }, None).await {
+                                if let Err(_) = device_coll.find_one_and_update_with_session(doc! { "id": id, "owner_name": username.clone() }, doc! { "$push": { "battery_logs": to_bson(&BatteryStatus { battery, timestamp: SystemTime::now() }).unwrap() } }, None, &mut session).await {
                                     eprint!("Failed to process read battery data");
                                 }
                             }
@@ -119,7 +122,7 @@ impl IotFeature for IotDeviceStatusFeature {
                             let device_coll: Collection<Document> =
                                 mongoc.default_database().unwrap().collection("devices");
                             for ReadDeviceErrorData { id, component } in data {
-                                if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone() }, doc! { "$push": { "error_logs": to_bson(&DeviceError { id, component, timestamp: SystemTime::now() }).unwrap() } }, None).await {
+                                if let Err(_) = device_coll.find_one_and_update_with_session(doc! { "id": id, "owner_name": username.clone() }, doc! { "$push": { "error_logs": to_bson(&DeviceError { id, component, timestamp: SystemTime::now() }).unwrap() } }, None, &mut session).await {
                                     eprint!("Failed to process read device error data");
                                 }
                             }
@@ -135,18 +138,18 @@ impl IotFeature for IotDeviceStatusFeature {
                             let device_coll: Collection<Document> =
                                 mongoc.default_database().unwrap().collection("devices");
                             for ConnectDeviceData { id, component } in data {
-                                match device_coll.find_one(doc! { "id": id, "owner_name": username.clone() }, None).await {
+                                match device_coll.find_one_with_session(doc! { "id": id, "owner_name": username.clone() }, None, &mut session).await {
                                     Ok(Some(_)) => {
-                                        if let Ok(None) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone(), "components": { "$elemMatch": { "id": component } } }, doc! { "$push": { "components.$.logs": to_bson(&ComponentStatus::Connect { timestamp: SystemTime::now() }).unwrap() } }, None).await {
-                                            if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone() }, doc! { "$push": { "components": to_bson(&Component { id: component, logs: vec![ComponentStatus::Connect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
+                                        if let Ok(None) = device_coll.find_one_and_update_with_session(doc! { "id": id, "owner_name": username.clone(), "components": { "$elemMatch": { "id": component } } }, doc! { "$push": { "components.$.logs": to_bson(&ComponentStatus::Connect { timestamp: SystemTime::now() }).unwrap() } }, None, &mut session).await {
+                                            if let Err(_) = device_coll.find_one_and_update_with_session(doc! { "id": id, "owner_name": username.clone() }, doc! { "$push": { "components": to_bson(&Component { id: component, logs: vec![ComponentStatus::Connect { timestamp: SystemTime::now() }]  }).unwrap() } }, None, &mut session).await {
                                                 eprintln!("Failed to process connect device data");
                                             }
                                         }
                                     }
                                     Ok(None) => {
-                                        if let Err(_) = device_coll.insert_one(doc! { "id": id, "owner_name": username.clone(), "battery_logs": to_bson(&vec![] as &Vec<BatteryStatus>).unwrap(), "error_logs": to_bson(&vec![] as &Vec<DeviceError>).unwrap(), "components": to_bson(&vec![] as &Vec<Component>).unwrap() }, None).await {
+                                        if let Err(_) = device_coll.insert_one_with_session(doc! { "id": id, "owner_name": username.clone(), "battery_logs": to_bson(&vec![] as &Vec<BatteryStatus>).unwrap(), "error_logs": to_bson(&vec![] as &Vec<DeviceError>).unwrap(), "components": to_bson(&vec![] as &Vec<Component>).unwrap() }, None, &mut session).await {
                                             eprintln!("Failed to process connect device data");
-                                        } else if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone() }, doc! { "$push": { "components": to_bson(&Component { id, logs: vec![ComponentStatus::Connect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
+                                        } else if let Err(_) = device_coll.find_one_and_update_with_session(doc! { "id": id, "owner_name": username.clone() }, doc! { "$push": { "components": to_bson(&Component { id, logs: vec![ComponentStatus::Connect { timestamp: SystemTime::now() }]  }).unwrap() } }, None, &mut session).await {
                                             eprintln!("Failed to process connect device data");
                                         }
                                     }
@@ -168,15 +171,16 @@ impl IotFeature for IotDeviceStatusFeature {
                                 mongoc.default_database().unwrap().collection("devices");
                             for DisconnectDeviceData { id, component } in data {
                                 match device_coll
-                                    .find_one(
+                                    .find_one_with_session(
                                         doc! { "id": id, "owner_name": username.clone() },
                                         None,
+                                        &mut session,
                                     )
                                     .await
                                 {
                                     Ok(Some(_)) => {
-                                        if let Ok(None) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone(), "components": { "$elemMatch": { "id": component } } }, doc! { "$push": { "components.$.logs": to_bson(&ComponentStatus::Disconnect { timestamp: SystemTime::now() }).unwrap() } }, None).await {
-                                            if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "onwer_name": username.clone() }, doc! { "$push": { "components": to_bson(&Component { id, logs: vec![ComponentStatus::Disconnect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
+                                        if let Ok(None) = device_coll.find_one_and_update_with_session(doc! { "id": id, "owner_name": username.clone(), "components": { "$elemMatch": { "id": component } } }, doc! { "$push": { "components.$.logs": to_bson(&ComponentStatus::Disconnect { timestamp: SystemTime::now() }).unwrap() } }, None, &mut session).await {
+                                            if let Err(_) = device_coll.find_one_and_update_with_session(doc! { "id": id, "onwer_name": username.clone() }, doc! { "$push": { "components": to_bson(&Component { id, logs: vec![ComponentStatus::Disconnect { timestamp: SystemTime::now() }]  }).unwrap() } }, None, &mut session).await {
                                                 eprintln!("Failed to process disconnect device data");
                                             }
                                         }
@@ -198,6 +202,8 @@ impl IotFeature for IotDeviceStatusFeature {
                         }
                     }
                 }
+
+                session.commit_transaction().await.unwrap();
             } else {
                 eprintln!("Failed to process MQTT message");
             }
