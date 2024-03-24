@@ -194,12 +194,7 @@ async fn update_features_status_handler(
                 message: format!("Failed to find the feature status of {}", email.clone()),
             }),
         ),
-    };
-
-    session.commit_transaction().await.unwrap();
-
-    res
-
+    }
 }
 
 pub fn features_route() -> ApiRouter {
