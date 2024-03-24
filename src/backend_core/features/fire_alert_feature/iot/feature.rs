@@ -36,56 +36,33 @@ pub struct IotFireFeature {
 }
 
 impl IotFireFeature {
-    async fn process_sensor_data(
+    async fn persist_sensor_data(
         &self,
-        username: &str,
-        sensor_data: Vec<SensorLogData>,
-        sensor_type: SensorDataType,
-    ) {
-        let filter = doc! {"owner_name": username};
-        let update_doc = self.generate_update_doc(&sensor_data, &sensor_type);
-
-        let collection = self.fire_collection.clone();
-
-        match collection
-            .find_one_and_update(filter.clone(), update_doc.clone(), None)
-            .await
-        {
-            Ok(result) => {
-                if result.is_none() {
-                    let insert_doc = doc! {
-                        "$setOnInsert": {"owner_name": username},
-                        "$set": update_doc
-                    };
-
-                    if let Err(err) = collection
-                        .update_one(filter.clone(), insert_doc, None)
-                        .await
-                    {
-                        eprintln!("Failed to upsert document: {}", err);
-                    }
-                }
-            }
-            Err(_) => {
-                eprintln!("Failed to process sensor data");
-            }
-        }
-    }
-
-    fn generate_update_doc(
-        &self,
+        owner_name: String,
         sensor_data: &[SensorLogData],
         sensor_type: &SensorDataType,
-    ) -> Document {
+    ) -> Option<()> {
         let field_name = match sensor_type {
             SensorDataType::Fire => "fire_logs",
             SensorDataType::Smoke => "smoke_logs",
             SensorDataType::CO => "co_logs",
             SensorDataType::Heat => "heat_logs",
-            SensorDataType::FireButton => "fire_button_logs",
+            SensorDataType::FireButton => "button_logs",
         };
+        
+        let fire_log_coll = self.mongoc.clone().default_database().unwrap().collection("fire-logs");
+        let mut session = self.mongoc.clone().start_session(None).await.ok()?;
+        session.start_transaction(None).await.ok()?;
 
-        doc! {"$push": {field_name: { "$each": sensor_data.iter().map(|data| to_bson(data).unwrap()).collect::<Vec<_>>() }}}
+        if let Ok(None) = fire_log_coll.find_one_with_session(doc! { "owner_name": owner_name.clone() }, None, &mut session).await {
+            fire_log_coll.insert_one_with_session(doc! { "owner_name": owner_name.clone(), "fire_logs": [], "smoke_logs": [], "co_logs": [], "heat_logs": [], "button_logs": [] }, None, &mut session).await.ok()?;
+        }
+        
+        fire_log_coll.find_one_and_update_with_session(doc! { "owner_name": owner_name.clone() }, doc! { "$push": { field_name: { "$each": sensor_data.iter().map(|data| to_bson(data).unwrap()).collect::<Vec<_>>() }}}, None, &mut session).await.ok()?;
+
+        session.commit_transaction().await.ok()?;
+
+        Some(())
     }
 }
 
@@ -144,7 +121,7 @@ impl IotFeature for IotFireFeature {
                             smoke,
                             co,
                             heat,
-                            fire_button,
+                            button,
                         }
                         | FireMQTTMessage::Unsafe {
                             token,
@@ -152,7 +129,7 @@ impl IotFeature for IotFireFeature {
                             smoke,
                             co,
                             heat,
-                            fire_button,
+                            button,
                         } => {
                             if let Some(email) =
                                 get_email_from_client_token(&self.jwt_key, token, &mut mongoc).await
@@ -162,7 +139,7 @@ impl IotFeature for IotFireFeature {
                                     (SensorDataType::Smoke, smoke),
                                     (SensorDataType::CO, co),
                                     (SensorDataType::Heat, heat),
-                                    (SensorDataType::FireButton, fire_button),
+                                    (SensorDataType::FireButton, button),
                                 ];
 
                                 for (sensor_type, data) in sensor_data {
@@ -183,10 +160,10 @@ impl IotFeature for IotFireFeature {
                                         | SensorDataType::CO
                                         | SensorDataType::Heat
                                         | SensorDataType::FireButton => {
-                                            self.process_sensor_data(
-                                                &email,
-                                                sensor_logs,
-                                                sensor_type,
+                                            self.persist_sensor_data(
+                                                email.clone(),
+                                                &sensor_logs,
+                                                &sensor_type,
                                             )
                                             .await;
                                         }

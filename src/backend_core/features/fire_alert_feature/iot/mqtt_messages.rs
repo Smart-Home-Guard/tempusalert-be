@@ -17,7 +17,7 @@ pub enum FireMQTTMessage {
         co: Vec<SensorData>,
         heat: Vec<SensorData>,
         #[serde(rename = "fire-button")]
-        fire_button: Vec<SensorData>,
+        button: Vec<SensorData>,
     },
     #[serde(rename = "1")]
     Unsafe {
@@ -28,7 +28,7 @@ pub enum FireMQTTMessage {
         co: Vec<SensorData>,
         heat: Vec<SensorData>,
         #[serde(rename = "fire-button")]
-        fire_button: Vec<SensorData>,
+        button: Vec<SensorData>,
     },
 }
 
@@ -200,7 +200,7 @@ mod deserialize_tests {
                     alert: FireStatus::SAFE,
                 },
             ],
-            fire_button: vec![SensorData {
+            button: vec![SensorData {
                 id: 1,
                 component: 10,
                 value: 1,
@@ -245,7 +245,7 @@ mod deserialize_tests {
             smoke: vec![],
             co: vec![],
             heat: vec![],
-            fire_button: vec![],
+            button: vec![],
         };
 
         assert_eq!(result, expected);
@@ -329,7 +329,7 @@ mod serialize_tests {
                     alert: FireStatus::SAFE,
                 },
             ],
-            fire_button: vec![SensorData {
+            button: vec![SensorData {
                 id: 1,
                 component: 10,
                 value: 1,
@@ -438,7 +438,7 @@ mod serialize_tests {
             smoke: vec![],
             co: vec![],
             heat: vec![],
-            fire_button: vec![],
+            button: vec![],
         };
 
         let expected = json!({
