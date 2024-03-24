@@ -97,10 +97,10 @@ async fn handler(headers: HeaderMap, Path(Params { email }): Path<Params>) -> im
 
 pub fn routes() -> ApiRouter {
     ApiRouter::new().api_route(
-        "/fire/:email",
+        "/:email/logs",
         get_with(handler, |op| {
             op.description("Get fire metrics log by user email")
-                .tag("Device status")
+                .tag("Fire alert")
                 .parameter("email", |op: TransformParameter<String>| {
                     op.description("The registered email")
                 })
