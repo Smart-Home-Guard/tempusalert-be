@@ -55,7 +55,7 @@ impl IotFireFeature {
             .clone()
             .default_database()
             .unwrap()
-            .collection("fire-logs");
+            .collection("fire_alerts");
         let mut session = self.mongoc.clone().start_session(None).await.ok()?;
         session.start_transaction(None).await.ok()?;
 
