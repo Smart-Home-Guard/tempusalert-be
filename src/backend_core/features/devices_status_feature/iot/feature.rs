@@ -203,7 +203,7 @@ impl IotFeature for IotDeviceStatusFeature {
                     }
                 }
 
-                session.commit_transaction().await.unwrap();
+                let _ = session.commit_transaction().await;
             } else {
                 eprintln!("Failed to process MQTT message");
             }

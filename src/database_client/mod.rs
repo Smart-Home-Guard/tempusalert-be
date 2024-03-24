@@ -28,6 +28,7 @@ pub async fn init(config: MongocConfig) -> mongodb::error::Result<Client> {
                 .build(),
         )
         .default_database(config.default_db)
+        .retry_writes(Some(false))
         .build();
 
     let client = Client::with_options(client_options)?;
