@@ -1,0 +1,87 @@
+name: CD
+
+on:
+  push:
+    branches: ["main"]
+    paths-ignore:
+      - "*.md"
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: smart-home-guard/tempusalert-be
+  ORG_USERNAME: ${{ github.actor }}
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  packages: write
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup env file
+        run: |
+          echo APP_PROFILE=${{ secrets.APP_PROFILE }} >> .env
+          echo RUST_LOG${{ secrets.RUST_LOG }} >> .env
+          echo MONGO_INITDB_ROOT_USERNAME=${{ secrets.MONGO_INITDB_ROOT_USERNAME }} >> .env
+          echo MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_INITDB_ROOT_PASSWORD }} >> .env
+          echo MONGO_DEFAULT_DATABASE=${{ secrets.MONGO_DEFAULT_DATABASE }} >> .env
+          echo MONGO_SERVER_HOSTNAME=${{ secrets.MONGO_SERVER_HOSTNAME }} >> .env
+          echo MONGO_SERVER_PORT=${{ secrets.MONGO_SERVER_PORT }} >> .env
+          echo MONGO_AUTH_SOURCE=${{ secrets.MONGO_AUTH_SOURCE }} >> .env
+          echo MQTT_SERVER_HOSTNAME=${{ secrets.MQTT_SERVER_HOSTNAME }} >> .env
+          echo MQTT_SERVER_PORT=${{ secrets.MQTT_SERVER_PORT }} >> .env
+          echo MQTT_CLIENT_CAPACITY=${{ secrets.MQTT_CLIENT_CAPACITY }} >> .env
+          echo MQTT_CLIENT_KEEP_ALIVE_SEC=${{ secrets.MQTT_CLIENT_KEEP_ALIVE_SEC }} >> .env
+          echo JWT_KEY=${{ secrets.JWT_KEY }} >> .env
+          echo SMTP_HOSTNAME=${{ secrets.SMTP_HOSTNAME }} >> .env
+          echo SMTP_USER=${{ secrets.SMTP_USER }} >> .env
+          echo SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }} >> .env
+          echo PEM_FILE=${{ secrets.PEM_FILE }} >> .env
+
+      - name: Setup Docker buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log into registry ${{ env.REGISTRY }}
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ env.ORG_USERNAME }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - name: Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.VPS_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+
+          script: |
+            export CR_PAT=${{ secrets.GITHUB_TOKEN }}
+            echo $CR_PAT | docker login ${{ env.REGISTRY }} -u ${{ env.ORG_USERNAME }} --password-stdin
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+            cd tempusalert-be
+            curl -s https://raw.githubusercontent.com/Smart-Home-Guard/tempusalert-be/main/docker-compose.yml -o docker-compose.yml
+            docker compose rm -f backend
+            docker compose up -d backend
+            docker logout ${{ env.REGISTRY }}
