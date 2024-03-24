@@ -200,7 +200,7 @@ async fn update_features_status_handler(
         ),
     };
 
-    let _ = session.commit_transaction().await;
+    session.commit_transaction().await.unwrap();
 
     res
 

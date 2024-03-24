@@ -72,7 +72,7 @@ impl IotFireFeature {
 
         fire_log_coll.find_one_and_update_with_session(doc! { "owner_name": owner_name.clone() }, doc! { "$push": { field_name: { "$each": sensor_data.iter().map(|data| to_bson(data).unwrap()).collect::<Vec<_>>() }}}, None, &mut session).await.ok()?;
 
-        let _ = session.commit_transaction().await.ok()?;
+        session.commit_transaction().await.ok()?;
 
         Some(())
     }
