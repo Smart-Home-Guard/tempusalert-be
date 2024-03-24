@@ -9,7 +9,7 @@ type Token = String;
 #[serde(tag = "kind", content = "payload")]
 pub enum FireMQTTMessage {
     #[serde(rename = "0")]
-    Safe {
+    Periodic {
         token: Token,
         #[serde(rename = "fire")]
         fire_data: Vec<SensorData>,
@@ -20,7 +20,7 @@ pub enum FireMQTTMessage {
         button: Vec<SensorData>,
     },
     #[serde(rename = "1")]
-    Unsafe {
+    Interrupt {
         token: Token,
         #[serde(rename = "fire")]
         fire_data: Vec<SensorData>,
@@ -132,7 +132,7 @@ mod deserialize_tests {
 
         let result: FireMQTTMessage = serde_json::from_str(input).unwrap();
 
-        let expected = FireMQTTMessage::Safe {
+        let expected = FireMQTTMessage::Periodic {
             token: Token::from("abcd"),
             fire_data: vec![SensorData {
                 id: 0,
@@ -234,7 +234,7 @@ mod deserialize_tests {
 
         let result: FireMQTTMessage = serde_json::from_str(input).unwrap();
 
-        let expected = FireMQTTMessage::Unsafe {
+        let expected = FireMQTTMessage::Interrupt {
             token: Token::from("efgh"),
             fire_data: vec![SensorData {
                 id: 0,
@@ -261,7 +261,7 @@ mod serialize_tests {
 
     #[test]
     fn serialize_safe_data() {
-        let input = FireMQTTMessage::Safe {
+        let input = FireMQTTMessage::Periodic {
             token: Token::from("abcd"),
             fire_data: vec![SensorData {
                 id: 0,
@@ -427,7 +427,7 @@ mod serialize_tests {
 
     #[test]
     fn serialize_unsafe_data() {
-        let input = FireMQTTMessage::Unsafe {
+        let input = FireMQTTMessage::Interrupt {
             token: Token::from("efgh"),
             fire_data: vec![SensorData {
                 id: 0,

@@ -125,7 +125,7 @@ impl IotFeature for IotFireFeature {
             if let Ok(raw_json) = String::from_utf8(payload.to_vec()) {
                 if let Some(message) = serde_json::from_str::<FireMQTTMessage>(&raw_json).ok() {
                     match message {
-                        FireMQTTMessage::Safe {
+                        FireMQTTMessage::Periodic {
                             token,
                             fire_data,
                             smoke,
@@ -133,7 +133,7 @@ impl IotFeature for IotFireFeature {
                             heat,
                             button,
                         }
-                        | FireMQTTMessage::Unsafe {
+                        | FireMQTTMessage::Interrupt {
                             token,
                             fire_data,
                             smoke,
