@@ -2,12 +2,15 @@ use aide::{
     axum::{routing::get_with, ApiRouter, IntoApiResponse},
     transform::TransformParameter,
 };
-use axum::{extract::Path, http::{HeaderMap, StatusCode}};
+use axum::{
+    extract::Path,
+    http::{HeaderMap, StatusCode},
+};
 use mongodb::{bson::doc, Collection};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{backend_core::features::device_status_feature::models::Device, json::Json};
+use crate::{backend_core::features::devices_status_feature::models::Device, json::Json};
 
 use super::MONGOC;
 
@@ -25,13 +28,20 @@ pub struct Params {
 
 async fn handler(
     headers: HeaderMap,
-    Path(Params {
-        device_id,
-        email,
-    }): Path<Params>,
+    Path(Params { device_id, email }): Path<Params>,
 ) -> impl IntoApiResponse {
-    if headers.get("email").is_none() || headers.get("email").is_some_and(|value| value != email.as_str()) {
-        return (StatusCode::FORBIDDEN, Json(Response { message: String::from("Forbidden"), device: None, }));
+    if headers.get("email").is_none()
+        || headers
+            .get("email")
+            .is_some_and(|value| value != email.as_str())
+    {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(Response {
+                message: String::from("Forbidden"),
+                device: None,
+            }),
+        );
     }
     let device_coll: Collection<Device> = {
         let mongoc = unsafe { MONGOC.as_ref().clone().unwrap().lock() }.await;
@@ -39,10 +49,7 @@ async fn handler(
     };
 
     match device_coll
-        .find_one(
-            doc! { "id": device_id, "owner_name": email.clone() },
-            None,
-        )
+        .find_one(doc! { "id": device_id, "owner_name": email.clone() }, None)
         .await
     {
         Ok(Some(device)) => (
@@ -78,7 +85,7 @@ pub fn routes() -> ApiRouter {
         "/:email/devices/:device_id",
         get_with(handler, |op| {
             op.description("Get devices by id for a given user by email")
-                .tag("Device status")
+                .tag("Devices status")
                 .parameter("email", |op: TransformParameter<String>| {
                     op.description("The registered email")
                 })

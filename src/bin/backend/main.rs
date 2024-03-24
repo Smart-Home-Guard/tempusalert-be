@@ -5,7 +5,7 @@ use futures::FutureExt;
 use iot::IotTask;
 use rumqttc::{AsyncClient, EventLoop};
 use tempusalert_be::{
-    backend_core::features::{device_status_feature, fire_feature, IotFeature, WebFeature},
+    backend_core::features::{devices_status_feature, fire_alert_feature, IotFeature, WebFeature},
     errors::AppError,
     mqtt_client::{self, ClientConfig},
 };
@@ -16,7 +16,6 @@ mod database_client;
 mod globals;
 mod iot;
 mod mail;
-mod models;
 mod push_notification;
 
 #[macro_use]
@@ -77,7 +76,7 @@ async fn init_mqtt_client(client_id: &str) -> (AsyncClient, EventLoop) {
     mqtt_client::init(mqtt_client_config)
 }
 
-static mut TOGGABLE_FEATURES_NAMES: Vec<String> = vec![]; 
+static mut TOGGABLE_FEATURES_NAMES: Vec<String> = vec![];
 
 #[tokio::main]
 async fn main() -> AppResult {
@@ -88,8 +87,8 @@ async fn main() -> AppResult {
     let (web_feats, iot_feats, toggable_feat_names) = create_features!(
         mongoc.clone(),
         init_mqtt_client,
-        fire_feature,
-        device_status_feature
+        fire_alert_feature,
+        devices_status_feature
     );
 
     unsafe {

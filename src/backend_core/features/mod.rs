@@ -47,6 +47,6 @@ pub trait WebFeature {
 }
 
 // Features
-pub mod device_status_feature;
-pub mod fire_feature;
+pub mod devices_status_feature;
+pub mod fire_alert_feature;
 pub mod template_feature;

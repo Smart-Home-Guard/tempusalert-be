@@ -2,12 +2,15 @@ use aide::{
     axum::{routing::get_with, ApiRouter, IntoApiResponse},
     transform::TransformParameter,
 };
-use axum::{extract::Path, http::{HeaderMap, StatusCode}};
+use axum::{
+    extract::Path,
+    http::{HeaderMap, StatusCode},
+};
 use mongodb::{bson::doc, options::FindOptions, Collection};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{backend_core::features::device_status_feature::models::Device, json::Json};
+use crate::{backend_core::features::devices_status_feature::models::Device, json::Json};
 
 use super::MONGOC;
 
@@ -29,8 +32,18 @@ pub struct ResponseDevice {
 }
 
 async fn handler(headers: HeaderMap, Path(Params { email }): Path<Params>) -> impl IntoApiResponse {
-    if headers.get("email").is_none() || headers.get("email").is_some_and(|value| value != email.as_str()) {
-        return (StatusCode::FORBIDDEN, Json(Response { message: String::from("Forbidden"), devices: None, }));
+    if headers.get("email").is_none()
+        || headers
+            .get("email")
+            .is_some_and(|value| value != email.as_str())
+    {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(Response {
+                message: String::from("Forbidden"),
+                devices: None,
+            }),
+        );
     }
     let device_coll: Collection<Device> = {
         let mongoc = unsafe { MONGOC.as_ref().clone().unwrap().lock() }.await;
@@ -83,10 +96,7 @@ async fn handler(headers: HeaderMap, Path(Params { email }): Path<Params>) -> im
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(Response {
                 devices: None,
-                message: format!(
-                    "Failed to fetch all devices for user '{}'",
-                    email.clone()
-                ),
+                message: format!("Failed to fetch all devices for user '{}'", email.clone()),
             }),
         )
     }
@@ -97,7 +107,7 @@ pub fn routes() -> ApiRouter {
         "/:email/devices",
         get_with(handler, |op| {
             op.description("Get all devices for a given user by email")
-                .tag("Device status")
+                .tag("Devices status")
                 .parameter("email", |op: TransformParameter<String>| {
                     op.description("The registered email")
                 })

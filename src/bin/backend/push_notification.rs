@@ -2,15 +2,13 @@ use std::fs::File;
 
 use mongodb::{bson::doc, Cursor};
 use once_cell::sync::Lazy;
+use tempusalert_be::backend_core::models::{PushCredential, PushKey};
 use web_push::{
     ContentEncoding, IsahcWebPushClient, SubscriptionInfo, VapidSignatureBuilder, WebPushClient,
     WebPushMessageBuilder,
 };
 
-use crate::{
-    models::{PushCredential, PushKey},
-    parse_env_var,
-};
+use crate::parse_env_var;
 
 static PEM_FILE: Lazy<File> =
     Lazy::new(|| File::open(parse_env_var::<String>("PEM_FILE")).unwrap());

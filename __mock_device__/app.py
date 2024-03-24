@@ -1,42 +1,23 @@
 import time
-from counterfit_connection import CounterFitConnection
-from counterfit_shims_grove.grove_light_sensor_v1_2 import GroveLightSensor
-from counterfit_shims_grove.grove_led import GroveLed
 import paho.mqtt.client as mqtt
 import json
 
-CounterFitConnection.init('127.0.0.1', 5000)
+id = '<client-id>'
 
-light_sensor = GroveLightSensor(0)
-led = GroveLed(5)
-
-id = '9f5a3bbd-907d-4a9b-9de7-6b8021843b37'
-
-client_telemetry_topic = id + '/telemetry'
-server_command_topic = id + '/commands'
-client_name = id + 'nightlight_client'
+client_metrics_topic = id + '/<feature>-metrics'
+server_command_topic = id + '/<feature>-commands'
+client_name = id
 
 mqtt_client = mqtt.Client(client_name)
 mqtt_client.connect('test.mosquitto.org')
 
 mqtt_client.loop_start()
 
-def handle_command(client, userdata, message):
-    payload = json.loads(message.payload.decode())
-    print("Message received:", payload)
+for i in range(5):
+    message = {
 
-    if payload['led_on']:
-        led.on()
-    else:
-        led.off()
-        
-mqtt_client.subscribe(server_command_topic)
-mqtt_client.on_message = handle_command
-
-while True:
-    light = light_sensor.light
-    print('Light level:', light)
-    
-    mqtt_client.publish(client_telemetry_topic, json.dumps({'light' : light}))
+    }
+    mqtt_client.publish(client_metrics_topic, json.dumps(message))
+    print(i)
 
     time.sleep(1)
