@@ -1,5 +1,6 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::time::SystemTime;
 
 #[derive(Serialize, Deserialize, JsonSchema)]
@@ -19,11 +20,12 @@ pub enum SensorDataType {
     FireButton,
 }
 
-#[derive(Deserialize, Serialize, JsonSchema)]
+#[derive(Serialize_repr, Deserialize_repr, JsonSchema)]
+#[repr(u8)]
 #[cfg_attr(test, derive(std::cmp::PartialEq, Debug))]
 pub enum FireStatus {
-    SAFE,
-    UNSAFE,
+    SAFE = 0,
+    UNSAFE = 1,
 }
 
 #[derive(Serialize, Deserialize)]
