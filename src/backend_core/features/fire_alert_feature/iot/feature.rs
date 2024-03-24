@@ -22,7 +22,7 @@ use crate::{
             IotFeature,
         },
         utils::non_primitive_cast,
-    }
+    },
 };
 
 pub struct IotFireFeature {
@@ -49,15 +49,27 @@ impl IotFireFeature {
             SensorDataType::Heat => "heat_logs",
             SensorDataType::FireButton => "button_logs",
         };
-        
-        let fire_log_coll = self.mongoc.clone().default_database().unwrap().collection("fire-logs");
+
+        let fire_log_coll = self
+            .mongoc
+            .clone()
+            .default_database()
+            .unwrap()
+            .collection("fire-logs");
         let mut session = self.mongoc.clone().start_session(None).await.ok()?;
         session.start_transaction(None).await.ok()?;
 
-        if let Ok(None) = fire_log_coll.find_one_with_session(doc! { "owner_name": owner_name.clone() }, None, &mut session).await {
+        if let Ok(None) = fire_log_coll
+            .find_one_with_session(
+                doc! { "owner_name": owner_name.clone() },
+                None,
+                &mut session,
+            )
+            .await
+        {
             fire_log_coll.insert_one_with_session(doc! { "owner_name": owner_name.clone(), "fire_logs": [], "smoke_logs": [], "co_logs": [], "heat_logs": [], "button_logs": [] }, None, &mut session).await.ok()?;
         }
-        
+
         fire_log_coll.find_one_and_update_with_session(doc! { "owner_name": owner_name.clone() }, doc! { "$push": { field_name: { "$each": sensor_data.iter().map(|data| to_bson(data).unwrap()).collect::<Vec<_>>() }}}, None, &mut session).await.ok()?;
 
         session.commit_transaction().await.ok()?;
