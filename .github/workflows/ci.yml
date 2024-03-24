@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "*/**/*.rs"
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run checks
+        run: cargo check
+
+      - name: Run lint
+        run: cargo clippy
+
+      - name: Build
+        run: cargo build
+
+      - name: Run tests
+        run: cargo test --verbose
