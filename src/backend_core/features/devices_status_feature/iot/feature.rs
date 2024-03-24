@@ -175,11 +175,6 @@ impl IotFeature for IotDeviceStatusFeature {
                                     .await
                                 {
                                     Ok(Some(_)) => {
-                                        println!(
-                                            "DisconnectDeviceData {}, {}",
-                                            id,
-                                            username.clone()
-                                        );
                                         if let Ok(None) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone(), "components": { "$elemMatch": { "id": component } } }, doc! { "$push": { "components.$.logs": to_bson(&ComponentStatus::Disconnect { timestamp: SystemTime::now() }).unwrap() } }, None).await {
                                             if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "onwer_name": username.clone() }, doc! { "$push": { "components": to_bson(&Component { id, logs: vec![ComponentStatus::Disconnect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
                                                 eprintln!("Failed to process disconnect device data");
