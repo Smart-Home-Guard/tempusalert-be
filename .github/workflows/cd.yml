@@ -84,6 +84,7 @@ jobs:
 
             cd tempusalert-be
             curl -s https://raw.githubusercontent.com/Smart-Home-Guard/tempusalert-be/main/docker-compose.yml -o docker-compose.yml
-            docker compose rm -f backend
+            docker compose stop tempusalert
+            docker compose rm -f tempusalert
             docker compose up -d tempusalert
             docker logout ${{ env.REGISTRY }}
