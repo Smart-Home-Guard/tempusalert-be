@@ -6,7 +6,7 @@ use axum::{
     extract::Path,
     http::{HeaderMap, StatusCode},
 };
-use mongodb::{bson::doc, change_stream::session};
+use mongodb::bson::doc;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use tempusalert_be::{backend_core::models::User, json::Json};
@@ -150,31 +150,26 @@ async fn update_features_status_handler(
     }
 
     let mongoc = MONGOC.get_or_init(init_database).await;
-    let mut session = mongoc.start_session(None).await.unwrap();
-    session.start_transaction(None).await.unwrap();
-
     let user_coll = mongoc
         .default_database()
         .unwrap()
         .collection::<User>("users");
-    
-    let res = match user_coll
-        .find_one_with_session(doc! { "email": email.clone() }, None, &mut session)
+    match user_coll
+        .find_one(doc! { "email": email.clone() }, None)
         .await
     {
         Ok(Some(_)) => {
             for new_feat_status in new_feature_status {
                 if new_feat_status.enabled {
-                    if let Ok(None) = user_coll.find_one_with_session(doc! { "email": email.clone(), "enabled_features": { "$elemMatch": new_feat_status.name.clone() } }, None, &mut session).await {
-                        let _ = user_coll.find_one_and_update_with_session(doc! { "email": email.clone() }, doc! { "$push": { "enabled_features": new_feat_status.name.clone() } }  , None, &mut session).await;
+                    if let Ok(None) = user_coll.find_one(doc! { "email": email.clone(), "enabled_features": { "$elemMatch": new_feat_status.name.clone() } }, None).await {
+                        let _ = user_coll.find_one_and_update(doc! { "email": email.clone() }, doc! { "$push": { "enabled_features": new_feat_status.name.clone() } }  , None).await;
                     }
                 } else {
                     let _ = user_coll
-                        .find_one_and_update_with_session(
+                        .find_one_and_update(
                             doc! { "email": email.clone() },
                             doc! { "$pull": { "enabled_features": new_feat_status.name.clone() } },
                             None,
-                            &mut session,
                         )
                         .await;
                 }
@@ -198,12 +193,7 @@ async fn update_features_status_handler(
                 message: format!("Failed to find the feature status of {}", email.clone()),
             }),
         ),
-    };
-
-    let _ = session.commit_transaction().await;
-
-    res
-
+    }
 }
 
 pub fn features_route() -> ApiRouter {
