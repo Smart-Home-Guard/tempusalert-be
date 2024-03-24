@@ -1,4 +1,6 @@
 # Smart Home Guard back-end
+[![CD](https://github.com/Smart-Home-Guard/tempusalert-be/actions/workflows/cd.yml/badge.svg)](https://github.com/Smart-Home-Guard/tempusalert-be/actions/workflows/cd.yml)
+[![CD](https://github.com/Smart-Home-Guard/tempusalert-be/actions/workflows/cd.yml/badge.svg)](https://github.com/Smart-Home-Guard/tempusalert-be/actions/workflows/cd.yml)
 ## Main contributors
 <a href = "https://github.com/Smart-Home-Guard/tempusalert-be/graphs/contributors">
   <img src = "https://contrib.rocks/image?repo=Smart-Home-Guard/tempusalert-be"/>
