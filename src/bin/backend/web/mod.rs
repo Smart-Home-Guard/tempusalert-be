@@ -71,8 +71,8 @@ impl WebTask {
             .nest_api_service("/auth/iot", auth_apis::iot_auth_routes())
             .nest_api_service("/auth/web", auth_apis::web_auth_routes())
             .nest_api_service("/auth/register", register_api::register_routes())
-            .nest_api_service("/push/credential", push_api::push_routes())
-            .nest_api_service("/features", feature_apis::features_route());
+            .nest_api_service("/api/push/credential", push_api::push_routes())
+            .nest_api_service("/api/features", feature_apis::features_route());
 
         for feat in &mut self.features {
             self.router = self.router.nest_api_service(
