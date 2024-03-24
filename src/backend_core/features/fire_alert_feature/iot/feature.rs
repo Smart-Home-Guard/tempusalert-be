@@ -18,7 +18,7 @@ use crate::{
     auth::get_email_from_client_token,
     backend_core::{
         features::{
-            fire_feature::models::{SensorDataType, SensorLogData},
+            fire_alert_feature::models::{SensorDataType, SensorLogData},
             IotFeature,
         },
         utils::non_primitive_cast,
@@ -114,11 +114,11 @@ impl IotFeature for IotFireFeature {
     where
         Self: Sized,
     {
-        "fire".into()
+        "fire-alert".into()
     }
 
     fn get_module_name(&self) -> String {
-        "fire".into()
+        "fire-alert".into()
     }
 
     fn get_mqttc(&mut self) -> rumqttc::AsyncClient {
