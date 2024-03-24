@@ -20,7 +20,7 @@ use crate::{
     auth::get_email_from_client_token,
     backend_core::{
         features::{
-            device_status_feature::models::{
+            devices_status_feature::models::{
                 BatteryStatus, Component, ComponentStatus, DeviceError,
             },
             IotFeature,
@@ -67,11 +67,11 @@ impl IotFeature for IotDeviceStatusFeature {
     where
         Self: Sized,
     {
-        "device-status".into()
+        "devices-status".into()
     }
 
     fn get_module_name(&self) -> String {
-        "device-status".into()
+        "devices-status".into()
     }
 
     fn get_mqttc(&mut self) -> rumqttc::AsyncClient {

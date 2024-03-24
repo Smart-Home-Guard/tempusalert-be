@@ -10,7 +10,7 @@ use mongodb::{bson::doc, options::FindOptions, Collection};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{backend_core::features::device_status_feature::models::Device, json::Json};
+use crate::{backend_core::features::devices_status_feature::models::Device, json::Json};
 
 use super::MONGOC;
 
@@ -107,7 +107,7 @@ pub fn routes() -> ApiRouter {
         "/:email/devices",
         get_with(handler, |op| {
             op.description("Get all devices for a given user by email")
-                .tag("Device status")
+                .tag("Devices status")
                 .parameter("email", |op: TransformParameter<String>| {
                     op.description("The registered email")
                 })
