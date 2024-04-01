@@ -1,9 +1,6 @@
 use hmac::{Hmac, Mac};
 use jwt::{FromBase64, SignWithKey, VerifyWithKey};
-use mongodb::{
-    bson::{doc, Document},
-    Collection,
-};
+use mongodb::bson::doc;
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 

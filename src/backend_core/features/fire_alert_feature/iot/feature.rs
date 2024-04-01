@@ -1,8 +1,5 @@
 use axum::async_trait;
-use mongodb::{
-    bson::{doc, to_bson, Document},
-    Collection,
-};
+use mongodb::bson::{doc, to_bson};
 use rumqttc::{Event, Incoming, Publish};
 use std::{sync::Arc, time::SystemTime};
 use tokio::sync::{
@@ -32,7 +29,6 @@ pub struct IotFireFeature {
     web_tx: Sender<FireIotNotification>,
     web_rx: Receiver<FireWebNotification>,
     jwt_key: String,
-    fire_collection: Collection<Document>,
 }
 
 impl IotFireFeature {
@@ -60,11 +56,7 @@ impl IotFireFeature {
         session.start_transaction(None).await.ok()?;
 
         if let Ok(None) = fire_log_coll
-            .find_one(
-                doc! { "owner_name": owner_name.clone() },
-                None,
-                
-            )
+            .find_one(doc! { "owner_name": owner_name.clone() }, None)
             .await
         {
             fire_log_coll.insert_one(doc! { "owner_name": owner_name.clone(), "fire_logs": [], "smoke_logs": [], "co_logs": [], "heat_logs": [], "button_logs": [] }, None).await.ok()?;
@@ -93,7 +85,6 @@ impl IotFeature for IotFireFeature {
             web_tx: non_primitive_cast(web_tx)?,
             web_rx: non_primitive_cast(web_rx)?,
             jwt_key,
-            fire_collection: mongoc.default_database().unwrap().collection("Fire"),
         })
     }
 

@@ -1,9 +1,6 @@
-use aide::{
-    axum::{routing::get_with, ApiRouter, IntoApiResponse},
-    transform::TransformParameter,
-};
+use aide::axum::{routing::get_with, ApiRouter, IntoApiResponse};
 use axum::{
-    extract::Path,
+    extract::Query,
     http::{HeaderMap, StatusCode},
 };
 use mongodb::{bson::doc, Collection};
@@ -18,12 +15,12 @@ use crate::{
 use super::MONGOC;
 
 #[derive(Deserialize, JsonSchema)]
-pub struct Params {
+pub struct GetLogsOfUserQuery {
     email: String,
 }
 
 #[derive(Serialize, JsonSchema)]
-pub struct Response {
+pub struct GetLogsOfUserResponse {
     fire_logs: Option<Vec<SensorLogData>>,
     smoke_logs: Option<Vec<SensorLogData>>,
     co_logs: Option<Vec<SensorLogData>>,
@@ -32,7 +29,10 @@ pub struct Response {
     message: String,
 }
 
-async fn handler(headers: HeaderMap, Path(Params { email }): Path<Params>) -> impl IntoApiResponse {
+async fn handler(
+    headers: HeaderMap,
+    Query(GetLogsOfUserQuery { email }): Query<GetLogsOfUserQuery>,
+) -> impl IntoApiResponse {
     if headers.get("email").is_none()
         || headers
             .get("email")
@@ -40,7 +40,7 @@ async fn handler(headers: HeaderMap, Path(Params { email }): Path<Params>) -> im
     {
         return (
             StatusCode::FORBIDDEN,
-            Json(Response {
+            Json(GetLogsOfUserResponse {
                 message: String::from("Forbidden"),
                 fire_logs: None,
                 smoke_logs: None,
@@ -61,7 +61,7 @@ async fn handler(headers: HeaderMap, Path(Params { email }): Path<Params>) -> im
     {
         Ok(Some(fire_log)) => (
             StatusCode::OK,
-            Json(Response {
+            Json(GetLogsOfUserResponse {
                 fire_logs: Some(fire_log.fire_logs),
                 smoke_logs: Some(fire_log.smoke_logs),
                 co_logs: Some(fire_log.co_logs),
@@ -72,7 +72,7 @@ async fn handler(headers: HeaderMap, Path(Params { email }): Path<Params>) -> im
         ),
         Ok(None) => (
             StatusCode::OK,
-            Json(Response {
+            Json(GetLogsOfUserResponse {
                 fire_logs: None,
                 smoke_logs: None,
                 co_logs: None,
@@ -83,7 +83,7 @@ async fn handler(headers: HeaderMap, Path(Params { email }): Path<Params>) -> im
         ),
         Err(_) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(Response {
+            Json(GetLogsOfUserResponse {
                 fire_logs: None,
                 smoke_logs: None,
                 co_logs: None,
@@ -97,16 +97,13 @@ async fn handler(headers: HeaderMap, Path(Params { email }): Path<Params>) -> im
 
 pub fn routes() -> ApiRouter {
     ApiRouter::new().api_route(
-        "/:email/logs",
+        "/fire-alert-logs",
         get_with(handler, |op| {
             op.description("Get fire metrics log by user email")
                 .tag("Fire alert")
-                .parameter("email", |op: TransformParameter<String>| {
-                    op.description("The registered email")
-                })
-                .response::<200, Json<Response>>()
-                .response::<403, Json<Response>>()
-                .response::<500, Json<Response>>()
+                .response::<200, Json<GetLogsOfUserResponse>>()
+                .response::<403, Json<GetLogsOfUserResponse>>()
+                .response::<500, Json<GetLogsOfUserResponse>>()
         }),
     )
 }
