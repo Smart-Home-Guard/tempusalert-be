@@ -1,9 +1,6 @@
-use aide::{
-    axum::{routing::get_with, ApiRouter, IntoApiResponse},
-    transform::TransformParameter,
-};
+use aide::axum::{routing::get_with, ApiRouter, IntoApiResponse};
 use axum::{
-    extract::Path,
+    extract::Query,
     http::{HeaderMap, StatusCode},
 };
 use mongodb::{bson::doc, options::FindOptions, Collection};
@@ -15,12 +12,12 @@ use crate::{backend_core::features::devices_status_feature::models::Device, json
 use super::MONGOC;
 
 #[derive(Deserialize, JsonSchema)]
-pub struct Params {
+pub struct GetAllDevicesQuery {
     email: String,
 }
 
 #[derive(Serialize, JsonSchema)]
-pub struct Response {
+pub struct GetAllDeviceResponse {
     devices: Option<Vec<ResponseDevice>>,
     message: String,
 }
@@ -31,7 +28,10 @@ pub struct ResponseDevice {
     components: Vec<u32>,
 }
 
-async fn handler(headers: HeaderMap, Path(Params { email }): Path<Params>) -> impl IntoApiResponse {
+async fn handler(
+    headers: HeaderMap,
+    Query(GetAllDevicesQuery { email }): Query<GetAllDevicesQuery>,
+) -> impl IntoApiResponse {
     if headers.get("email").is_none()
         || headers
             .get("email")
@@ -39,7 +39,7 @@ async fn handler(headers: HeaderMap, Path(Params { email }): Path<Params>) -> im
     {
         return (
             StatusCode::FORBIDDEN,
-            Json(Response {
+            Json(GetAllDeviceResponse {
                 message: String::from("Forbidden"),
                 devices: None,
             }),
@@ -70,7 +70,7 @@ async fn handler(headers: HeaderMap, Path(Params { email }): Path<Params>) -> im
                 Err(_) => {
                     return (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(Response {
+                        Json(GetAllDeviceResponse {
                             devices: None,
                             message: format!(
                                 "Failed to fetch all devices for user '{}'",
@@ -83,7 +83,7 @@ async fn handler(headers: HeaderMap, Path(Params { email }): Path<Params>) -> im
         }
         (
             StatusCode::OK,
-            Json(Response {
+            Json(GetAllDeviceResponse {
                 devices: Some(devices),
                 message: format!(
                     "Successfully fetch all devices for user '{}'",
@@ -94,7 +94,7 @@ async fn handler(headers: HeaderMap, Path(Params { email }): Path<Params>) -> im
     } else {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(Response {
+            Json(GetAllDeviceResponse {
                 devices: None,
                 message: format!("Failed to fetch all devices for user '{}'", email.clone()),
             }),
@@ -104,16 +104,13 @@ async fn handler(headers: HeaderMap, Path(Params { email }): Path<Params>) -> im
 
 pub fn routes() -> ApiRouter {
     ApiRouter::new().api_route(
-        "/:email/devices",
+        "/devices",
         get_with(handler, |op| {
             op.description("Get all devices for a given user by email")
                 .tag("Devices status")
-                .parameter("email", |op: TransformParameter<String>| {
-                    op.description("The registered email")
-                })
-                .response::<200, Json<Response>>()
-                .response::<403, Json<Response>>()
-                .response::<500, Json<Response>>()
+                .response::<200, Json<GetAllDeviceResponse>>()
+                .response::<403, Json<GetAllDeviceResponse>>()
+                .response::<500, Json<GetAllDeviceResponse>>()
         }),
     )
 }

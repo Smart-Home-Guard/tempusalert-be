@@ -1,9 +1,6 @@
-use aide::{
-    axum::{routing::get_with, ApiRouter, IntoApiResponse},
-    transform::TransformParameter,
-};
+use aide::axum::{routing::get_with, ApiRouter, IntoApiResponse};
 use axum::{
-    extract::Path,
+    extract::Query,
     http::{HeaderMap, StatusCode},
 };
 use mongodb::bson::doc;
@@ -17,16 +14,14 @@ use crate::{
 };
 
 #[derive(Serialize, JsonSchema)]
-struct AllFeaturesResponse {
-    feature_names: Vec<String>,
-}
-
-async fn get_all_features_handler() -> impl IntoApiResponse {
-    (StatusCode::OK, unsafe {
-        Json(AllFeaturesResponse {
-            feature_names: TOGGABLE_FEATURES_NAMES.clone(),
-        })
-    })
+enum AllFeaturesResponse {
+    FeatureQuery {
+        feature_names: Vec<String>,
+    },
+    FeatureStatusResponse {
+        feature_status: Vec<FeatureStatus>,
+        message: String,
+    },
 }
 
 #[derive(Deserialize, Serialize, JsonSchema)]
@@ -35,21 +30,23 @@ struct FeatureStatus {
     enabled: bool,
 }
 
-#[derive(Serialize, JsonSchema)]
-struct AllFeatureStatusResponse {
-    feature_status: Vec<FeatureStatus>,
-    message: String,
-}
-
 #[derive(Deserialize, JsonSchema)]
-struct AllFeatureStatusParams {
-    email: String,
+struct AllFeatureStatusQuery {
+    email: Option<String>,
 }
 
 async fn get_all_features_status_handler(
     headers: HeaderMap,
-    Path(AllFeatureStatusParams { email }): Path<AllFeatureStatusParams>,
+    Query(AllFeatureStatusQuery { email }): Query<AllFeatureStatusQuery>,
 ) -> impl IntoApiResponse {
+    if email.is_none() {
+        return (StatusCode::OK, unsafe {
+            Json(AllFeaturesResponse::FeatureQuery {
+                feature_names: TOGGABLE_FEATURES_NAMES.clone(),
+            })
+        });
+    }
+    let email = email.unwrap();
     if headers.get("email").is_none()
         || headers
             .get("email")
@@ -57,7 +54,7 @@ async fn get_all_features_status_handler(
     {
         return (
             StatusCode::FORBIDDEN,
-            Json(AllFeatureStatusResponse {
+            Json(AllFeaturesResponse::FeatureStatusResponse {
                 message: String::from("Forbidden"),
                 feature_status: vec![],
             }),
@@ -93,7 +90,7 @@ async fn get_all_features_status_handler(
             }
             (
                 StatusCode::OK,
-                Json(AllFeatureStatusResponse {
+                Json(AllFeaturesResponse::FeatureStatusResponse {
                     feature_status,
                     message: String::from("Successfully"),
                 }),
@@ -101,14 +98,14 @@ async fn get_all_features_status_handler(
         }
         Ok(None) => (
             StatusCode::BAD_REQUEST,
-            Json(AllFeatureStatusResponse {
+            Json(AllFeaturesResponse::FeatureStatusResponse {
                 feature_status: vec![],
                 message: format!("No such user with email '{}'", email.clone()),
             }),
         ),
         Err(_) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(AllFeatureStatusResponse {
+            Json(AllFeaturesResponse::FeatureStatusResponse {
                 feature_status: vec![],
                 message: format!("Failed to find the feature status of {}", email.clone()),
             }),
@@ -122,7 +119,7 @@ struct UpdateFeatureStatusResponse {
 }
 
 #[derive(Deserialize, JsonSchema)]
-struct UpdateFeatureStatusParams {
+struct UpdateFeatureStatusQuery {
     email: String,
 }
 
@@ -133,7 +130,7 @@ struct UpdateFeatureStatusBody {
 
 async fn update_features_status_handler(
     headers: HeaderMap,
-    Path(UpdateFeatureStatusParams { email }): Path<UpdateFeatureStatusParams>,
+    Query(UpdateFeatureStatusQuery { email }): Query<UpdateFeatureStatusQuery>,
     Json(UpdateFeatureStatusBody { new_feature_status }): Json<UpdateFeatureStatusBody>,
 ) -> impl IntoApiResponse {
     if headers.get("email").is_none()
@@ -197,38 +194,23 @@ async fn update_features_status_handler(
 }
 
 pub fn features_route() -> ApiRouter {
-    ApiRouter::new()
-        .api_route(
-            "/",
-            get_with(get_all_features_handler, |op| {
-                op.description("Get all available features")
-                    .tag("Features")
-                    .response::<200, Json<AllFeaturesResponse>>()
-            }),
-        )
-        .api_route(
-            "/:email",
-            get_with(get_all_features_status_handler, |op| {
-                op.description("Get all feature status of a given user by email")
-                    .tag("Features")
-                    .parameter("email", |op: TransformParameter<String>| {
-                        op.description("The registered email")
-                    })
-                    .response::<200, Json<AllFeatureStatusResponse>>()
-                    .response::<400, Json<AllFeatureStatusResponse>>()
-                    .response::<403, Json<AllFeatureStatusResponse>>()
-                    .response::<500, Json<AllFeatureStatusResponse>>()
-            })
-            .patch_with(update_features_status_handler, |op| {
-                op.description("Update the feature status of a given user by email")
-                    .tag("Features")
-                    .parameter("email", |op: TransformParameter<String>| {
-                        op.description("The registered email")
-                    })
-                    .response::<200, Json<UpdateFeatureStatusResponse>>()
-                    .response::<400, Json<UpdateFeatureStatusResponse>>()
-                    .response::<403, Json<UpdateFeatureStatusResponse>>()
-                    .response::<500, Json<UpdateFeatureStatusResponse>>()
-            }),
-        )
+    ApiRouter::new().api_route(
+        "/",
+        get_with(get_all_features_status_handler, |op| {
+            op.description("Get all feature status")
+                .tag("Features")
+                .response::<200, Json<AllFeaturesResponse>>()
+                .response::<400, Json<AllFeaturesResponse>>()
+                .response::<403, Json<AllFeaturesResponse>>()
+                .response::<500, Json<AllFeaturesResponse>>()
+        })
+        .patch_with(update_features_status_handler, |op| {
+            op.description("Update the feature status of a user by email if given")
+                .tag("Features")
+                .response::<200, Json<UpdateFeatureStatusResponse>>()
+                .response::<400, Json<UpdateFeatureStatusResponse>>()
+                .response::<403, Json<UpdateFeatureStatusResponse>>()
+                .response::<500, Json<UpdateFeatureStatusResponse>>()
+        }),
+    )
 }

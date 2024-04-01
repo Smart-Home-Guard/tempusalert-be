@@ -1,9 +1,6 @@
-use aide::{
-    axum::{routing::get_with, ApiRouter, IntoApiResponse},
-    transform::TransformParameter,
-};
+use aide::axum::{routing::get_with, ApiRouter, IntoApiResponse};
 use axum::{
-    extract::Path,
+    extract::Query,
     http::{HeaderMap, StatusCode},
 };
 use mongodb::{bson::doc, Collection};
@@ -15,20 +12,20 @@ use crate::{backend_core::features::devices_status_feature::models::Device, json
 use super::MONGOC;
 
 #[derive(Serialize, JsonSchema)]
-pub struct Response {
+pub struct GetDeviceByIdResponse {
     device: Option<Device>,
     message: String,
 }
 
 #[derive(Deserialize, JsonSchema)]
-pub struct Params {
+pub struct GetDeviceByIdQuery {
     device_id: u32,
     email: String,
 }
 
 async fn handler(
     headers: HeaderMap,
-    Path(Params { device_id, email }): Path<Params>,
+    Query(GetDeviceByIdQuery { device_id, email }): Query<GetDeviceByIdQuery>,
 ) -> impl IntoApiResponse {
     if headers.get("email").is_none()
         || headers
@@ -37,7 +34,7 @@ async fn handler(
     {
         return (
             StatusCode::FORBIDDEN,
-            Json(Response {
+            Json(GetDeviceByIdResponse {
                 message: String::from("Forbidden"),
                 device: None,
             }),
@@ -54,14 +51,14 @@ async fn handler(
     {
         Ok(Some(device)) => (
             StatusCode::OK,
-            Json(Response {
+            Json(GetDeviceByIdResponse {
                 device: Some(device),
                 message: format!("Successfully fetch device '{device_id}'"),
             }),
         ),
         Ok(None) => (
             StatusCode::OK,
-            Json(Response {
+            Json(GetDeviceByIdResponse {
                 device: None,
                 message: format!(
                     "No device with id '{}' for user '{}'",
@@ -72,7 +69,7 @@ async fn handler(
         ),
         Err(_) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(Response {
+            Json(GetDeviceByIdResponse {
                 device: None,
                 message: format!("Unexpected error while fetching device with id '{device_id}'"),
             }),
@@ -82,19 +79,13 @@ async fn handler(
 
 pub fn routes() -> ApiRouter {
     ApiRouter::new().api_route(
-        "/:email/devices/:device_id",
+        "/devices/:device_id",
         get_with(handler, |op| {
             op.description("Get devices by id for a given user by email")
                 .tag("Devices status")
-                .parameter("email", |op: TransformParameter<String>| {
-                    op.description("The registered email")
-                })
-                .parameter("device_id", |op: TransformParameter<u32>| {
-                    op.description("The id of a device owned by the user")
-                })
-                .response::<200, Json<Response>>()
-                .response::<403, Json<Response>>()
-                .response::<500, Json<Response>>()
+                .response::<200, Json<GetDeviceByIdResponse>>()
+                .response::<403, Json<GetDeviceByIdResponse>>()
+                .response::<500, Json<GetDeviceByIdResponse>>()
         }),
     )
 }

@@ -171,7 +171,6 @@ impl IotFeature for IotDeviceStatusFeature {
                                     .find_one(
                                         doc! { "id": id, "owner_name": username.clone() },
                                         None,
-                                        
                                     )
                                     .await
                                 {
@@ -199,7 +198,6 @@ impl IotFeature for IotDeviceStatusFeature {
                         }
                     }
                 }
-
             } else {
                 eprintln!("Failed to process MQTT message");
             }
