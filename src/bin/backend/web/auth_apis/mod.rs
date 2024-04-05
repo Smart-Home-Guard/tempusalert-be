@@ -139,9 +139,9 @@ pub fn web_auth_routes() -> ApiRouter {
         post_with(web_auth_handler, |op| {
             op.description("Web authentication api")
                 .tag("Authentication")
-                .response::<200, Json<Token>>()
-                .response::<400, Json<Token>>()
-                .response::<500, Json<Token>>()
+                .response::<200, Json<WebAuthResponse>>()
+                .response::<400, Json<WebAuthResponse>>()
+                .response::<500, Json<WebAuthResponse>>()
         }),
     )
 }
