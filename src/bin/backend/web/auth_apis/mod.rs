@@ -1,6 +1,6 @@
 use aide::axum::{routing::post_with, ApiRouter, IntoApiResponse};
 use axum::{
-    http::{header::SET_COOKIE, HeaderName, StatusCode},
+    http::{HeaderName, StatusCode},
     response::AppendHeaders,
 };
 use mongodb::{bson::doc, Collection};
@@ -100,7 +100,7 @@ async fn web_auth_handler(Json(body): Json<WebAuthBody>) -> impl IntoApiResponse
         if !verify_hashed_password(body.password, hashed_password, salt) {
             (
                 StatusCode::BAD_REQUEST,
-                AppendHeaders(vec![(SET_COOKIE, format!("JWT={}", ""))]),
+                AppendHeaders(vec![(HeaderName::from_static("JWT"), String::new())]),
                 Json(WebAuthResponse{ token: Token::None, message: String::from("Wrong password or email") }),
             )
         } else {
@@ -113,13 +113,13 @@ async fn web_auth_handler(Json(body): Json<WebAuthBody>) -> impl IntoApiResponse
             if let Some(token) = token {
                 (
                     StatusCode::OK,
-                    AppendHeaders(vec![(SET_COOKIE, format!("JWT={}", token)), (HeaderName::from_static("isLoggedIn"), String::from("true"))]),
+                    AppendHeaders(vec![(HeaderName::from_static("JWT"), format!("{token}")), (HeaderName::from_static("isLoggedIn"), String::from("true"))]),
                     Json(WebAuthResponse{ token: Token::Some(token), message: String::from("Logged in successfuly") }),
                 )
             } else {
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    AppendHeaders(vec![(SET_COOKIE, format!("JWT={}", ""))]),
+                    AppendHeaders(vec![(HeaderName::from_static("JWT"), String::new())]),
                     Json(WebAuthResponse { token: Token::None, message: String::from("Internal server error. Please try again later!") }),
                 )
             }
@@ -127,7 +127,7 @@ async fn web_auth_handler(Json(body): Json<WebAuthBody>) -> impl IntoApiResponse
     } else {
         (
             StatusCode::BAD_REQUEST,
-            AppendHeaders(vec![(SET_COOKIE, format!("JWT={}", ""))]),
+            AppendHeaders(vec![(HeaderName::from_static("JWT"), String::new())]),
             Json(WebAuthResponse{ token: Token::None, message: String::from("Wrong password or email") }),
         )
     }
