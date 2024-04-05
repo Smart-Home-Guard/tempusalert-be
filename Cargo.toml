@@ -40,6 +40,6 @@ serde_bytes = "0.11.14"
 lettre = "0.11.4"
 lazy_static = "1.4.0"
 web-push = "0.10.1"
-tower-http = { version = "0.5.2", features = ["trace"] }
+tower-http = { version = "0.5.2", features = ["trace", "cors"] }
 axum-extra = { version = "0.9.2", features = ["typed-header"] }
 serde_repr = "0.1.18"
