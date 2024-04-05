@@ -13,7 +13,7 @@ pub async fn set_username_from_token_in_request_middleware(
     mut request: Request,
     next: Next,
 ) -> Result<Response, StatusCode> {
-    let value: Option<&str> = headers.get("JWT").and_then(|value| value.to_str().ok());
+    let value: Option<&str> = headers.get("jwt").and_then(|value| value.to_str().ok());
     request.headers_mut().remove("email");
     if let Some(jwt) = value {
         request.headers_mut().append(
