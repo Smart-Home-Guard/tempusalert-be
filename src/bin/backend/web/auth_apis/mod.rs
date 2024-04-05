@@ -1,6 +1,6 @@
 use aide::axum::{routing::post_with, ApiRouter, IntoApiResponse};
 use axum::{
-    http::{header::SET_COOKIE, StatusCode},
+    http::{header::SET_COOKIE, HeaderName, StatusCode},
     response::AppendHeaders,
 };
 use mongodb::{bson::doc, Collection};
@@ -94,7 +94,7 @@ async fn web_auth_handler(Json(body): Json<WebAuthBody>) -> impl IntoApiResponse
         if !verify_hashed_password(body.password, hashed_password, salt) {
             (
                 StatusCode::BAD_REQUEST,
-                AppendHeaders([(SET_COOKIE, format!("JWT={}", ""))]),
+                AppendHeaders(vec![(SET_COOKIE, format!("JWT={}", ""))]),
                 Json(Token::None),
             )
         } else {
@@ -107,13 +107,13 @@ async fn web_auth_handler(Json(body): Json<WebAuthBody>) -> impl IntoApiResponse
             if let Some(token) = token {
                 (
                     StatusCode::OK,
-                    AppendHeaders([(SET_COOKIE, format!("JWT={}", token))]),
+                    AppendHeaders(vec![(SET_COOKIE, format!("JWT={}", token)), (HeaderName::from_static("isLoggedIn"), String::from("true"))]),
                     Json(Token::Some(token)),
                 )
             } else {
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    AppendHeaders([(SET_COOKIE, format!("JWT={}", ""))]),
+                    AppendHeaders(vec![(SET_COOKIE, format!("JWT={}", ""))]),
                     Json(Token::None),
                 )
             }
@@ -121,7 +121,7 @@ async fn web_auth_handler(Json(body): Json<WebAuthBody>) -> impl IntoApiResponse
     } else {
         (
             StatusCode::BAD_REQUEST,
-            AppendHeaders([(SET_COOKIE, format!("JWT={}", ""))]),
+            AppendHeaders(vec![(SET_COOKIE, format!("JWT={}", ""))]),
             Json(Token::None),
         )
     }
