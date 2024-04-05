@@ -78,6 +78,12 @@ struct WebAuthBody {
     password: String,
 }
 
+#[derive(Serialize, JsonSchema)]
+struct WebAuthResponse {
+    token: Token,
+    message: String,
+}
+
 async fn web_auth_handler(Json(body): Json<WebAuthBody>) -> impl IntoApiResponse {
     let mongoc = MONGOC.get_or_init(init_database).await;
     let user_coll: Collection<User> = mongoc.default_database().unwrap().collection("users");
@@ -95,7 +101,7 @@ async fn web_auth_handler(Json(body): Json<WebAuthBody>) -> impl IntoApiResponse
             (
                 StatusCode::BAD_REQUEST,
                 AppendHeaders(vec![(SET_COOKIE, format!("JWT={}", ""))]),
-                Json(Token::None),
+                Json(WebAuthResponse{ token: Token::None, message: String::from("Wrong password or email") }),
             )
         } else {
             let client_claim = WebClientClaim {
@@ -108,13 +114,13 @@ async fn web_auth_handler(Json(body): Json<WebAuthBody>) -> impl IntoApiResponse
                 (
                     StatusCode::OK,
                     AppendHeaders(vec![(SET_COOKIE, format!("JWT={}", token)), (HeaderName::from_static("isLoggedIn"), String::from("true"))]),
-                    Json(Token::Some(token)),
+                    Json(WebAuthResponse{ token: Token::Some(token), message: String::from("Logged in successfuly") }),
                 )
             } else {
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
                     AppendHeaders(vec![(SET_COOKIE, format!("JWT={}", ""))]),
-                    Json(Token::None),
+                    Json(WebAuthResponse { token: Token::None, message: String::from("Internal server error. Please try again later!") }),
                 )
             }
         }
@@ -122,7 +128,7 @@ async fn web_auth_handler(Json(body): Json<WebAuthBody>) -> impl IntoApiResponse
         (
             StatusCode::BAD_REQUEST,
             AppendHeaders(vec![(SET_COOKIE, format!("JWT={}", ""))]),
-            Json(Token::None),
+            Json(WebAuthResponse{ token: Token::None, message: String::from("Wrong password or email") }),
         )
     }
 }
