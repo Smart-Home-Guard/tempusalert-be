@@ -15,7 +15,7 @@ use aide::{
     transform::TransformOpenApi,
 };
 use tokio::sync::Mutex;
-use tower_http::trace::TraceLayer;
+use tower_http::{cors::{Any, CorsLayer}, trace::TraceLayer};
 
 use crate::{config::WebConfig, AppResult};
 use axum::{
@@ -92,6 +92,7 @@ impl WebTask {
                 set_username_from_token_in_request_middleware,
             ))
             .layer(TraceLayer::new_for_http())
+            .layer(CorsLayer::new().allow_methods(Any).allow_origin(Any)) // TODO: Whitelist some origin only
             .into_make_service();
         tokio::spawn(async move {
             println!(
