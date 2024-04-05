@@ -1,20 +1,19 @@
 use axum::{
     extract::Request,
-    http::{HeaderValue, StatusCode},
+    http::{HeaderMap, HeaderValue, StatusCode},
     middleware::Next,
     response::Response,
 };
-use axum_extra::{headers::Cookie, TypedHeader};
 use tempusalert_be::auth::get_email_from_email_token;
 
 use crate::config::JWT_KEY;
 
 pub async fn set_username_from_token_in_request_middleware(
-    TypedHeader(cookie): TypedHeader<Cookie>,
+    headers: HeaderMap,
     mut request: Request,
     next: Next,
 ) -> Result<Response, StatusCode> {
-    let value: Option<&str> = cookie.get("JWT");
+    let value: Option<&str> = headers.get("JWT").and_then(|value| value.to_str().ok());
     request.headers_mut().remove("email");
     if let Some(jwt) = value {
         request.headers_mut().append(
