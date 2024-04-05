@@ -19,7 +19,7 @@ use tower_http::{cors::{Any, CorsLayer}, trace::TraceLayer};
 
 use crate::{config::WebConfig, AppResult};
 use axum::{
-    http::{HeaderValue, Method, StatusCode, Uri},
+    http::{header::CONTENT_TYPE, HeaderValue, Method, StatusCode, Uri},
     Extension, Json,
 };
 use tempusalert_be::backend_core::features::WebFeature;
@@ -92,7 +92,7 @@ impl WebTask {
                 set_username_from_token_in_request_middleware,
             ))
             .layer(TraceLayer::new_for_http())
-            .layer(CorsLayer::new().allow_methods([Method::GET, Method::POST, Method::PATCH, Method::PUT]).allow_credentials(true).allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())) // TODO: Whitelist additional origins
+            .layer(CorsLayer::new().allow_methods([Method::GET, Method::POST, Method::PATCH, Method::PUT]).allow_credentials(true).allow_headers([CONTENT_TYPE]).allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())) // TODO: Whitelist additional origins
             .into_make_service();
         tokio::spawn(async move {
             println!(
