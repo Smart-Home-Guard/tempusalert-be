@@ -61,7 +61,8 @@ async fn register_push_credential_handler(
 }
 
 async fn get_public_key_handler() -> impl IntoApiResponse {
-    (StatusCode::OK, Json(PUBLIC_KEY.to_string()))
+    let key = PUBLIC_KEY.to_string().split('\n').nth(1).unwrap().to_string();
+    (StatusCode::OK, Json(key))
 }
 
 pub fn push_routes() -> ApiRouter {
