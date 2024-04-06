@@ -2,7 +2,7 @@ mod auth_apis;
 mod doc;
 mod feature_apis;
 mod middlewares;
-mod push_api;
+mod push_apis;
 mod register_api;
 mod logout_api;
 mod utils;
@@ -73,7 +73,7 @@ impl WebTask {
             .nest_api_service("/auth/web", auth_apis::web_auth_routes())
             .nest_api_service("/auth/logout", logout_api::logout_routes())
             .nest_api_service("/auth/register", register_api::register_routes())
-            .nest_api_service("/api/push-credential", push_api::push_routes())
+            .nest_api_service("/api/push-credential", push_apis::push_routes())
             .nest_api_service("/api/features", feature_apis::features_route());
 
         for feat in &mut self.features {
