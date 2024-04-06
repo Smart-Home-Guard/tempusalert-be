@@ -31,7 +31,7 @@ pub async fn push_notification(email: String, message: String, mongoc: &mut mong
         let subscription_info = SubscriptionInfo::new(endpoint, p256dh, auth);
 
         let sig_builder =
-            VapidSignatureBuilder::from_pem(SECRET_KEY.to_bytes().as_slice(), &subscription_info)
+            VapidSignatureBuilder::from_pem(SECRET_KEY.clone().into_bytes().as_slice(), &subscription_info)
                 .ok()?
                 .build()
                 .ok()?;
