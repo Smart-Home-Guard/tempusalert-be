@@ -1,5 +1,5 @@
 use aide::axum::{routing::post_with, ApiRouter, IntoApiResponse};
-use axum::{http::{header::SET_COOKIE, HeaderName, StatusCode}, response::AppendHeaders};
+use axum::{http::{HeaderName, StatusCode}, response::AppendHeaders};
 use schemars::JsonSchema;
 use serde::Serialize;
 use tempusalert_be::json::Json;
@@ -12,7 +12,7 @@ struct LogoutResponse {
 async fn logout_handler() -> impl IntoApiResponse {
     (
         StatusCode::OK,
-        AppendHeaders([(HeaderName::from_static("jwt"), String::new()), (HeaderName::from_static("isLoggedIn"), String::new())]),
+        AppendHeaders([(HeaderName::from_static("jwt"), String::new()), (HeaderName::from_static("loggedin"), String::new())]),
         Json(LogoutResponse { message: String::from("Logout successfully"), }),
     )
 }

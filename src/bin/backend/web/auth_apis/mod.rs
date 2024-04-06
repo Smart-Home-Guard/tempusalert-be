@@ -113,7 +113,7 @@ async fn web_auth_handler(Json(body): Json<WebAuthBody>) -> impl IntoApiResponse
             if let Some(token) = token {
                 (
                     StatusCode::OK,
-                    AppendHeaders(vec![(HeaderName::from_static("jwt"), format!("{token}")), (HeaderName::from_static("isLoggedIn"), String::from("true"))]),
+                    AppendHeaders(vec![(HeaderName::from_static("jwt"), format!("{token}")), (HeaderName::from_static("loggedin"), String::from("true"))]),
                     Json(WebAuthResponse{ token: Token::Some(token), message: String::from("Logged in successfuly") }),
                 )
             } else {
