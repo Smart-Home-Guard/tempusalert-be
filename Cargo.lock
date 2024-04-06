@@ -3294,7 +3294,6 @@ dependencies = [
  "lettre",
  "mongodb",
  "once_cell",
- "p256",
  "ring",
  "rumqttc",
  "schemars",

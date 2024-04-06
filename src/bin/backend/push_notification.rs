@@ -1,17 +1,18 @@
 use mongodb::{bson::doc, Cursor};
 use once_cell::sync::Lazy;
-use p256::{elliptic_curve::{rand_core::OsRng, PublicKey, SecretKey}, pkcs8::EncodePrivateKey, NistP256};
 use tempusalert_be::backend_core::models::{PushCredential, PushKey};
 use web_push::{
     ContentEncoding, IsahcWebPushClient, SubscriptionInfo, VapidSignatureBuilder, WebPushClient,
     WebPushMessageBuilder,
 };
 
-static SECRET_KEY: Lazy<SecretKey<NistP256>> =
-    Lazy::new(|| SecretKey::<NistP256>::random(&mut OsRng).to_pkcs8_pem(Default::default()).unwrap().to_string().parse::<SecretKey<NistP256>>().unwrap());
+use crate::parse_env_var;
 
-pub static PUBLIC_KEY: Lazy<PublicKey<NistP256>> =
-    Lazy::new(|| SECRET_KEY.clone().public_key());
+static SECRET_KEY: Lazy<String> =
+    Lazy::new(|| parse_env_var("SECRET_VAPID_KEY"));
+
+pub static PUBLIC_KEY: Lazy<String> =
+    Lazy::new(|| parse_env_var("PUBLIC_VAPID_KEY"));
 
 pub async fn push_notification(email: String, message: String, mongoc: &mut mongodb::Client) -> Option<()> {
     let mut cred_cursor: Cursor<PushCredential> = mongoc
