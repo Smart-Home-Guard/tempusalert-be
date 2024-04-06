@@ -43,7 +43,8 @@ jobs:
           echo SMTP_HOSTNAME=${{ secrets.SMTP_HOSTNAME }} >> .env
           echo SMTP_USER=${{ secrets.SMTP_USER }} >> .env
           echo SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }} >> .env
-          echo PEM_FILE=${{ secrets.PEM_FILE }} >> .env
+          echo PUBLIC_VAPID_KEY=${{ secrets.PUBLIC_VAPID_KEY }} >> .env
+          echo PRIVATE_VAPID_KEY=${{ secrets.PRIVATE_VAPID_KEY }} >> .env
 
       - name: Setup Docker buildx
         uses: docker/setup-buildx-action@v2
