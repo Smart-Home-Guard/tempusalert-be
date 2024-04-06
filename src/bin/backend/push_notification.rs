@@ -9,7 +9,7 @@ use web_push::{
 use crate::parse_env_var;
 
 static SECRET_KEY: Lazy<String> =
-    Lazy::new(|| parse_env_var("SECRET_VAPID_KEY"));
+    Lazy::new(|| parse_env_var("PRIVATE_VAPID_KEY"));
 
 pub static PUBLIC_KEY: Lazy<String> =
     Lazy::new(|| parse_env_var("PUBLIC_VAPID_KEY"));
