@@ -15,7 +15,7 @@ use aide::{
     transform::TransformOpenApi,
 };
 use tokio::sync::Mutex;
-use tower_http::{cors::{Any, CorsLayer}, trace::TraceLayer};
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
 use crate::{config::WebConfig, AppResult};
 use axum::{

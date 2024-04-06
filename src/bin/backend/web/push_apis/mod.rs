@@ -1,5 +1,5 @@
 use aide::{
-    axum::{routing::post_with, ApiRouter, IntoApiResponse},
+    axum::{routing::{get_with, post_with}, ApiRouter, IntoApiResponse},
     transform::TransformParameter,
 };
 use axum::{
@@ -14,7 +14,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use tempusalert_be::{backend_core::models::PushCredential, json::Json};
 
-use crate::database_client::{init_database, MONGOC};
+use crate::{database_client::{init_database, MONGOC}, push_notification::PUBLIC_KEY};
 
 #[derive(Deserialize, JsonSchema)]
 struct Params {
@@ -31,7 +31,7 @@ struct PushCredentialResponse {
     message: String,
 }
 
-async fn push_handler(
+async fn register_push_credential_handler(
     headers: HeaderMap,
     Path(Params { email }): Path<Params>,
     Json(body): Json<PushCredentialBody>,
@@ -60,10 +60,14 @@ async fn push_handler(
     }
 }
 
+async fn get_public_key_handler() -> impl IntoApiResponse {
+    (StatusCode::OK, Json(PUBLIC_KEY.to_string()))
+}
+
 pub fn push_routes() -> ApiRouter {
     ApiRouter::new().api_route(
         "/:email",
-        post_with(push_handler, |op| {
+        post_with(register_push_credential_handler, |op| {
             op.description("Add subscription for push notification")
                 .tag("Push notification")
                 .parameter("email", |op: TransformParameter<String>| {
@@ -71,6 +75,12 @@ pub fn push_routes() -> ApiRouter {
                 })
                 .response::<200, Json<PushCredentialResponse>>()
                 .response::<500, Json<PushCredentialResponse>>()
-        }),
+        })
+    ).api_route(
+    "/public-key",
+        get_with(get_public_key_handler, |op|
+            op.description("Get public key for client side subscription")
+              .tag("Push notification")
+              .response::<200, Json<String>>())
     )
 }
