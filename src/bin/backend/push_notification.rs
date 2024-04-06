@@ -13,7 +13,7 @@ use crate::parse_env_var;
 static PEM_FILE: Lazy<File> =
     Lazy::new(|| File::open(parse_env_var::<String>("PEM_FILE")).unwrap());
 
-pub async fn push_notification(email: String, mongoc: &mut mongodb::Client) -> Option<()> {
+pub async fn push_notification(email: String, message: String, mongoc: &mut mongodb::Client) -> Option<()> {
     let mut cred_cursor: Cursor<PushCredential> = mongoc
         .default_database()
         .unwrap()
@@ -36,7 +36,7 @@ pub async fn push_notification(email: String, mongoc: &mut mongodb::Client) -> O
                 .ok()?;
 
         let mut builder = WebPushMessageBuilder::new(&subscription_info);
-        let content = "Encrypted payload to be sent in the notification".as_bytes();
+        let content = message.as_bytes();
         builder.set_payload(ContentEncoding::Aes128Gcm, content);
         builder.set_vapid_signature(sig_builder);
 
