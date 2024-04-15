@@ -18,6 +18,7 @@ pub enum FireMQTTMessage {
         heat: Vec<SensorData>,
         #[serde(rename = "fire-button")]
         button: Vec<SensorData>,
+        lpg: Vec<SensorData>,
     },
     #[serde(rename = "1")]
     Interrupt {
@@ -29,6 +30,7 @@ pub enum FireMQTTMessage {
         heat: Vec<SensorData>,
         #[serde(rename = "fire-button")]
         button: Vec<SensorData>,
+        lpg: Vec<SensorData>,
     },
 }
 
@@ -46,7 +48,7 @@ mod deserialize_tests {
     use super::{FireMQTTMessage, FireStatus, SensorData, Token};
 
     #[test]
-    fn deserialize_safe_data() {
+    fn deserialize_periodic_data() {
         let input = r#"{
             "kind": "0",
             "payload": {
@@ -214,13 +216,14 @@ mod deserialize_tests {
                 value: 1,
                 alert: FireStatus::SAFE,
             }],
+            lpg: vec![],
         };
 
         assert_eq!(result, expected);
     }
 
     #[test]
-    fn deserialize_unsafe_data() {
+    fn deserialize_interrupt_data() {
         let input = r#"{
             "kind": "1",
             "payload": {
@@ -255,6 +258,7 @@ mod deserialize_tests {
             co: vec![],
             heat: vec![],
             button: vec![],
+            lpg: vec![]
         };
 
         assert_eq!(result, expected);
@@ -269,7 +273,7 @@ mod serialize_tests {
     use super::{FireMQTTMessage, FireStatus, SensorData, Token};
 
     #[test]
-    fn serialize_safe_data() {
+    fn serialize_periodic_data() {
         let input = FireMQTTMessage::Periodic {
             token: Token::from("abcd"),
             fire_data: vec![SensorData {
@@ -344,6 +348,7 @@ mod serialize_tests {
                 value: 1,
                 alert: FireStatus::SAFE,
             }],
+            lpg: vec![],
         };
 
         let expected = json!({
@@ -443,7 +448,7 @@ mod serialize_tests {
     }
 
     #[test]
-    fn serialize_unsafe_data() {
+    fn serialize_interrupt_data() {
         let input = FireMQTTMessage::Interrupt {
             token: Token::from("efgh"),
             fire_data: vec![SensorData {
@@ -456,6 +461,7 @@ mod serialize_tests {
             co: vec![],
             heat: vec![],
             button: vec![],
+            lpg: vec![],
         };
 
         let expected = json!({
