@@ -44,6 +44,7 @@ impl IotFireFeature {
             SensorDataType::CO => "co_logs",
             SensorDataType::Heat => "heat_logs",
             SensorDataType::FireButton => "button_logs",
+            SensorDataType::LPG => "lpg_logs",
         };
 
         let fire_log_coll = self
@@ -160,7 +161,8 @@ impl IotFeature for IotFireFeature {
                                         | SensorDataType::Smoke
                                         | SensorDataType::CO
                                         | SensorDataType::Heat
-                                        | SensorDataType::FireButton => {
+                                        | SensorDataType::FireButton
+                                        | SensorDataType::LPG => {
                                             self.persist_sensor_data(
                                                 email.clone(),
                                                 &sensor_logs,
