@@ -48,7 +48,7 @@ mod deserialize_tests {
     use super::{FireMQTTMessage, FireStatus, SensorData, Token};
 
     #[test]
-    fn deserialize_safe_data() {
+    fn deserialize_periodic_data() {
         let input = r#"{
             "kind": "0",
             "payload": {
@@ -223,7 +223,7 @@ mod deserialize_tests {
     }
 
     #[test]
-    fn deserialize_unsafe_data() {
+    fn deserialize_interrupt_data() {
         let input = r#"{
             "kind": "1",
             "payload": {
@@ -273,7 +273,7 @@ mod serialize_tests {
     use super::{FireMQTTMessage, FireStatus, SensorData, Token};
 
     #[test]
-    fn serialize_safe_data() {
+    fn serialize_periodic_data() {
         let input = FireMQTTMessage::Periodic {
             token: Token::from("abcd"),
             fire_data: vec![SensorData {
@@ -448,7 +448,7 @@ mod serialize_tests {
     }
 
     #[test]
-    fn serialize_unsafe_data() {
+    fn serialize_interrupt_data() {
         let input = FireMQTTMessage::Interrupt {
             token: Token::from("efgh"),
             fire_data: vec![SensorData {
