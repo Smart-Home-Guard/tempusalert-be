@@ -124,6 +124,7 @@ impl IotFeature for IotFireFeature {
                             co,
                             heat,
                             button,
+                            lpg
                         }
                         | FireMQTTMessage::Interrupt {
                             token,
@@ -132,6 +133,7 @@ impl IotFeature for IotFireFeature {
                             co,
                             heat,
                             button,
+                            lpg
                         } => {
                             if let Some(email) =
                                 get_email_from_client_token(&self.jwt_key, token, &mut mongoc).await
@@ -142,6 +144,7 @@ impl IotFeature for IotFireFeature {
                                     (SensorDataType::CO, co),
                                     (SensorDataType::Heat, heat),
                                     (SensorDataType::FireButton, button),
+                                    (SensorDataType::LPG, lpg),
                                 ];
 
                                 for (sensor_type, data) in sensor_data {
