@@ -8,6 +8,12 @@ use super::WebFireFeature;
 pub static mut MONGOC: Option<Arc<Mutex<mongodb::Client>>> = None;
 
 mod get_logs_of_user;
+mod get_button_logs_of_user;
+mod get_co_logs_of_user;
+mod get_fire_logs_of_user;
+mod get_gas_logs_of_user;
+mod get_heat_logs_of_user;
+mod get_smoke_logs_of_user;
 
 pub fn create_router(web: &mut WebFireFeature) -> ApiRouter {
     unsafe {
@@ -15,4 +21,9 @@ pub fn create_router(web: &mut WebFireFeature) -> ApiRouter {
     }
 
     ApiRouter::new().nest("/", get_logs_of_user::routes())
+                    .nest("/", get_button_logs_of_user::routes())
+                    .nest("/", get_co_logs_of_user::routes())
+                    .nest("/", get_gas_logs_of_user::routes())
+                    .nest("/", get_heat_logs_of_user::routes())
+                    .nest("/", get_smoke_logs_of_user::routes())
 }
