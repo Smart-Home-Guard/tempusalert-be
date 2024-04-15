@@ -18,6 +18,7 @@ pub enum SensorDataType {
     CO,
     Heat,
     FireButton,
+    LPG,
 }
 
 #[derive(Serialize_repr, Deserialize_repr, JsonSchema)]
@@ -36,4 +37,5 @@ pub struct FireLog {
     pub co_logs: Vec<SensorLogData>,
     pub heat_logs: Vec<SensorLogData>,
     pub button_logs: Vec<SensorLogData>,
+    pub lpg_logs: Vec<SensorLogData>,
 }
