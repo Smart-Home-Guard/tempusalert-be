@@ -134,7 +134,7 @@ mod deserialize_tests {
                         "id": 1,
                         "component": 6,
                         "value": 20,
-                        "alert": 0,
+                        "alert": 0
                     }
                 ]
             }
@@ -216,7 +216,14 @@ mod deserialize_tests {
                 value: 1,
                 alert: FireStatus::SAFE,
             }],
-            lpg: vec![],
+            lpg: vec![
+                SensorData {
+                    id: 1,
+                    component: 6,
+                    value: 20,
+                    alert: FireStatus::SAFE,
+                }
+            ],
         };
 
         assert_eq!(result, expected);
@@ -348,7 +355,14 @@ mod serialize_tests {
                 value: 1,
                 alert: FireStatus::SAFE,
             }],
-            lpg: vec![],
+            lpg: vec![
+                SensorData {
+                    id: 1,
+                    component: 6,
+                    value: 20,
+                    alert: FireStatus::SAFE,
+                }
+            ],
         };
 
         let expected = json!({
