@@ -126,6 +126,14 @@ mod deserialize_tests {
                         "value": 1,
                         "alert": 0
                     }
+                ],
+                "lpg": [
+                    {
+                        "id": 1,
+                        "component": 6,
+                        "value": 20,
+                        "alert": 0,
+                    }
                 ]
             }
         }"#;
@@ -228,7 +236,8 @@ mod deserialize_tests {
                 "smoke": [],
                 "co": [],
                 "heat": [],
-                "fire-button": []
+                "fire-button": [],
+                "lpg": []
             }
         }"#;
 
@@ -416,7 +425,15 @@ mod serialize_tests {
                         "value": 1,
                         "alert": 0
                     }
-                ]
+                ],
+                "lpg": [
+                    {
+                        "id": 1,
+                        "component": 6,
+                        "value": 20,
+                        "alert": 0,
+                    }
+                ],
             }
         });
 
@@ -456,7 +473,8 @@ mod serialize_tests {
                 "smoke": [],
                 "co": [],
                 "heat": [],
-                "fire-button": []
+                "fire-button": [],
+                "lpg": [],
             }
         });
 
