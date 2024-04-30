@@ -44,7 +44,7 @@ async fn handler(
     }
     let fire_coll: Collection<FireLog> = {
         let mongoc = unsafe { MONGOC.as_ref().clone().unwrap().lock() }.await;
-        mongoc.default_database().unwrap().collection("fire")
+        mongoc.default_database().unwrap().collection("fire_alerts")
     };
 
     match fire_coll
