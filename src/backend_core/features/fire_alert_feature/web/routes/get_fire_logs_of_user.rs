@@ -79,15 +79,35 @@ async fn handler(
         },
         doc! {
             "$project": {
-                "fire_logs": {
-                    "$slice": ["$fire_logs", offset.unwrap_or(0), limit.unwrap()],
-                }
+                "fire_logs": 1
             }
         },
         doc! {
+            "$unwind": "$fire_logs"
+        },
+        doc! {
             "$sort": {
-                "fire_logs.timestamp.secs_since_epoch": 1,
-                "fire_logs.timestamp.nanos_since_epoch": 1
+                "fire_logs.timestamp.secs_since_epoch": -1,
+                "fire_logs.timestamp.nanos_since_epoch": -1
+            }
+        },
+        doc! {
+            "$match": {
+                "fire_logs.timestamp.secs_since_epoch": { "$gt": start_time.unwrap_or(0) },
+                "fire_logs.timestamp.secs_since_epoch": { "$lt": end_time.unwrap() },
+            }
+        },
+        doc! {
+            "$group": {
+                "_id": "$_id",
+                "fire_logs": { "$push": "$fire_logs" }
+            }
+        },
+        doc! {
+            "$project": {
+                "fire_logs": {
+                    "$slice": ["$fire_logs", offset.unwrap_or(0), limit.unwrap()],
+                }
             }
         },
     ];
