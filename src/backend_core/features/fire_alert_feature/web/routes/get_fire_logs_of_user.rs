@@ -131,7 +131,7 @@ async fn handler(
                         }
                     }
                     Err(e) => {
-                        println!("Error deserializing document: {}", e);
+                        eprintln!("Error deserializing document: {}", e);
                     }
                 }
             }
@@ -166,7 +166,7 @@ async fn handler(
             }
         }
         Err(e) => {
-            println!("Error executing aggregation pipeline: {}", e);
+            eprintln!("Error executing aggregation pipeline: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(GetFireLogsOfUserResponse {
