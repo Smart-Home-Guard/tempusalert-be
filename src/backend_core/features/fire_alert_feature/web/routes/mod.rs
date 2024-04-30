@@ -26,4 +26,5 @@ pub fn create_router(web: &mut WebFireFeature) -> ApiRouter {
                     .nest("/", get_gas_logs_of_user::routes())
                     .nest("/", get_heat_logs_of_user::routes())
                     .nest("/", get_smoke_logs_of_user::routes())
+                    .nest("/", get_fire_logs_of_user::routes())
 }
