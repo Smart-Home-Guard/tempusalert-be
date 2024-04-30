@@ -1,3 +1,4 @@
+pub mod fixed_value;
 mod iot;
 mod models;
 mod notifications;

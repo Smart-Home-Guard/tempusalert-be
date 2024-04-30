@@ -5,14 +5,17 @@ use axum::{
 };
 use mongodb::{
     bson::{self, doc, Bson},
-    options::{AggregateOptions, FindOptions},
+    options::AggregateOptions,
     Collection,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    backend_core::features::fire_alert_feature::models::{FireLog, Pagination, SensorLogData},
+    backend_core::features::fire_alert_feature::{
+        fixed_value::MAX_AMOUNT_DOCUMENT_PER_REQUEST,
+        models::{FireLog, Pagination, SensorLogData},
+    },
     json::Json,
 };
 
@@ -78,11 +81,6 @@ async fn handler(
             "$match": query_doc,
         },
         doc! {
-            "$project": {
-                "fire_logs": 1
-            }
-        },
-        doc! {
             "$unwind": "$fire_logs"
         },
         doc! {
@@ -93,10 +91,12 @@ async fn handler(
         },
         doc! {
             "$match": {
-                "fire_logs.timestamp.secs_since_epoch": { "$gt": start_time.unwrap_or(0) },
-                "fire_logs.timestamp.secs_since_epoch": { "$lt": end_time.unwrap() },
-            }
-        },
+                "$and": [
+                    { "fire_logs.timestamp.secs_since_epoch": { "$gt": start_time.unwrap_or(0) } },
+                    { "fire_logs.timestamp.secs_since_epoch": { "$lt": end_time.unwrap_or(i32::MAX) } }
+            ]
+        }
+            },
         doc! {
             "$group": {
                 "_id": "$_id",
@@ -106,7 +106,7 @@ async fn handler(
         doc! {
             "$project": {
                 "fire_logs": {
-                    "$slice": ["$fire_logs", offset.unwrap_or(0), limit.unwrap()],
+                    "$slice": ["$fire_logs", offset.unwrap_or(0), limit.unwrap_or(MAX_AMOUNT_DOCUMENT_PER_REQUEST)],
                 }
             }
         },
