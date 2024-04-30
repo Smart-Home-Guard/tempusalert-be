@@ -44,6 +44,6 @@ pub struct FireLog {
 pub struct Pagination {
     pub start_time: Option<i32>,
     pub end_time: Option<i32>,
-    pub offset: Option<u64>,
+    pub offset: Option<u32>,
     pub limit: Option<i64>,
 }

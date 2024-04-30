@@ -3,7 +3,11 @@ use axum::{
     extract::Query,
     http::{HeaderMap, StatusCode},
 };
-use mongodb::{bson::doc, options::FindOptions, Collection};
+use mongodb::{
+    bson::{self, doc, Bson},
+    options::{AggregateOptions, FindOptions},
+    Collection,
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -19,7 +23,7 @@ pub struct GetFireLogsOfUserQuery {
     email: String,
     start_time: Option<i32>,
     end_time: Option<i32>,
-    offset: Option<u64>,
+    offset: Option<u32>,
     limit: Option<i64>,
 }
 
@@ -65,55 +69,54 @@ async fn handler(
         mongoc.default_database().unwrap().collection("fire_alerts")
     };
 
-    let mut find_option = FindOptions::default();
-    find_option.skip = offset;
-    find_option.limit = limit;
-    find_option.sort = Some(
-        doc! { "fire_logs.timestamp.secs_since_epoch": -1, "fire_logs.timestamp.nanos_since_epoch": -1 },
-    );
-
-    let mut query_doc = doc! {
+    let query_doc = doc! {
         "owner_name": email.clone(),
     };
-    if let Some(start_time) = start_time {
-        query_doc.insert(
-            "fire_logs.timestamp.secs_since_epoch",
-            doc! { "$gte": start_time },
-        );
-    }
-    if let Some(end_time) = end_time {
-        query_doc.insert(
-            "fire_logs.timestamp.secs_since_epoch",
-            doc! { "$lte": end_time },
-        );
-    }
 
-    match fire_coll.find(query_doc, find_option).await {
+    let pipeline = vec![
+        doc! {
+            "$match": query_doc,
+        },
+        doc! {
+            "$project": {
+                "fire_logs": {
+                    "$slice": ["$fire_logs", offset.unwrap_or(0), limit.unwrap()],
+                }
+            }
+        },
+        doc! {
+            "$sort": {
+                "fire_logs.timestamp.secs_since_epoch": 1,
+                "fire_logs.timestamp.nanos_since_epoch": 1
+            }
+        },
+    ];
+
+    let aggregate_options = AggregateOptions::builder().build();
+
+    match fire_coll.aggregate(pipeline, Some(aggregate_options)).await {
         Ok(mut cursor) => {
             let mut fire_logs = Vec::new();
-            while cursor.advance().await.unwrap() {
+            while cursor.advance().await.unwrap_or(false) {
                 match cursor.deserialize_current() {
-                    Ok(fire_log) => fire_logs = (fire_log.fire_logs),
-                    Err(_) => {
-                        return (
-                            StatusCode::INTERNAL_SERVER_ERROR,
-                            Json(GetFireLogsOfUserResponse {
-                                message: format!("Unexpected error while fetching fire log data"),
-                                fire_logs: None,
-                                pagination: Pagination {
-                                    start_time,
-                                    end_time,
-                                    offset,
-                                    limit,
-                                },
-                            }),
-                        );
+                    Ok(document) => {
+                        if let Some(Bson::Array(fire_logs_array)) = document.get("fire_logs") {
+                            let logs: Vec<SensorLogData> = fire_logs_array
+                                .iter()
+                                .filter_map(|log| {
+                                    bson::from_bson::<SensorLogData>(log.clone()).ok()
+                                })
+                                .collect();
+                            fire_logs.extend(logs);
+                        }
+                    }
+                    Err(e) => {
+                        println!("Error deserializing document: {}", e);
                     }
                 }
             }
-
             if fire_logs.is_empty() {
-                return (
+                (
                     StatusCode::OK,
                     Json(GetFireLogsOfUserResponse {
                         message: format!("Your fire matrix hasn't had any data"),
@@ -125,14 +128,30 @@ async fn handler(
                             limit,
                         },
                     }),
-                );
+                )
+            } else {
+                (
+                    StatusCode::OK,
+                    Json(GetFireLogsOfUserResponse {
+                        message: format!("Successfully fetched fire log data"),
+                        fire_logs: Some(fire_logs),
+                        pagination: Pagination {
+                            start_time,
+                            end_time,
+                            offset,
+                            limit,
+                        },
+                    }),
+                )
             }
-
+        }
+        Err(e) => {
+            println!("Error executing aggregation pipeline: {}", e);
             (
-                StatusCode::OK,
+                StatusCode::INTERNAL_SERVER_ERROR,
                 Json(GetFireLogsOfUserResponse {
-                    message: format!("Successfully fetched fire log data"),
-                    fire_logs: Some(fire_logs),
+                    message: format!("Unexpected error while fetching fire log data"),
+                    fire_logs: None,
                     pagination: Pagination {
                         start_time,
                         end_time,
@@ -142,19 +161,6 @@ async fn handler(
                 }),
             )
         }
-        Err(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(GetFireLogsOfUserResponse {
-                message: format!("Unexpected error while fetching fire log data"),
-                fire_logs: None,
-                pagination: Pagination {
-                    start_time,
-                    end_time,
-                    offset,
-                    limit,
-                },
-            }),
-        ),
     }
 }
 
