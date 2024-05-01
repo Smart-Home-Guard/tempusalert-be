@@ -107,7 +107,7 @@ async fn handler(
                                 { "$lte": ["$$fire_log.timestamp.secs_since_epoch", end_time.unwrap_or(i32::MAX)] }
                             ]
                         }
-                    }
+                    },
                 },
                 "smoke_logs": {
                     "$filter": {
@@ -119,7 +119,7 @@ async fn handler(
                                 { "$lte": ["$$smoke_log.timestamp.secs_since_epoch", end_time.unwrap_or(i32::MAX)] }
                             ]
                         }
-                    }
+                    },
                 },
                 "co_logs": {
                     "$filter": {
@@ -131,11 +131,11 @@ async fn handler(
                                 { "$lte": ["$$co_log.timestamp.secs_since_epoch", end_time.unwrap_or(i32::MAX)] }
                             ]
                         }
-                    }
+                    },
                 },
-                "user_logs": {
+                "heat_logs": {
                     "$filter": {
-                        "input": "$user_logs",
+                        "input": "$heat_logs",
                         "as": "heat_log",
                         "cond": {
                             "$and": [
@@ -143,7 +143,7 @@ async fn handler(
                                 { "$lte": ["$$heat_log.timestamp.secs_since_epoch", end_time.unwrap_or(i32::MAX)] }
                             ]
                         }
-                    }
+                    },
                 },
                 "button_logs": {
                     "$filter": {
@@ -155,8 +155,17 @@ async fn handler(
                                 { "$lte": ["$$button_log.timestamp.secs_since_epoch", end_time.unwrap_or(i32::MAX)] }
                             ]
                         }
-                    }
+                    },
                 }
+            }
+        },
+        doc! {
+            "$project": {
+                "fire_logs": { "$slice": ["$fire_logs", offset.unwrap_or(0), limit.unwrap_or(MAX_AMOUNT_DOCUMENT_PER_REQUEST)] },
+                "smoke_logs": { "$slice": ["$smoke_logs", offset.unwrap_or(0), limit.unwrap_or(MAX_AMOUNT_DOCUMENT_PER_REQUEST)] },
+                "co_logs": { "$slice": ["$co_logs", offset.unwrap_or(0), limit.unwrap_or(MAX_AMOUNT_DOCUMENT_PER_REQUEST)] },
+                "heat_logs": { "$slice": ["$heat_logs", offset.unwrap_or(0), limit.unwrap_or(MAX_AMOUNT_DOCUMENT_PER_REQUEST)] },
+                "button_logs": { "$slice": ["$button_logs", offset.unwrap_or(0), limit.unwrap_or(MAX_AMOUNT_DOCUMENT_PER_REQUEST)] }
             }
         },
     ];
