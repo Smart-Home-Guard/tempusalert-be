@@ -91,8 +91,8 @@ async fn handler(
         doc! {
             "$match": {
                 "$and": [
-                    { "smoke_logs.timestamp.secs_since_epoch": { "$gt": start_time.unwrap_or(0) } },
-                    { "smoke_logs.timestamp.secs_since_epoch": { "$lt": end_time.unwrap_or(i32::MAX) } }
+                    { "smoke_logs.timestamp.secs_since_epoch": { "$gte": start_time.unwrap_or(0) } },
+                    { "smoke_logs.timestamp.secs_since_epoch": { "$lte": end_time.unwrap_or(i32::MAX) } }
             ]
         }
             },

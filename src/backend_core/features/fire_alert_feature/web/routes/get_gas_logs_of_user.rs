@@ -4,13 +4,18 @@ use axum::{
     http::{HeaderMap, StatusCode},
 };
 use mongodb::{
-    bson::{self, doc, Bson}, options::AggregateOptions, Collection
+    bson::{self, doc, Bson},
+    options::AggregateOptions,
+    Collection,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    backend_core::features::fire_alert_feature::{fixed_value::MAX_AMOUNT_DOCUMENT_PER_REQUEST, models::{FireLog, Pagination, SensorLogData}},
+    backend_core::features::fire_alert_feature::{
+        fixed_value::MAX_AMOUNT_DOCUMENT_PER_REQUEST,
+        models::{FireLog, Pagination, SensorLogData},
+    },
     json::Json,
 };
 
@@ -86,8 +91,8 @@ async fn handler(
         doc! {
             "$match": {
                 "$and": [
-                    { "lpg_logs.timestamp.secs_since_epoch": { "$gt": start_time.unwrap_or(0) } },
-                    { "lpg_logs.timestamp.secs_since_epoch": { "$lt": end_time.unwrap_or(i32::MAX) } }
+                    { "lpg_logs.timestamp.secs_since_epoch": { "$gte": start_time.unwrap_or(0) } },
+                    { "lpg_logs.timestamp.secs_since_epoch": { "$lte": end_time.unwrap_or(i32::MAX) } }
             ]
         }
             },

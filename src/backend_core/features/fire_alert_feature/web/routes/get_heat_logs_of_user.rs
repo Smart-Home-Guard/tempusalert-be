@@ -91,11 +91,11 @@ async fn handler(
         doc! {
             "$match": {
                 "$and": [
-                    { "heat_logs.timestamp.secs_since_epoch": { "$gt": start_time.unwrap_or(0) } },
-                    { "heat_logs.timestamp.secs_since_epoch": { "$lt": end_time.unwrap_or(i32::MAX) } }
+                    { "heat_logs.timestamp.secs_since_epoch": { "$gte": start_time.unwrap_or(0) } },
+                    { "heat_logs.timestamp.secs_since_epoch": { "$lte": end_time.unwrap_or(i32::MAX) } }
             ]
-        }
-            },
+            }
+        },
         doc! {
             "$group": {
                 "_id": "$_id",

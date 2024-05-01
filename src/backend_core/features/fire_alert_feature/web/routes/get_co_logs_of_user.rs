@@ -92,8 +92,8 @@ async fn handler(
         doc! {
             "$match": {
                 "$and": [
-                    { "co_logs.timestamp.secs_since_epoch": { "$gt": start_time.unwrap_or(0) } },
-                    { "co_logs.timestamp.secs_since_epoch": { "$lt": end_time.unwrap_or(i32::MAX) } }
+                    { "co_logs.timestamp.secs_since_epoch": { "$gte": start_time.unwrap_or(0) } },
+                    { "co_logs.timestamp.secs_since_epoch": { "$lte": end_time.unwrap_or(i32::MAX) } }
             ]
         }
             },
