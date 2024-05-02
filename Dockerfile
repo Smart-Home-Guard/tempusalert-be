@@ -24,5 +24,5 @@ WORKDIR /tempusalert-be
 COPY --from=builder /tempusalert-be/settings settings
 COPY --from=builder /tempusalert-be/target/release/backend .
 
-EXPOSE 8080
+EXPOSE 8081
 CMD ["./backend"]
