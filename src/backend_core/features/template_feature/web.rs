@@ -65,7 +65,10 @@ impl WebFeature for WebExampleFeature {
         "feature_example".into()
     }
 
-    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_feature: I) {
+    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_feature: I) 
+    where
+        Self: Sized, 
+    {
         self._iot_instance = Some(Box::new(non_primitive_cast(iot_feature).unwrap()));    
     }
 

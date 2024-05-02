@@ -2,7 +2,7 @@ use aide::axum::ApiRouter;
 use axum::async_trait;
 
 #[async_trait]
-pub trait IotFeature: Clone {
+pub trait IotFeature {
     fn create<I: 'static, W: 'static>(
         mqttc: rumqttc::AsyncClient,
         mqttc_event_loop: rumqttc::EventLoop,
@@ -21,14 +21,16 @@ pub trait IotFeature: Clone {
     async fn process_next_mqtt_message(&mut self);
     async fn process_next_web_push_message(&mut self);
 
-    fn set_web_feature_instance<W: WebFeature + 'static>(&mut self, web_instance: W);
+    fn set_web_feature_instance<W: WebFeature + 'static>(&mut self, web_instance: W)
+    where
+        Self: Sized; 
 
     fn get_mqttc(&mut self) -> rumqttc::AsyncClient;
     fn get_mongoc(&mut self) -> mongodb::Client;
 }
 
 #[async_trait]
-pub trait WebFeature: Clone {
+pub trait WebFeature {
     fn create<W: 'static, I: 'static>(
         mongoc: mongodb::Client,
         jwt_key: String,
@@ -40,7 +42,9 @@ pub trait WebFeature: Clone {
         Self: Sized;
     fn get_module_name(&self) -> String;
 
-    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: I);
+    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: I)
+    where
+        Self: Sized;
     
     fn create_router(&mut self) -> ApiRouter;
     

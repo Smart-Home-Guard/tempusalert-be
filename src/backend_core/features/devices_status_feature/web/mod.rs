@@ -2,7 +2,6 @@ use aide::axum::ApiRouter;
 use axum::async_trait;
 use schemars::JsonSchema;
 use serde::Serialize;
-use tokio::sync::mpsc::{Receiver, Sender};
 
 use super::notifications::{DeviceStatusIotNotification, DeviceStatusWebNotification};
 use crate::backend_core::features::devices_status_feature::iot::IotDeviceStatusFeature;
@@ -48,7 +47,10 @@ impl WebFeature for WebDeviceStatusFeature {
         "devices-status".into()
     }
 
-    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: I) {
+    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: I)
+    where
+        Self: Sized, 
+    {
         self._iot_instance = Some(Box::new(non_primitive_cast(iot_instance).unwrap()));
     }
 

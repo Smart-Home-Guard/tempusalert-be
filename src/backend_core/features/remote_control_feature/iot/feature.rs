@@ -64,7 +64,10 @@ impl IotFeature for IotRemoteControlFeature {
         }
     }
 
-    fn set_web_feature_instance<W: WebFeature + 'static>(&mut self, web_instance: W) {
+    fn set_web_feature_instance<W: WebFeature + 'static>(&mut self, web_instance: W)
+    where
+        Self: Sized, 
+    {
         self.web_instance = Some(Box::new(non_primitive_cast(web_instance).unwrap()));
     }
 

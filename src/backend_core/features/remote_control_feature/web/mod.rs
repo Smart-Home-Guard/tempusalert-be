@@ -42,7 +42,10 @@ impl WebFeature for WebRemoteControlFeature {
         routes::create_router(self)
     }
 
-    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: I) {
+    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: I) 
+    where
+        Self: Sized, 
+    {
         self.iot_instance = Some(Box::new(non_primitive_cast(iot_instance).unwrap()));
     }
 

@@ -54,7 +54,10 @@ impl IotFeature for IotExampleFeature {
         self.mongoc.clone()
     }
 
-    fn set_web_feature_instance<W: WebFeature + 'static>(&mut self, web_instance: W) {
+    fn set_web_feature_instance<W: WebFeature + 'static>(&mut self, web_instance: W) 
+    where
+        Self: Sized,
+    {
         self._web_instance = Some(Box::new(non_primitive_cast(web_instance).unwrap()));
     }
 
