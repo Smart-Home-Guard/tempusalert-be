@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::Weak;
 
 use aide::axum::ApiRouter;
 use axum::async_trait;
@@ -21,7 +21,7 @@ pub struct GenericResponse {
 #[derive(Clone)]
 pub struct WebDeviceStatusFeature {
     mongoc: mongodb::Client,
-    _iot_instance: Option<Arc<IotDeviceStatusFeature>>,
+    _iot_instance: Option<Weak<IotDeviceStatusFeature>>,
     jwt_key: String,
 }
 
@@ -49,7 +49,7 @@ impl WebFeature for WebDeviceStatusFeature {
         "devices-status".into()
     }
 
-    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: Arc<I>)
+    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: Weak<I>)
     where
         Self: Sized, 
     {

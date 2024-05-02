@@ -1,6 +1,6 @@
 use axum::{async_trait, http::StatusCode};
 use rumqttc::{Event, Incoming, Publish};
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 use tokio::sync::Mutex;
 use crate::backend_core::{
     features::{
@@ -13,7 +13,7 @@ pub struct IotRemoteControlFeature {
     mqttc: rumqttc::AsyncClient,
     mqtt_event_loop: Arc<Mutex<rumqttc::EventLoop>>,
     mongoc: mongodb::Client,
-    web_instance: Option<Arc<WebRemoteControlFeature>>,
+    web_instance: Option<Weak<WebRemoteControlFeature>>,
     jwt_key: String,
 }
 
@@ -64,7 +64,7 @@ impl IotFeature for IotRemoteControlFeature {
         }
     }
 
-    fn set_web_feature_instance<W: WebFeature + 'static>(&mut self, web_instance: Arc<W>)
+    fn set_web_feature_instance<W: WebFeature + 'static>(&mut self, web_instance: Weak<W>)
     where
         Self: Sized, 
     {

@@ -1,4 +1,5 @@
-use std::sync::Arc;
+
+use std::sync::Weak;
 
 use aide::axum::ApiRouter;
 use axum::async_trait;
@@ -12,7 +13,7 @@ mod routes;
 #[derive(Clone)]
 pub struct WebRemoteControlFeature {
     mongoc: mongodb::Client,
-    iot_instance: Option<Arc<IotRemoteControlFeature>>,
+    iot_instance: Option<Weak<IotRemoteControlFeature>>,
     jwt_key: String,
 }
 
@@ -44,7 +45,7 @@ impl WebFeature for WebRemoteControlFeature {
         routes::create_router(self)
     }
 
-    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: Arc<I>) 
+    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: Weak<I>) 
     where
         Self: Sized, 
     {

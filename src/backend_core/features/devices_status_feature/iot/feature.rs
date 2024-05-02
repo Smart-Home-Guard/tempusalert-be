@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::SystemTime};
+use std::{sync::{Arc, Weak}, time::SystemTime};
 
 use axum::async_trait;
 use mongodb::{
@@ -30,7 +30,7 @@ pub struct IotDeviceStatusFeature {
     mqttc: rumqttc::AsyncClient,
     mqtt_event_loop: Arc<Mutex<EventLoop>>,
     mongoc: mongodb::Client,
-    _web_instance: Option<Arc<WebDeviceStatusFeature>>,
+    _web_instance: Option<Weak<WebDeviceStatusFeature>>,
     jwt_key: String,
 }
 
@@ -75,7 +75,7 @@ impl IotFeature for IotDeviceStatusFeature {
         self.mongoc.clone()
     }
 
-    fn set_web_feature_instance<W: WebFeature + 'static>(&mut self, web_instance: Arc<W>)
+    fn set_web_feature_instance<W: WebFeature + 'static>(&mut self, web_instance: Weak<W>)
     where
         Self: Sized, 
     {

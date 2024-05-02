@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::Weak;
 
 use aide::axum::routing::get_with;
 use aide::axum::{ApiRouter, IntoApiResponse};
@@ -22,7 +22,7 @@ pub struct GenericResponse {
 #[derive(Clone)]
 pub struct WebExampleFeature {
     _mongoc: mongodb::Client,
-    _iot_instance: Option<Arc<IotExampleFeature>>,
+    _iot_instance: Option<Weak<IotExampleFeature>>,
     _jwt_key: String,
 }
 
@@ -67,7 +67,7 @@ impl WebFeature for WebExampleFeature {
         "feature_example".into()
     }
 
-    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_feature: Arc<I>) 
+    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_feature: Weak<I>) 
     where
         Self: Sized, 
     {

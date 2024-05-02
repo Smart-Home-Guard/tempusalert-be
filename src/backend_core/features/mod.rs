@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::Weak;
 
 use aide::axum::ApiRouter;
 use axum::async_trait;
@@ -23,7 +23,7 @@ pub trait IotFeature {
     async fn process_next_mqtt_message(&mut self);
     async fn process_next_web_push_message(&mut self);
 
-    fn set_web_feature_instance<W: WebFeature + 'static>(&mut self, web_instance: Arc<W>)
+    fn set_web_feature_instance<W: WebFeature + 'static>(&mut self, web_instance: Weak<W>)
     where
         Self: Sized; 
 
@@ -44,7 +44,7 @@ pub trait WebFeature {
         Self: Sized;
     fn get_module_name(&self) -> String;
 
-    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: Arc<I>)
+    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: Weak<I>)
     where
         Self: Sized;
     

@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
 use axum::async_trait;
 use tokio::sync::Mutex;
@@ -12,7 +12,7 @@ pub struct IotExampleFeature {
     mqttc: rumqttc::AsyncClient,
     _mqtt_event_loop: Arc<Mutex<rumqttc::EventLoop>>,
     mongoc: mongodb::Client,
-    _web_instance: Option<Arc<WebExampleFeature>>,
+    _web_instance: Option<Weak<WebExampleFeature>>,
     _jwt_key: String,
 }
 
@@ -54,7 +54,7 @@ impl IotFeature for IotExampleFeature {
         self.mongoc.clone()
     }
     
-    fn set_web_feature_instance<W: WebFeature + 'static>(&mut self, web_instance: Arc<W>) 
+    fn set_web_feature_instance<W: WebFeature + 'static>(&mut self, web_instance: Weak<W>) 
     where
         Self: Sized,
     {

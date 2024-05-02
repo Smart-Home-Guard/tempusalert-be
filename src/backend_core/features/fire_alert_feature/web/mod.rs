@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::Weak;
 
 use aide::axum::ApiRouter;
 use axum::async_trait;
@@ -21,7 +21,7 @@ pub struct FireResponse {
 #[derive(Clone)]
 pub struct WebFireFeature {
     mongoc: mongodb::Client,
-    _iot_instance: Option<Arc<IotFireFeature>>,
+    _iot_instance: Option<Weak<IotFireFeature>>,
     jwt_key: String,
 }
 
@@ -53,7 +53,7 @@ impl WebFeature for WebFireFeature {
         routes::create_router(self)
     }
 
-    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: Arc<I>)
+    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: Weak<I>)
     where
         Self: Sized,
     {

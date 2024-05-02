@@ -33,9 +33,9 @@ macro_rules! create_features {
             
             unsafe {
                 let mut web_feat_dup = *web_feat_ptr;
-                web_feat_dup.set_iot_feature_instance(iot_feat_arc.clone());
+                web_feat_dup.set_iot_feature_instance(Arc::downgrade(&iot_feat_arc));
                 let mut iot_feat_dup = *iot_feat_ptr;
-                iot_feat_dup.set_web_feature_instance(web_feat_arc.clone());
+                iot_feat_dup.set_web_feature_instance(Arc::downgrade(&web_feat_arc));
                 std::mem::forget(web_feat_dup);
                 std::mem::forget(iot_feat_dup);
             }
