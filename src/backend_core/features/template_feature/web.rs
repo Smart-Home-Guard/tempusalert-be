@@ -45,7 +45,7 @@ impl WebExampleFeature {
 
 #[async_trait]
 impl WebFeature for WebExampleFeature {
-    fn create<W: 'static, I: 'static>(
+    fn create(
         mongoc: mongodb::Client,
         jwt_key: String,
     ) -> Option<Self> {
@@ -67,7 +67,7 @@ impl WebFeature for WebExampleFeature {
         "feature_example".into()
     }
 
-    fn set_iot_feature_instance<I: IotFeature + 'static + Sized>(&mut self, iot_feature: Arc<I>) 
+    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_feature: Arc<I>) 
     where
         Self: Sized, 
     {

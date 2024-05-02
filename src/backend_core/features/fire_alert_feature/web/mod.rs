@@ -18,10 +18,6 @@ pub struct FireResponse {
     pub message: String,
 }
 
-struct FireAppState {
-    mongoc: mongodb::Client,
-}
-
 #[derive(Clone)]
 pub struct WebFireFeature {
     mongoc: mongodb::Client,
@@ -31,7 +27,7 @@ pub struct WebFireFeature {
 
 #[async_trait]
 impl WebFeature for WebFireFeature {
-    fn create<W: 'static, I: 'static>(
+    fn create(
         mongoc: mongodb::Client,
         jwt_key: String,
     ) -> Option<Self> {
@@ -57,7 +53,7 @@ impl WebFeature for WebFireFeature {
         routes::create_router(self)
     }
 
-    fn set_iot_feature_instance<I: IotFeature + 'static + Sized>(&mut self, iot_instance: Arc<I>)
+    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: Arc<I>)
     where
         Self: Sized,
     {

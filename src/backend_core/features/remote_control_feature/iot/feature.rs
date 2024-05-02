@@ -21,7 +21,7 @@ impl IotRemoteControlFeature {}
 
 #[async_trait]
 impl IotFeature for IotRemoteControlFeature {
-    fn create<I: 'static, W: 'static>(
+    fn create(
         mqttc: rumqttc::AsyncClient,
         mqtt_event_loop: rumqttc::EventLoop,
         mongoc: mongodb::Client,
@@ -64,7 +64,7 @@ impl IotFeature for IotRemoteControlFeature {
         }
     }
 
-    fn set_web_feature_instance<W: WebFeature + 'static + Sized>(&mut self, web_instance: Arc<W>)
+    fn set_web_feature_instance<W: WebFeature + 'static>(&mut self, web_instance: Arc<W>)
     where
         Self: Sized, 
     {

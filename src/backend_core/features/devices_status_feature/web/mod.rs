@@ -27,7 +27,7 @@ pub struct WebDeviceStatusFeature {
 
 #[async_trait]
 impl WebFeature for WebDeviceStatusFeature {
-    fn create<W: 'static, I: 'static>(
+    fn create(
         mongoc: mongodb::Client,
         jwt_key: String,
     ) -> Option<Self> {
@@ -49,7 +49,7 @@ impl WebFeature for WebDeviceStatusFeature {
         "devices-status".into()
     }
 
-    fn set_iot_feature_instance<I: IotFeature + 'static + Sized>(&mut self, iot_instance: Arc<I>)
+    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: Arc<I>)
     where
         Self: Sized, 
     {

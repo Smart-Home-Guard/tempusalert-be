@@ -18,7 +18,7 @@ pub struct WebRemoteControlFeature {
 
 #[async_trait]
 impl WebFeature for WebRemoteControlFeature {
-    fn create<W: 'static, I: 'static>(
+    fn create(
         mongoc: mongodb::Client,
         jwt_key: String,
     ) -> Option<Self> {
@@ -44,7 +44,7 @@ impl WebFeature for WebRemoteControlFeature {
         routes::create_router(self)
     }
 
-    fn set_iot_feature_instance<I: IotFeature + 'static + Sized>(&mut self, iot_instance: Arc<I>) 
+    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: Arc<I>) 
     where
         Self: Sized, 
     {

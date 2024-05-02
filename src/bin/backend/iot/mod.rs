@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use mongodb::bson::Document;
 use tempusalert_be::backend_core::features::IotFeature;
-use tokio::sync::Mutex;
 
 use crate::{
     config::IotConfig,
@@ -26,16 +25,17 @@ impl IotTask {
     pub async fn run(self) -> AppResult {
         let mut join_handles = vec![];
         for feat in self.features {
-            let feat_cloned = feat.clone();
+            let mut feat = feat.clone();
+            
+            let mut feat_cloned = feat.clone();
             join_handles.push(tokio::spawn(async move {
                 watch_users(feat_cloned).await;
             }));
 
-            let feat_cloned = feat.clone();
+            let mut feat_cloned = feat.clone();
             join_handles.push(tokio::spawn(async move {
                 loop {
-                    let mut feat = feat_cloned.lock().await;
-                    feat.process_next_mqtt_message().await;
+                    feat_cloned.process_next_mqtt_message().await;
                 }
             }));
         }
@@ -46,7 +46,7 @@ impl IotTask {
     }
 }
 
-async fn watch_users(feat: Arc<Mutex<dyn IotFeature + Send + Sync>>) {
+async fn watch_users(feat: Arc<dyn IotFeature + Send + Sync>) {
     let (feature_id, mqttc, mongoc) = {
         let mut feat = feat.lock().await;
         (feat.get_module_name(), feat.get_mqttc(), feat.get_mongoc())
