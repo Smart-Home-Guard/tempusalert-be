@@ -1,11 +1,8 @@
 use axum::async_trait;
 use mongodb::bson::{doc, to_bson};
 use rumqttc::{Event, Incoming, Publish};
-use std::{sync::Arc, time::SystemTime};
-use tokio::sync::{
-    mpsc::{Receiver, Sender},
-    Mutex,
-};
+use std::{any::Any, sync::{Arc, Weak}, time::SystemTime};
+use tokio::sync::Mutex;
 
 use super::{
     super::notifications::{FireIotNotification, FireWebNotification},
@@ -15,19 +12,17 @@ use crate::{
     auth::get_email_from_client_token,
     backend_core::{
         features::{
-            fire_alert_feature::models::{SensorDataType, SensorLogData},
-            IotFeature,
-        },
-        utils::non_primitive_cast,
+            fire_alert_feature::{models::{SensorDataType, SensorLogData}, web::WebFireFeature}, IotFeature, WebFeature,
+        }, utils::non_primitive_cast,
     },
 };
 
+#[derive(Clone)]
 pub struct IotFireFeature {
     mqttc: rumqttc::AsyncClient,
     mqtt_event_loop: Arc<Mutex<rumqttc::EventLoop>>,
     mongoc: mongodb::Client,
-    web_tx: Sender<FireIotNotification>,
-    web_rx: Receiver<FireWebNotification>,
+    _web_instance: Option<Weak<WebFireFeature>>,
     jwt_key: String,
 }
 
@@ -73,20 +68,17 @@ impl IotFireFeature {
 
 #[async_trait]
 impl IotFeature for IotFireFeature {
-    fn create<I: 'static, W: 'static>(
+    fn create(
         mqttc: rumqttc::AsyncClient,
         mqtt_event_loop: rumqttc::EventLoop,
         mongoc: mongodb::Client,
-        web_tx: Sender<I>,
-        web_rx: Receiver<W>,
         jwt_key: String,
     ) -> Option<Self> {
         Some(IotFireFeature {
             mqttc,
             mqtt_event_loop: Arc::new(Mutex::new(mqtt_event_loop)),
             mongoc: mongoc.clone(),
-            web_tx: non_primitive_cast(web_tx)?,
-            web_rx: non_primitive_cast(web_rx)?,
+            _web_instance: None,
             jwt_key,
         })
     }
@@ -108,6 +100,13 @@ impl IotFeature for IotFireFeature {
 
     fn get_mongoc(&mut self) -> mongodb::Client {
         self.mongoc.clone()
+    }
+    
+    fn set_web_feature_instance<W: WebFeature + 'static>(&mut self, web_instance: Weak<W>)
+    where
+        Self: Sized, 
+    {
+        self._web_instance = Some(non_primitive_cast(web_instance.clone()).unwrap()); 
     }
 
     async fn process_next_mqtt_message(&mut self) {
@@ -199,4 +198,8 @@ impl IotFeature for IotFireFeature {
         }
     }
     async fn process_next_web_push_message(&mut self) {}
+    
+    fn into_any(self: Arc<Self>) -> Arc<dyn Any> {
+        self
+    }
 }

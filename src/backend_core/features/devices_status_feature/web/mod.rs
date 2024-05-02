@@ -1,11 +1,14 @@
+use std::any::Any;
+use std::sync::{Arc, Weak};
+
 use aide::axum::ApiRouter;
 use axum::async_trait;
 use schemars::JsonSchema;
 use serde::Serialize;
-use tokio::sync::mpsc::{Receiver, Sender};
 
 use super::notifications::{DeviceStatusIotNotification, DeviceStatusWebNotification};
-use crate::backend_core::features::WebFeature;
+use crate::backend_core::features::devices_status_feature::iot::IotDeviceStatusFeature;
+use crate::backend_core::features::{IotFeature, WebFeature};
 use crate::backend_core::utils::non_primitive_cast;
 
 mod routes;
@@ -16,25 +19,22 @@ pub struct GenericResponse {
     pub message: String,
 }
 
+#[derive(Clone)]
 pub struct WebDeviceStatusFeature {
     mongoc: mongodb::Client,
-    iot_tx: Sender<DeviceStatusWebNotification>,
-    iot_rx: Receiver<DeviceStatusIotNotification>,
+    _iot_instance: Option<Weak<IotDeviceStatusFeature>>,
     jwt_key: String,
 }
 
 #[async_trait]
 impl WebFeature for WebDeviceStatusFeature {
-    fn create<W: 'static, I: 'static>(
+    fn create(
         mongoc: mongodb::Client,
-        iot_tx: Sender<W>,
-        iot_rx: Receiver<I>,
         jwt_key: String,
     ) -> Option<Self> {
         Some(WebDeviceStatusFeature {
             mongoc,
-            iot_tx: non_primitive_cast(iot_tx)?,
-            iot_rx: non_primitive_cast(iot_rx)?,
+            _iot_instance: None,
             jwt_key,
         })
     }
@@ -50,9 +50,20 @@ impl WebFeature for WebDeviceStatusFeature {
         "devices-status".into()
     }
 
+    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: Weak<I>)
+    where
+        Self: Sized, 
+    {
+        self._iot_instance = Some(non_primitive_cast(iot_instance.clone()).unwrap());
+    }
+
     fn create_router(&mut self) -> ApiRouter {
         routes::create_router(self)
     }
 
     async fn process_next_iot_push_message(&mut self) {}
+
+    fn into_any(self: Arc<Self>) -> Arc<dyn Any> {
+        self
+    }
 }

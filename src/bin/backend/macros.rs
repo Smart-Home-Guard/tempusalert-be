@@ -4,18 +4,47 @@ macro_rules! create_features {
         let mut web_features = vec![];
         let mut iot_features = vec![];
         let mut toggable_feat_names = vec![];
-        use tokio::sync::mpsc;
-        use std::sync::Arc;
-        use tokio::sync::Mutex;
         use crate::config::JWT_KEY;
+        use std::sync::Arc; 
+        use crate::clonable_wrapper::ClonableWrapper;
+        use crate::types::*;
         $(
-            let (iot_rx, web_tx) = mpsc::channel::<$feature_module::WebNotification>(64);
-            let (web_rx, iot_tx) = mpsc::channel::<$feature_module::IotNotification>(64);
-            let web_feat = Arc::new(Mutex::new($feature_module::WebFeature::create($mongoc, iot_rx, iot_tx, JWT_KEY.to_owned()).unwrap())) as Arc<Mutex<dyn WebFeature + Send + Sync>>;
+            let mut web_feat = $feature_module::WebFeature::create($mongoc, JWT_KEY.to_owned()).unwrap();
+            let web_feat_ptr = &mut web_feat as *mut $feature_module::WebFeature;
             let (mqttc, event_loop) = $init_mqtt_client($feature_module::IotFeature::name().as_str()).await;
-            let iot_feat = Arc::new(Mutex::new($feature_module::IotFeature::create(mqttc, event_loop, $mongoc, web_rx, web_tx, JWT_KEY.to_owned()).unwrap())) as Arc<Mutex<dyn IotFeature + Send + Sync>>;
-            web_features.push(web_feat);
-            iot_features.push(iot_feat);
+            let mut iot_feat = $feature_module::IotFeature::create(mqttc, event_loop, $mongoc, JWT_KEY.to_owned()).unwrap();
+            let iot_feat_ptr = &mut iot_feat as *mut $feature_module::IotFeature; 
+
+            let web_feat_arc = Arc::new(web_feat);
+            let iot_feat_arc = Arc::new(iot_feat);
+            
+            unsafe {
+                let mut web_feat_dup = std::ptr::read(web_feat_ptr);
+                web_feat_dup.set_iot_feature_instance(Arc::downgrade(&iot_feat_arc));
+                let mut iot_feat_dup = std::ptr::read(iot_feat_ptr);
+                iot_feat_dup.set_web_feature_instance(Arc::downgrade(&web_feat_arc));
+                std::mem::forget(web_feat_dup);
+                std::mem::forget(iot_feat_dup);
+            }
+
+            let web_clonable_wrapper: ClonableWrapper<WebFeatureDyn> = ClonableWrapper::create(
+                Box::new(|e: Arc<WebFeatureDyn>| {
+                    let e_any = e.into_any();
+                    Box::new($feature_module::WebFeature::clone(e_any.downcast_ref::<$feature_module::WebFeature>().unwrap()))
+                }),
+                web_feat_arc,
+            );
+
+            let iot_clonable_wrapper: ClonableWrapper<IotFeatureDyn> = ClonableWrapper::create(
+                Box::new(|e: Arc<IotFeatureDyn>| {
+                    let e_any = e.into_any();
+                    Box::new($feature_module::IotFeature::clone(e_any.downcast_ref::<$feature_module::IotFeature>().unwrap()))
+                }),
+                iot_feat_arc,
+            );
+
+            web_features.push(web_clonable_wrapper);
+            iot_features.push(iot_clonable_wrapper);
             if !$feature_module::MUST_ON {
                 toggable_feat_names.push($feature_module::IotFeature::name());
             }

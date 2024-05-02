@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::SystemTime};
+use std::{any::Any, sync::{Arc, Weak}, time::SystemTime};
 
 use axum::async_trait;
 use mongodb::{
@@ -6,10 +6,7 @@ use mongodb::{
     Collection,
 };
 use rumqttc::{Event, EventLoop, Incoming, Publish};
-use tokio::sync::{
-    mpsc::{Receiver, Sender},
-    Mutex,
-};
+use tokio::sync::Mutex;
 
 use super::super::notifications::{DeviceStatusIotNotification, DeviceStatusWebNotification};
 use super::mqtt_messages::{
@@ -20,21 +17,20 @@ use crate::{
     auth::get_email_from_client_token,
     backend_core::{
         features::{
-            devices_status_feature::models::{
+            devices_status_feature::{models::{
                 BatteryStatus, Component, ComponentStatus, DeviceError,
-            },
-            IotFeature,
-        },
-        utils,
+            }, web::WebDeviceStatusFeature},
+            IotFeature, WebFeature,
+        }, utils::non_primitive_cast,
     },
 };
 
+#[derive(Clone)]
 pub struct IotDeviceStatusFeature {
     mqttc: rumqttc::AsyncClient,
     mqtt_event_loop: Arc<Mutex<EventLoop>>,
     mongoc: mongodb::Client,
-    web_tx: Sender<DeviceStatusIotNotification>,
-    web_rx: Receiver<DeviceStatusWebNotification>,
+    _web_instance: Option<Weak<WebDeviceStatusFeature>>,
     jwt_key: String,
 }
 
@@ -42,12 +38,10 @@ impl IotDeviceStatusFeature {}
 
 #[async_trait]
 impl IotFeature for IotDeviceStatusFeature {
-    fn create<I: 'static, W: 'static>(
+    fn create(
         mqttc: rumqttc::AsyncClient,
         mqtt_event_loop: rumqttc::EventLoop,
         mongoc: mongodb::Client,
-        web_tx: Sender<I>,
-        web_rx: Receiver<W>,
         jwt_key: String,
     ) -> Option<Self>
     where
@@ -57,8 +51,7 @@ impl IotFeature for IotDeviceStatusFeature {
             mqttc,
             mongoc,
             mqtt_event_loop: Arc::new(Mutex::new(mqtt_event_loop)),
-            web_tx: utils::non_primitive_cast(web_tx)?,
-            web_rx: utils::non_primitive_cast(web_rx)?,
+            _web_instance: None,
             jwt_key,
         })
     }
@@ -80,6 +73,13 @@ impl IotFeature for IotDeviceStatusFeature {
 
     fn get_mongoc(&mut self) -> mongodb::Client {
         self.mongoc.clone()
+    }
+
+    fn set_web_feature_instance<W: WebFeature + 'static>(&mut self, web_instance: Weak<W>)
+    where
+        Self: Sized, 
+    {
+        self._web_instance = Some(non_primitive_cast(web_instance.clone()).unwrap());
     }
 
     async fn process_next_mqtt_message(&mut self) {
@@ -205,4 +205,8 @@ impl IotFeature for IotDeviceStatusFeature {
     }
 
     async fn process_next_web_push_message(&mut self) {}
+    
+    fn into_any(self: Arc<Self>) -> Arc<dyn Any> {
+        self
+    }
 }

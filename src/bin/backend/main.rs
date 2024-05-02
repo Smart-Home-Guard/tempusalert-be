@@ -14,13 +14,15 @@ use web::WebTask;
 mod config;
 mod database_client;
 mod globals;
-mod iot;
 mod mail;
 mod push_notification;
+mod clonable_wrapper;
 
 #[macro_use]
 mod macros;
 mod web;
+mod iot;
+mod types;
 
 pub type AppResult<T = ()> = std::result::Result<T, AppError>;
 

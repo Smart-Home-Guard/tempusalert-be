@@ -1,15 +1,14 @@
+use std::{any::Any, sync::{Arc, Weak}};
+
 use aide::axum::ApiRouter;
 use axum::async_trait;
-use tokio::sync::mpsc::{Receiver, Sender};
 
 #[async_trait]
 pub trait IotFeature {
-    fn create<I: 'static, W: 'static>(
+    fn create(
         mqttc: rumqttc::AsyncClient,
         mqttc_event_loop: rumqttc::EventLoop,
         mongoc: mongodb::Client,
-        web_tx: Sender<I>,
-        web_rx: Receiver<W>,
         jwt_key: String,
     ) -> Option<Self>
     where
@@ -24,16 +23,20 @@ pub trait IotFeature {
     async fn process_next_mqtt_message(&mut self);
     async fn process_next_web_push_message(&mut self);
 
+    fn set_web_feature_instance<W: WebFeature + 'static>(&mut self, web_instance: Weak<W>)
+    where
+        Self: Sized; 
+
     fn get_mqttc(&mut self) -> rumqttc::AsyncClient;
     fn get_mongoc(&mut self) -> mongodb::Client;
+
+    fn into_any(self: Arc<Self>) -> Arc<dyn Any>;
 }
 
 #[async_trait]
 pub trait WebFeature {
-    fn create<W: 'static, I: 'static>(
+    fn create(
         mongoc: mongodb::Client,
-        iot_tx: Sender<W>,
-        iot_rx: Receiver<I>,
         jwt_key: String,
     ) -> Option<Self>
     where
@@ -42,8 +45,16 @@ pub trait WebFeature {
     where
         Self: Sized;
     fn get_module_name(&self) -> String;
+
+    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: Weak<I>)
+    where
+        Self: Sized;
+    
     fn create_router(&mut self) -> ApiRouter;
+    
     async fn process_next_iot_push_message(&mut self);
+
+    fn into_any(self: Arc<Self>) -> Arc<dyn Any>;
 }
 
 // Features

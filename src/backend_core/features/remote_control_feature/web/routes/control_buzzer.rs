@@ -11,7 +11,7 @@ use tokio::sync::{mpsc::{Receiver, Sender}, Mutex};
 
 use crate::{auth::get_client_id_from_web_token, backend_core::features::remote_control_feature::{models::*, IotNotification, WebFeature, WebNotification}, json::Json};
 
-use super::{JWT_KEY, MONGOC};
+use super::WEB_INSTANCE;
 
 #[derive(Deserialize, JsonSchema)]
 pub struct ControlBuzzerQuery {
@@ -30,20 +30,13 @@ pub struct ControlBuzzerRequestBody {
     command: BuzzerCommand,
 }
 
-static mut IOT_TX: Option<Sender<WebNotification>> = None;
-static mut IOT_RX: Option<Arc<Mutex<Receiver<IotNotification>>>> = None;
-
 async fn handler(
     headers: HeaderMap,
     Query(ControlBuzzerQuery { email }): Query<ControlBuzzerQuery>,
     Json(ControlBuzzerRequestBody { device_id, component_id, command }): Json<ControlBuzzerRequestBody>,
 ) -> impl IntoApiResponse {
-    let iot_tx = unsafe {
-        IOT_TX.clone()
-    };
-
-    let iot_rx = unsafe {
-        IOT_RX.clone()
+    let mut web_instance = unsafe {
+        WEB_INSTANCE.clone().unwrap()        
     };
 
     if headers.get("email").is_none()
@@ -60,21 +53,21 @@ async fn handler(
         
     let jwt = String::from(headers.get("jwt").unwrap().to_str().unwrap());
     let client_id = unsafe {
-        get_client_id_from_web_token(JWT_KEY.clone().unwrap().as_str(), jwt, &mut *MONGOC.clone().unwrap().lock().await).await.unwrap()
+        get_client_id_from_web_token(web_instance.jwt_key.as_str(), jwt, &mut web_instance.mongoc).await.unwrap()
     };
 
     let notif = WebNotification::BuzzerCommandNotification { device_id, component_id, command, client_id };
     
-    if let Ok(_) = iot_tx.clone().unwrap().send(notif).await {
-        if let Some(response) = iot_rx.clone().unwrap().lock().await.recv().await {
-            return (
-                response.status_code,
-                Json(ControlBuzzerResponse {
-                    message: response.message,
-                }),
-            );
-        };
-    }
+    // if let Ok(_) = iot_tx.clone().unwrap().send(notif).await {
+    //    if let Some(response) = iot_rx.clone().unwrap().lock().await.recv().await {
+    //        return (
+    //            response.status_code,
+    //            Json(ControlBuzzerResponse {
+    //                message: response.message,
+    //            }),
+    //        );
+    //    };
+    // }
          
     return (
         StatusCode::INTERNAL_SERVER_ERROR,
@@ -85,11 +78,6 @@ async fn handler(
 }
 
 pub fn routes(web_feature_instance: &mut WebFeature) -> ApiRouter {
-    unsafe {
-        IOT_RX = Some(web_feature_instance.iot_rx.clone());
-        IOT_TX = Some(web_feature_instance.iot_tx.clone());
-    }
-
     ApiRouter::new().api_route(
         "/buzzer",
         post_with(handler, |op| {
