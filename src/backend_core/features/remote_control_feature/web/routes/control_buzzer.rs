@@ -58,16 +58,16 @@ async fn handler(
 
     let notif = WebNotification::BuzzerCommandNotification { device_id, component_id, command, client_id };
     
-    // if let Ok(_) = iot_tx.clone().unwrap().send(notif).await {
-    //    if let Some(response) = iot_rx.clone().unwrap().lock().await.recv().await {
-    //        return (
-    //            response.status_code,
-    //            Json(ControlBuzzerResponse {
-    //                message: response.message,
-    //            }),
-    //        );
-    //    };
-    // }
+    if let Ok(_) = .await {
+        if let Some(response) = iot_rx.clone().unwrap().lock().await.recv().await {
+            return (
+                response.status_code,
+                Json(ControlBuzzerResponse {
+                    message: response.message,
+                }),
+            );
+        };
+    }
          
     return (
         StatusCode::INTERNAL_SERVER_ERROR,

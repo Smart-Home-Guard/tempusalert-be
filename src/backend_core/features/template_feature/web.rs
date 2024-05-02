@@ -83,7 +83,7 @@ impl WebFeature for WebExampleFeature {
     }
 
     async fn send_message_to_iot(&mut self, message: String) -> String { String::from("") }
-    async fn response_message_from_iot(&mut self, message: String) -> String { String::from("") }
+    async fn respond_message_from_iot(&mut self, message: String) -> String { String::from("") }
 
     fn into_any(self: Arc<Self>) -> Arc<dyn Any> {
         self

@@ -32,7 +32,7 @@ impl WebFeature for WebRemoteControlFeature {
 
     fn name() -> String
     where
-        Self: Sized,
+        Self: Sized
     {
         "remote-control".into()
     }
@@ -52,8 +52,11 @@ impl WebFeature for WebRemoteControlFeature {
         self.iot_instance = Some(non_primitive_cast(iot_instance.clone()).unwrap());
     }
 
-    async fn send_message_to_iot(&mut self, message: String) -> String { String::from("") }
-    async fn response_message_from_iot(&mut self, message: String) -> String { String::from("") }
+    async fn send_message_to_iot(&mut self, message: String) -> String { 
+        self.iot_instance.unwrap().upgrade().unwrap().respond_message_from_web(message).await
+    }
+
+    async fn respond_message_from_iot(&mut self, message: String) -> String { String::from("") }
 
     fn into_any(self: Arc<Self>) -> Arc<dyn Any> {
         self
