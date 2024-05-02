@@ -104,20 +104,6 @@ impl WebTask {
             axum::serve(self.tcp, router).await
         });
 
-        let mut join_handles = vec![];
-        
-        for feat in self.features {
-            let mut feat = feat.clone();
-            join_handles.push(tokio::spawn(async move {
-                loop {
-                    feat.process_next_iot_push_message().await;
-                }
-            }));
-        }
-
-        for handle in join_handles {
-            handle.await.unwrap();
-        }
         Ok(())
     }
 

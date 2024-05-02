@@ -26,13 +26,6 @@ impl IotTask {
             join_handles.push(tokio::spawn(async move {
                 watch_users(feat_cloned).await;
             }));
-
-            let mut feat_cloned = feat.clone();
-            join_handles.push(tokio::spawn(async move {
-                loop {
-                    feat_cloned.process_next_mqtt_message().await;
-                }
-            }));
         }
         for handle in join_handles {
             handle.await.unwrap()
