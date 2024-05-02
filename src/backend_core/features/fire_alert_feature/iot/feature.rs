@@ -198,8 +198,8 @@ impl IotFeature for IotFireFeature {
         }
     }
    
-    async fn send_message_to_web(&mut self, message: String) -> String {}
-    async fn response_message_from_web(&mut self, message: String) -> String {}
+    async fn send_message_to_web(&mut self, message: String) -> String { String::from("") }
+    async fn response_message_from_web(&mut self, message: String) -> String { String::from("") }
 
     fn into_any(self: Arc<Self>) -> Arc<dyn Any> {
         self

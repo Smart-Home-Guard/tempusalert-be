@@ -61,8 +61,8 @@ impl WebFeature for WebDeviceStatusFeature {
         routes::create_router(self)
     }
     
-    async fn send_message_to_iot(&mut self, message: String) -> String {}
-    async fn response_message_from_iot(&mut self, message: String) -> String {}
+    async fn send_message_to_iot(&mut self, message: String) -> String { String::from("") }
+    async fn response_message_from_iot(&mut self, message: String) -> String { String::from("") }
 
     fn into_any(self: Arc<Self>) -> Arc<dyn Any> {
         self
