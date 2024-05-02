@@ -1,2 +1,2 @@
-pub struct DeviceStatusWebNotification();
-pub struct DeviceStatusIotNotification();
+pub struct RemoteControlWebNotification();
+pub struct RemoteControlIotNotification();
