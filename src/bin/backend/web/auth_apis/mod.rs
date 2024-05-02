@@ -45,7 +45,7 @@ async fn iot_auth_handler(Json(body): Json<IotAuthBody>) -> impl IntoApiResponse
     {
         let client_claim = IotClientClaim {
             client_id: body.client_id,
-            nonce: uuid::Uuid::new_v4().into(),
+            nonce: uuid::Uuid::now_v7().into(),
         };
         let token = auth::sign_jwt(JWT_KEY.as_str(), &client_claim);
 
@@ -106,7 +106,7 @@ async fn web_auth_handler(Json(body): Json<WebAuthBody>) -> impl IntoApiResponse
         } else {
             let client_claim = WebClientClaim {
                 email: body.email,
-                nonce: uuid::Uuid::new_v4().into(),
+                nonce: uuid::Uuid::now_v7().into(),
             };
             let token = auth::sign_jwt(JWT_KEY.as_str(), &client_claim);
 
