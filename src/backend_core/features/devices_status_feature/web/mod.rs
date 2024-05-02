@@ -1,4 +1,5 @@
-use std::sync::Weak;
+use std::any::Any;
+use std::sync::{Arc, Weak};
 
 use aide::axum::ApiRouter;
 use axum::async_trait;
@@ -61,4 +62,8 @@ impl WebFeature for WebDeviceStatusFeature {
     }
 
     async fn process_next_iot_push_message(&mut self) {}
+
+    fn into_any(self: Arc<Self>) -> Arc<dyn Any> {
+        self
+    }
 }

@@ -28,12 +28,18 @@ macro_rules! create_features {
             }
 
             let web_clonable_wrapper: ClonableWrapper<WebFeatureDyn> = ClonableWrapper::create(
-                Box::new(|e| Box::new($feature_module::WebFeature::clone((&e as &dyn std::any::Any).downcast_ref::<$feature_module::WebFeature>().unwrap()))),
+                Box::new(|e: Arc<WebFeatureDyn>| {
+                    let e_any = e.into_any();
+                    Box::new($feature_module::WebFeature::clone(e_any.downcast_ref::<$feature_module::WebFeature>().unwrap()))
+                }),
                 web_feat_arc,
             );
 
             let iot_clonable_wrapper: ClonableWrapper<IotFeatureDyn> = ClonableWrapper::create(
-                Box::new(|e| Box::new($feature_module::IotFeature::clone((&e as &dyn std::any::Any).downcast_ref::<$feature_module::IotFeature>().unwrap()))),
+                Box::new(|e: Arc<IotFeatureDyn>| {
+                    let e_any = e.into_any();
+                    Box::new($feature_module::IotFeature::clone(e_any.downcast_ref::<$feature_module::IotFeature>().unwrap()))
+                }),
                 iot_feat_arc,
             );
 

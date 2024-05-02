@@ -1,6 +1,6 @@
 use axum::{async_trait, http::StatusCode};
 use rumqttc::{Event, Incoming, Publish};
-use std::sync::{Arc, Weak};
+use std::{any::Any, sync::{Arc, Weak}};
 use tokio::sync::Mutex;
 use crate::backend_core::{
     features::{
@@ -72,4 +72,8 @@ impl IotFeature for IotRemoteControlFeature {
     }
 
     async fn process_next_web_push_message(&mut self) { }
+    
+    fn into_any(self: Arc<Self>) -> Arc<dyn Any> {
+        self
+    }
 }

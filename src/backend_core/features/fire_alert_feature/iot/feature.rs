@@ -1,7 +1,7 @@
 use axum::async_trait;
 use mongodb::bson::{doc, to_bson};
 use rumqttc::{Event, Incoming, Publish};
-use std::{sync::{Arc, Weak}, time::SystemTime};
+use std::{any::Any, sync::{Arc, Weak}, time::SystemTime};
 use tokio::sync::Mutex;
 
 use super::{
@@ -198,4 +198,8 @@ impl IotFeature for IotFireFeature {
         }
     }
     async fn process_next_web_push_message(&mut self) {}
+    
+    fn into_any(self: Arc<Self>) -> Arc<dyn Any> {
+        self
+    }
 }

@@ -1,4 +1,4 @@
-use std::{sync::{Arc, Weak}, time::SystemTime};
+use std::{any::Any, sync::{Arc, Weak}, time::SystemTime};
 
 use axum::async_trait;
 use mongodb::{
@@ -205,4 +205,8 @@ impl IotFeature for IotDeviceStatusFeature {
     }
 
     async fn process_next_web_push_message(&mut self) {}
+    
+    fn into_any(self: Arc<Self>) -> Arc<dyn Any> {
+        self
+    }
 }

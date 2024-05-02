@@ -1,4 +1,4 @@
-use std::sync::Weak;
+use std::{any::Any, sync::{Arc, Weak}};
 
 use aide::axum::ApiRouter;
 use axum::async_trait;
@@ -29,6 +29,8 @@ pub trait IotFeature {
 
     fn get_mqttc(&mut self) -> rumqttc::AsyncClient;
     fn get_mongoc(&mut self) -> mongodb::Client;
+
+    fn into_any(self: Arc<Self>) -> Arc<dyn Any>;
 }
 
 #[async_trait]
@@ -51,6 +53,8 @@ pub trait WebFeature {
     fn create_router(&mut self) -> ApiRouter;
     
     async fn process_next_iot_push_message(&mut self);
+
+    fn into_any(self: Arc<Self>) -> Arc<dyn Any>;
 }
 
 // Features

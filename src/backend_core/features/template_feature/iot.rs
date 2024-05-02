@@ -1,4 +1,4 @@
-use std::sync::{Arc, Weak};
+use std::{any::Any, sync::{Arc, Weak}};
 
 use axum::async_trait;
 use tokio::sync::Mutex;
@@ -63,4 +63,8 @@ impl IotFeature for IotExampleFeature {
 
     async fn process_next_mqtt_message(&mut self) {}
     async fn process_next_web_push_message(&mut self) {}
+
+    fn into_any(self: Arc<Self>) -> Arc<dyn Any> {
+        self
+    }
 }
