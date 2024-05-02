@@ -86,8 +86,8 @@ pub fn routes(web_feature_instance: &mut WebFeature) -> ApiRouter {
     ApiRouter::new().api_route(
         "/buzzer",
         post_with(handler, |op| {
-            op.description("Get all devices for a given user by email")
-                .tag("Devices status")
+            op.description("Control a light by email")
+                .tag("Remote control")
                 .response::<200, Json<ControlLightResponse>>()
                 .response::<403, Json<ControlLightResponse>>()
                 .response::<500, Json<ControlLightResponse>>()
