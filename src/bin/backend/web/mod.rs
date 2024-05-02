@@ -14,7 +14,6 @@ use aide::{
     openapi::{OpenApi, Tag},
     transform::TransformOpenApi,
 };
-use tokio::sync::Mutex;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
 use crate::{config::WebConfig, AppResult};
@@ -31,14 +30,14 @@ use self::{
 pub struct WebTask {
     pub config: WebConfig,
     tcp: tokio::net::TcpListener,
-    features: Vec<Arc<Mutex<dyn WebFeature + Send + Sync>>>,
+    features: Vec<Arc<dyn WebFeature + Send + Sync>>,
     router: ApiRouter,
 }
 
 impl WebTask {
     pub async fn create(
         mut config: WebConfig,
-        features: Vec<Arc<Mutex<dyn WebFeature + Send + Sync>>>,
+        features: Vec<Arc<dyn WebFeature + Send + Sync>>,
     ) -> AppResult<Self> {
         let tcp = tokio::net::TcpListener::bind(config.get_socket_addr()?).await?;
         let addr = tcp.local_addr()?;

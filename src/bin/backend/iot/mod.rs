@@ -12,13 +12,13 @@ use crate::{
 
 pub struct IotTask {
     pub config: IotConfig,
-    features: Vec<Arc<Mutex<dyn IotFeature + Send + Sync>>>,
+    features: Vec<Arc<dyn IotFeature + Send + Sync>>,
 }
 
 impl IotTask {
     pub async fn create(
         config: IotConfig,
-        features: Vec<Arc<Mutex<dyn IotFeature + Send + Sync>>>,
+        features: Vec<Arc<dyn IotFeature + Send + Sync>>,
     ) -> AppResult<Self> {
         Ok(Self { config, features })
     }

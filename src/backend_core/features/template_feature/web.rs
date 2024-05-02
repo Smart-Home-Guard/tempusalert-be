@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use aide::axum::routing::get_with;
 use aide::axum::{ApiRouter, IntoApiResponse};
 use aide::transform::TransformOperation;
@@ -20,7 +22,7 @@ pub struct GenericResponse {
 #[derive(Clone)]
 pub struct WebExampleFeature {
     _mongoc: mongodb::Client,
-    _iot_instance: Option<Box<IotExampleFeature>>,
+    _iot_instance: Option<Arc<IotExampleFeature>>,
     _jwt_key: String,
 }
 
@@ -65,13 +67,13 @@ impl WebFeature for WebExampleFeature {
         "feature_example".into()
     }
 
-    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_feature: I) 
+    fn set_iot_feature_instance<I: IotFeature + 'static + Sized>(&mut self, iot_feature: Arc<I>) 
     where
         Self: Sized, 
     {
-        self._iot_instance = Some(Box::new(non_primitive_cast(iot_feature).unwrap()));    
+        self._iot_instance = Some(non_primitive_cast(iot_feature.clone()).unwrap());    
     }
-
+    
     fn create_router(&mut self) -> ApiRouter {
         ApiRouter::new().api_route(
             "/",

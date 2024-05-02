@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use aide::axum::ApiRouter;
 use axum::async_trait;
 use schemars::JsonSchema;
@@ -19,7 +21,7 @@ pub struct GenericResponse {
 #[derive(Clone)]
 pub struct WebDeviceStatusFeature {
     mongoc: mongodb::Client,
-    _iot_instance: Option<Box<IotDeviceStatusFeature>>,
+    _iot_instance: Option<Arc<IotDeviceStatusFeature>>,
     jwt_key: String,
 }
 
@@ -47,11 +49,11 @@ impl WebFeature for WebDeviceStatusFeature {
         "devices-status".into()
     }
 
-    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: I)
+    fn set_iot_feature_instance<I: IotFeature + 'static + Sized>(&mut self, iot_instance: Arc<I>)
     where
         Self: Sized, 
     {
-        self._iot_instance = Some(Box::new(non_primitive_cast(iot_instance).unwrap()));
+        self._iot_instance = Some(non_primitive_cast(iot_instance.clone()).unwrap());
     }
 
     fn create_router(&mut self) -> ApiRouter {

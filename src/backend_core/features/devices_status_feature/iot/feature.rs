@@ -30,7 +30,7 @@ pub struct IotDeviceStatusFeature {
     mqttc: rumqttc::AsyncClient,
     mqtt_event_loop: Arc<Mutex<EventLoop>>,
     mongoc: mongodb::Client,
-    _web_instance: Option<Box<WebDeviceStatusFeature>>,
+    _web_instance: Option<Arc<WebDeviceStatusFeature>>,
     jwt_key: String,
 }
 
@@ -75,11 +75,11 @@ impl IotFeature for IotDeviceStatusFeature {
         self.mongoc.clone()
     }
 
-    fn set_web_feature_instance<W: WebFeature + 'static>(&mut self, web_instance: W)
+    fn set_web_feature_instance<W: WebFeature + 'static + Sized>(&mut self, web_instance: Arc<W>)
     where
         Self: Sized, 
     {
-        self._web_instance = Some(Box::new(non_primitive_cast(web_instance).unwrap()));
+        self._web_instance = Some(non_primitive_cast(web_instance.clone()).unwrap());
     }
 
     async fn process_next_mqtt_message(&mut self) {
