@@ -5,7 +5,8 @@ use serde::Serialize;
 use tokio::sync::mpsc::{Receiver, Sender};
 
 use super::notifications::{DeviceStatusIotNotification, DeviceStatusWebNotification};
-use crate::backend_core::features::WebFeature;
+use crate::backend_core::features::devices_status_feature::iot::IotDeviceStatusFeature;
+use crate::backend_core::features::{IotFeature, WebFeature};
 use crate::backend_core::utils::non_primitive_cast;
 
 mod routes;
@@ -16,10 +17,10 @@ pub struct GenericResponse {
     pub message: String,
 }
 
+#[derive(Clone)]
 pub struct WebDeviceStatusFeature {
     mongoc: mongodb::Client,
-    iot_tx: Sender<DeviceStatusWebNotification>,
-    iot_rx: Receiver<DeviceStatusIotNotification>,
+    _iot_instance: Option<Box<IotDeviceStatusFeature>>,
     jwt_key: String,
 }
 
@@ -27,14 +28,11 @@ pub struct WebDeviceStatusFeature {
 impl WebFeature for WebDeviceStatusFeature {
     fn create<W: 'static, I: 'static>(
         mongoc: mongodb::Client,
-        iot_tx: Sender<W>,
-        iot_rx: Receiver<I>,
         jwt_key: String,
     ) -> Option<Self> {
         Some(WebDeviceStatusFeature {
             mongoc,
-            iot_tx: non_primitive_cast(iot_tx)?,
-            iot_rx: non_primitive_cast(iot_rx)?,
+            _iot_instance: None,
             jwt_key,
         })
     }
@@ -48,6 +46,10 @@ impl WebFeature for WebDeviceStatusFeature {
 
     fn get_module_name(&self) -> String {
         "devices-status".into()
+    }
+
+    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: I) {
+        self._iot_instance = Some(Box::new(non_primitive_cast(iot_instance).unwrap()));
     }
 
     fn create_router(&mut self) -> ApiRouter {

@@ -1,15 +1,12 @@
 use aide::axum::ApiRouter;
 use axum::async_trait;
-use tokio::sync::mpsc::{Receiver, Sender};
 
 #[async_trait]
-pub trait IotFeature {
+pub trait IotFeature: Clone {
     fn create<I: 'static, W: 'static>(
         mqttc: rumqttc::AsyncClient,
         mqttc_event_loop: rumqttc::EventLoop,
         mongoc: mongodb::Client,
-        web_tx: Sender<I>,
-        web_rx: Receiver<W>,
         jwt_key: String,
     ) -> Option<Self>
     where
@@ -24,16 +21,16 @@ pub trait IotFeature {
     async fn process_next_mqtt_message(&mut self);
     async fn process_next_web_push_message(&mut self);
 
+    fn set_web_feature_instance<W: WebFeature + 'static>(&mut self, web_instance: W);
+
     fn get_mqttc(&mut self) -> rumqttc::AsyncClient;
     fn get_mongoc(&mut self) -> mongodb::Client;
 }
 
 #[async_trait]
-pub trait WebFeature {
+pub trait WebFeature: Clone {
     fn create<W: 'static, I: 'static>(
         mongoc: mongodb::Client,
-        iot_tx: Sender<W>,
-        iot_rx: Receiver<I>,
         jwt_key: String,
     ) -> Option<Self>
     where
@@ -42,7 +39,11 @@ pub trait WebFeature {
     where
         Self: Sized;
     fn get_module_name(&self) -> String;
+
+    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: I);
+    
     fn create_router(&mut self) -> ApiRouter;
+    
     async fn process_next_iot_push_message(&mut self);
 }
 

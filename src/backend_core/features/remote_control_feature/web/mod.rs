@@ -1,20 +1,16 @@
-use std::sync::Arc;
-
 use aide::axum::ApiRouter;
 use axum::async_trait;
-use tokio::sync::{mpsc::{Receiver, Sender}, Mutex};
 
-use crate::backend_core::features::WebFeature;
-use crate::backend_core::utils::non_primitive_cast;
+use crate::backend_core::{features::{IotFeature, WebFeature}, utils::non_primitive_cast};
 
-use super::{IotNotification, WebNotification};
+use super::iot::IotRemoteControlFeature;
 
 mod routes;
 
+#[derive(Clone)]
 pub struct WebRemoteControlFeature {
     mongoc: mongodb::Client,
-    iot_tx: Sender<WebNotification>,
-    iot_rx: Arc<Mutex<Receiver<IotNotification>>>,
+    iot_instance: Option<Box<IotRemoteControlFeature>>,
     jwt_key: String,
 }
 
@@ -22,14 +18,11 @@ pub struct WebRemoteControlFeature {
 impl WebFeature for WebRemoteControlFeature {
     fn create<W: 'static, I: 'static>(
         mongoc: mongodb::Client,
-        iot_tx: Sender<W>,
-        iot_rx: Receiver<I>,
         jwt_key: String,
     ) -> Option<Self> {
         Some(WebRemoteControlFeature {
             mongoc,
-            iot_tx: non_primitive_cast(iot_tx)?,
-            iot_rx: Arc::new(Mutex::new(non_primitive_cast(iot_rx)?)),
+            iot_instance: None,
             jwt_key,
         })
     }
@@ -47,6 +40,10 @@ impl WebFeature for WebRemoteControlFeature {
 
     fn create_router(&mut self) -> ApiRouter {
         routes::create_router(self)
+    }
+
+    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: I) {
+        self.iot_instance = Some(Box::new(non_primitive_cast(iot_instance).unwrap()));
     }
 
     async fn process_next_iot_push_message(&mut self) {}

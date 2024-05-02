@@ -1,24 +1,19 @@
-use axum::async_trait;
+use axum::{async_trait, http::StatusCode};
 use rumqttc::{Event, Incoming, Publish};
 use std::sync::Arc;
-use tokio::sync::{
-    mpsc::{Receiver, Sender},
-    Mutex,
-};
-
+use tokio::sync::{Mutex};
 use crate::backend_core::{
     features::{
-        remote_control_feature::{IotNotification, WebNotification}, IotFeature
-    },
-    utils::non_primitive_cast
+        remote_control_feature::web::WebRemoteControlFeature, IotFeature, WebFeature
+    }, utils::non_primitive_cast,
 };
 
+#[derive(Clone)]
 pub struct IotRemoteControlFeature {
     mqttc: rumqttc::AsyncClient,
     mqtt_event_loop: Arc<Mutex<rumqttc::EventLoop>>,
     mongoc: mongodb::Client,
-    web_tx: Sender<IotNotification>,
-    web_rx: Receiver<WebNotification>,
+    web_instance: Option<Box<WebRemoteControlFeature>>,
     jwt_key: String,
 }
 
@@ -30,16 +25,13 @@ impl IotFeature for IotRemoteControlFeature {
         mqttc: rumqttc::AsyncClient,
         mqtt_event_loop: rumqttc::EventLoop,
         mongoc: mongodb::Client,
-        web_tx: Sender<I>,
-        web_rx: Receiver<W>,
         jwt_key: String,
     ) -> Option<Self> {
         Some(IotRemoteControlFeature {
             mqttc,
             mqtt_event_loop: Arc::new(Mutex::new(mqtt_event_loop)),
             mongoc: mongoc.clone(),
-            web_tx: non_primitive_cast(web_tx)?,
-            web_rx: non_primitive_cast(web_rx)?,
+            web_instance: None,
             jwt_key,
         })
     }
@@ -71,7 +63,10 @@ impl IotFeature for IotRemoteControlFeature {
         {
         }
     }
-    async fn process_next_web_push_message(&mut self) {
-        
+
+    fn set_web_feature_instance<W: WebFeature + 'static>(&mut self, web_instance: W) {
+        self.web_instance = Some(Box::new(non_primitive_cast(web_instance).unwrap()));
     }
+
+    async fn process_next_web_push_message(&mut self) { }
 }

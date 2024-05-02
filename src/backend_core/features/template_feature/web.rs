@@ -4,10 +4,10 @@ use aide::transform::TransformOperation;
 use axum::{async_trait, http::StatusCode};
 use schemars::JsonSchema;
 use serde::Serialize;
-use tokio::sync::mpsc::{Receiver, Sender};
 
 use super::notifications::{ExampleIotNotification, ExampleWebNotification};
-use crate::backend_core::features::WebFeature;
+use crate::backend_core::features::template_feature::iot::IotExampleFeature;
+use crate::backend_core::features::{IotFeature, WebFeature};
 use crate::backend_core::utils::non_primitive_cast;
 use crate::json::Json;
 
@@ -17,10 +17,10 @@ pub struct GenericResponse {
     pub message: String,
 }
 
+#[derive(Clone)]
 pub struct WebExampleFeature {
     _mongoc: mongodb::Client,
-    _iot_tx: Sender<ExampleWebNotification>,
-    _iot_rx: Receiver<ExampleIotNotification>,
+    _iot_instance: Option<Box<IotExampleFeature>>,
     _jwt_key: String,
 }
 
@@ -45,14 +45,11 @@ impl WebExampleFeature {
 impl WebFeature for WebExampleFeature {
     fn create<W: 'static, I: 'static>(
         mongoc: mongodb::Client,
-        iot_tx: Sender<W>,
-        iot_rx: Receiver<I>,
         jwt_key: String,
     ) -> Option<Self> {
         Some(WebExampleFeature {
             _mongoc: mongoc,
-            _iot_tx: non_primitive_cast(iot_tx)?,
-            _iot_rx: non_primitive_cast(iot_rx)?,
+            _iot_instance: None,
             _jwt_key: jwt_key,
         })
     }
@@ -66,6 +63,10 @@ impl WebFeature for WebExampleFeature {
 
     fn get_module_name(&self) -> String {
         "feature_example".into()
+    }
+
+    fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_feature: I) {
+        self._iot_instance = Some(Box::new(non_primitive_cast(iot_feature).unwrap()));    
     }
 
     fn create_router(&mut self) -> ApiRouter {
