@@ -84,7 +84,7 @@ pub fn routes(web_feature_instance: &mut WebFeature) -> ApiRouter {
     }
 
     ApiRouter::new().api_route(
-        "/buzzer",
+        "/light",
         post_with(handler, |op| {
             op.description("Control a light by email")
                 .tag("Remote control")

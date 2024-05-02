@@ -38,11 +38,11 @@ impl WebFeature for WebRemoteControlFeature {
     where
         Self: Sized,
     {
-        "devices-status".into()
+        "remote-control".into()
     }
 
     fn get_module_name(&self) -> String {
-        "devices-status".into()
+        "remote-control".into()
     }
 
     fn create_router(&mut self) -> ApiRouter {
