@@ -9,7 +9,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc::{Receiver, Sender}, Mutex};
 
-use crate::{backend_core::features::remote_control_feature::{models::*, IotNotification, WebFeature, WebNotification}, json::Json};
+use crate::{auth::get_client_id_from_web_token, backend_core::features::remote_control_feature::{models::*, IotNotification, WebFeature, WebNotification}, json::Json};
+
+use super::{JWT_KEY, MONGOC};
 
 #[derive(Deserialize, JsonSchema)]
 pub struct ControlBuzzerQuery {
@@ -56,7 +58,12 @@ async fn handler(
         );
     }
         
-    let notif = WebNotification::BuzzerCommandNotification { device_id, component_id, command, };
+    let jwt = String::from(headers.get("jwt").unwrap().to_str().unwrap());
+    let client_id = unsafe {
+        get_client_id_from_web_token(JWT_KEY.clone().unwrap().as_str(), jwt, &mut *MONGOC.clone().unwrap().lock().await).await.unwrap()
+    };
+
+    let notif = WebNotification::BuzzerCommandNotification { device_id, component_id, command, client_id };
     
     if let Ok(_) = iot_tx.clone().unwrap().send(notif).await {
         if let Some(response) = iot_rx.clone().unwrap().lock().await.recv().await {

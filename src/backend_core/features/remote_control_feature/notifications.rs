@@ -12,10 +12,12 @@ pub enum RemoteControlWebNotification {
         device_id: usize,
         component_id: usize,
         command: BuzzerCommand,
+        client_id: String,
     },
     LightCommandNotification {
         device_id: usize,
         component_id: usize,
         command: LightCommand,
+        client_id: String,
     },
 }
