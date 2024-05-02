@@ -44,6 +44,8 @@ impl IotFireFeature {
             SensorDataType::CO => "co_logs",
             SensorDataType::Heat => "heat_logs",
             SensorDataType::FireButton => "button_logs",
+            SensorDataType::FireLight => "light_logs",
+            SensorDataType::FireBuzzer => "buzzer_logs",
             SensorDataType::LPG => "lpg_logs",
         };
 
@@ -124,6 +126,8 @@ impl IotFeature for IotFireFeature {
                             co,
                             heat,
                             button,
+                            light,
+                            buzzer,
                             lpg
                         }
                         | FireMQTTMessage::Interrupt {
@@ -133,6 +137,8 @@ impl IotFeature for IotFireFeature {
                             co,
                             heat,
                             button,
+                            light,
+                            buzzer,
                             lpg
                         } => {
                             if let Some(email) =
@@ -144,6 +150,8 @@ impl IotFeature for IotFireFeature {
                                     (SensorDataType::CO, co),
                                     (SensorDataType::Heat, heat),
                                     (SensorDataType::FireButton, button),
+                                    (SensorDataType::FireLight, light),
+                                    (SensorDataType::FireBuzzer, buzzer),
                                     (SensorDataType::LPG, lpg),
                                 ];
 
@@ -165,6 +173,8 @@ impl IotFeature for IotFireFeature {
                                         | SensorDataType::CO
                                         | SensorDataType::Heat
                                         | SensorDataType::FireButton
+                                        | SensorDataType::FireLight
+                                        | SensorDataType::FireBuzzer
                                         | SensorDataType::LPG => {
                                             self.persist_sensor_data(
                                                 email.clone(),

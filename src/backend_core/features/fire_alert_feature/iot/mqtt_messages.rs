@@ -18,6 +18,10 @@ pub enum FireMQTTMessage {
         heat: Vec<SensorData>,
         #[serde(rename = "fire-button")]
         button: Vec<SensorData>,
+        #[serde(rename = "fire-light")]
+        light: Vec<SensorData>,
+        #[serde(rename = "fire-buzzer")]
+        buzzer: Vec<SensorData>,
         lpg: Vec<SensorData>,
     },
     #[serde(rename = "1")]
@@ -30,6 +34,10 @@ pub enum FireMQTTMessage {
         heat: Vec<SensorData>,
         #[serde(rename = "fire-button")]
         button: Vec<SensorData>,
+        #[serde(rename = "fire-light")]
+        light: Vec<SensorData>,
+        #[serde(rename = "fire-buzzer")]
+        buzzer: Vec<SensorData>,
         lpg: Vec<SensorData>,
     },
 }
@@ -129,6 +137,8 @@ mod deserialize_tests {
                         "alert": 0
                     }
                 ],
+                "fire-light": [],
+                "fire-buzzer": [],
                 "lpg": [
                     {
                         "id": 1,
@@ -216,6 +226,8 @@ mod deserialize_tests {
                 value: 1,
                 alert: FireStatus::SAFE,
             }],
+            light: vec![],
+            buzzer: vec![],
             lpg: vec![
                 SensorData {
                     id: 1,
@@ -247,6 +259,8 @@ mod deserialize_tests {
                 "co": [],
                 "heat": [],
                 "fire-button": [],
+                "fire-light": [],
+                "fire-buzzer": [],
                 "lpg": []
             }
         }"#;
@@ -265,6 +279,8 @@ mod deserialize_tests {
             co: vec![],
             heat: vec![],
             button: vec![],
+            light: vec![],
+            buzzer: vec![],
             lpg: vec![]
         };
 
@@ -355,6 +371,8 @@ mod serialize_tests {
                 value: 1,
                 alert: FireStatus::SAFE,
             }],
+            light: vec![],
+            buzzer: vec![],
             lpg: vec![
                 SensorData {
                     id: 1,
@@ -445,6 +463,8 @@ mod serialize_tests {
                         "alert": 0
                     }
                 ],
+                "fire-light": [],
+                "fire-buzzer": [],
                 "lpg": [
                     {
                         "id": 1,
@@ -475,6 +495,8 @@ mod serialize_tests {
             co: vec![],
             heat: vec![],
             button: vec![],
+            buzzer: vec![],
+            light: vec![],
             lpg: vec![],
         };
 
@@ -494,6 +516,8 @@ mod serialize_tests {
                 "co": [],
                 "heat": [],
                 "fire-button": [],
+                "fire-light": [],
+                "fire-buzzer": [],
                 "lpg": [],
             }
         });

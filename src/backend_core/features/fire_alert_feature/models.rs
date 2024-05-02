@@ -18,6 +18,8 @@ pub enum SensorDataType {
     CO,
     Heat,
     FireButton,
+    FireLight,
+    FireBuzzer,
     LPG,
 }
 
@@ -37,6 +39,8 @@ pub struct FireLog {
     pub co_logs: Vec<SensorLogData>,
     pub heat_logs: Vec<SensorLogData>,
     pub button_logs: Vec<SensorLogData>,
+    pub light_logs: Vec<SensorLogData>,
+    pub buzzer_logs: Vec<SensorLogData>,
     pub lpg_logs: Vec<SensorLogData>,
 }
 
