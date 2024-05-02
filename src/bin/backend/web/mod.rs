@@ -16,12 +16,11 @@ use aide::{
 };
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
-use crate::{config::WebConfig, AppResult};
+use crate::{clonable_wrapper::ClonableWrapper, config::WebConfig, types::WebFeatureDyn, AppResult};
 use axum::{
     http::{header::CONTENT_TYPE, HeaderName, HeaderValue, Method, StatusCode, Uri},
     Extension, Json,
 };
-use tempusalert_be::backend_core::features::WebFeature;
 
 use self::{
     doc::docs_routes, middlewares::auth_middleware::set_username_from_token_in_request_middleware,
@@ -30,14 +29,14 @@ use self::{
 pub struct WebTask {
     pub config: WebConfig,
     tcp: tokio::net::TcpListener,
-    features: Vec<Arc<dyn WebFeature + Send + Sync>>,
+    features: Vec<ClonableWrapper<WebFeatureDyn>>,
     router: ApiRouter,
 }
 
 impl WebTask {
     pub async fn create(
         mut config: WebConfig,
-        features: Vec<Arc<dyn WebFeature + Send + Sync>>,
+        features: Vec<ClonableWrapper<WebFeatureDyn>>,
     ) -> AppResult<Self> {
         let tcp = tokio::net::TcpListener::bind(config.get_socket_addr()?).await?;
         let addr = tcp.local_addr()?;
@@ -77,8 +76,8 @@ impl WebTask {
 
         for feat in &mut self.features {
             self.router = self.router.nest_api_service(
-                format!("/api/{}", feat.clone().lock().await.get_module_name()).as_str(),
-                feat.lock().await.create_router(),
+                format!("/api/{}", feat.clone().get_module_name()).as_str(),
+                feat.clone().create_router(),
             )
         }
 
@@ -104,17 +103,20 @@ impl WebTask {
             );
             axum::serve(self.tcp, router).await
         });
+
         let mut join_handles = vec![];
+        
         for feat in self.features {
+            let mut feat = feat.clone();
             join_handles.push(tokio::spawn(async move {
                 loop {
-                    let mut feat = feat.lock().await;
                     feat.process_next_iot_push_message().await;
                 }
             }));
         }
+
         for handle in join_handles {
-            handle.await.unwrap()
+            handle.await.unwrap();
         }
         Ok(())
     }

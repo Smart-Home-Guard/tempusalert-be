@@ -1,3 +1,3 @@
 pub mod features;
 pub mod models;
-mod utils;
+pub mod utils;

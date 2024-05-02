@@ -1,23 +1,19 @@
-use std::sync::Arc;
-
 use mongodb::bson::Document;
 use tempusalert_be::backend_core::features::IotFeature;
 
 use crate::{
-    config::IotConfig,
-    globals::channels::{get_user_subscriber, UserEvent, UserEventKind},
-    AppResult,
+    clonable_wrapper::ClonableWrapper, config::IotConfig, globals::channels::{get_user_subscriber, UserEvent, UserEventKind}, types::IotFeatureDyn, AppResult
 };
 
 pub struct IotTask {
     pub config: IotConfig,
-    features: Vec<Arc<dyn IotFeature + Send + Sync>>,
+    features: Vec<ClonableWrapper<IotFeatureDyn>>,
 }
 
 impl IotTask {
     pub async fn create(
         config: IotConfig,
-        features: Vec<Arc<dyn IotFeature + Send + Sync>>,
+        features: Vec<ClonableWrapper<IotFeatureDyn>>,
     ) -> AppResult<Self> {
         Ok(Self { config, features })
     }
@@ -25,9 +21,8 @@ impl IotTask {
     pub async fn run(self) -> AppResult {
         let mut join_handles = vec![];
         for feat in self.features {
-            let mut feat = feat.clone();
+            let feat_cloned = feat.clone();
             
-            let mut feat_cloned = feat.clone();
             join_handles.push(tokio::spawn(async move {
                 watch_users(feat_cloned).await;
             }));
@@ -46,9 +41,8 @@ impl IotTask {
     }
 }
 
-async fn watch_users(feat: Arc<dyn IotFeature + Send + Sync>) {
+async fn watch_users(mut feat: Box<dyn IotFeature + Send + Sync>) {
     let (feature_id, mqttc, mongoc) = {
-        let mut feat = feat.lock().await;
         (feat.get_module_name(), feat.get_mqttc(), feat.get_mongoc())
     };
     let collection = mongoc.default_database().unwrap().collection("users");
