@@ -71,7 +71,8 @@ impl IotFeature for IotRemoteControlFeature {
         self.web_instance = Some(non_primitive_cast(web_instance.clone()).unwrap());
     }
 
-    async fn process_next_web_push_message(&mut self) { }
+    async fn send_message_to_web(&mut self, message: String) -> String {}
+    async fn response_message_from_web(&mut self, message: String) -> String {}
     
     fn into_any(self: Arc<Self>) -> Arc<dyn Any> {
         self
