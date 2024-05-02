@@ -1,8 +1,8 @@
+use std::sync::Arc;
+
 use aide::axum::ApiRouter;
 use axum::async_trait;
-use schemars::JsonSchema;
-use serde::Serialize;
-use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::sync::{mpsc::{Receiver, Sender}, Mutex};
 
 use crate::backend_core::features::WebFeature;
 use crate::backend_core::utils::non_primitive_cast;
@@ -14,7 +14,7 @@ mod routes;
 pub struct WebRemoteControlFeature {
     mongoc: mongodb::Client,
     iot_tx: Sender<WebNotification>,
-    iot_rx: Receiver<IotNotification>,
+    iot_rx: Arc<Mutex<Receiver<IotNotification>>>,
     jwt_key: String,
 }
 
@@ -29,7 +29,7 @@ impl WebFeature for WebRemoteControlFeature {
         Some(WebRemoteControlFeature {
             mongoc,
             iot_tx: non_primitive_cast(iot_tx)?,
-            iot_rx: non_primitive_cast(iot_rx)?,
+            iot_rx: Arc::new(Mutex::new(non_primitive_cast(iot_rx)?)),
             jwt_key,
         })
     }

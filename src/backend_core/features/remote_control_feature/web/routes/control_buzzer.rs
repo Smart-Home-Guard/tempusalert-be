@@ -1,116 +1,96 @@
-use aide::axum::{routing::get_with, ApiRouter, IntoApiResponse};
+use std::sync::Arc;
+
+use aide::axum::{routing::post_with, ApiRouter, IntoApiResponse};
 use axum::{
-    extract::Query,
-    http::{HeaderMap, StatusCode},
+    extract::Query, http::{HeaderMap, StatusCode},
 };
-use mongodb::{bson::doc, options::FindOptions, Collection};
+use mongodb::bson::doc;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use tokio::sync::{mpsc::{Receiver, Sender}, Mutex};
 
-use crate::{backend_core::features::remote_control_feature::models::*, json::Json};
-
-use super::MONGOC;
+use crate::{backend_core::features::remote_control_feature::{models::*, IotNotification, WebFeature, WebNotification}, json::Json};
 
 #[derive(Deserialize, JsonSchema)]
-pub struct GetAllDevicesQuery {
+pub struct ControlBuzzerQuery {
     email: String,
 }
 
 #[derive(Serialize, JsonSchema)]
-pub struct GetAllDeviceResponse {
-    devices: Option<Vec<ResponseDevice>>,
+pub struct ControlBuzzerResponse {
     message: String,
 }
 
-#[derive(Serialize, JsonSchema)]
-pub struct ResponseDevice {
-    id: u32,
-    components: Vec<u32>,
+#[derive(Deserialize, JsonSchema)]
+pub struct ControlBuzzerRequestBody {
+    device_id: usize,
+    component_id: usize,
+    command: BuzzerCommand,
 }
+
+static mut IOT_TX: Option<Sender<WebNotification>> = None;
+static mut IOT_RX: Option<Arc<Mutex<Receiver<IotNotification>>>> = None;
 
 async fn handler(
     headers: HeaderMap,
-    Query(GetAllDevicesQuery { email }): Query<GetAllDevicesQuery>,
+    Query(ControlBuzzerQuery { email }): Query<ControlBuzzerQuery>,
+    Json(ControlBuzzerRequestBody { device_id, component_id, command }): Json<ControlBuzzerRequestBody>,
 ) -> impl IntoApiResponse {
+    let iot_tx = unsafe {
+        IOT_TX.clone()
+    };
+
+    let iot_rx = unsafe {
+        IOT_RX.clone()
+    };
+
     if headers.get("email").is_none()
         || headers
             .get("email")
-            .is_some_and(|value| value != email.as_str())
-    {
+            .is_some_and(|value| value != email.as_str()) {  
         return (
             StatusCode::FORBIDDEN,
-            Json(GetAllDeviceResponse {
+            Json(ControlBuzzerResponse {
                 message: String::from("Forbidden"),
-                devices: None,
             }),
         );
     }
-    let device_coll: Collection<Device> = {
-        let mongoc = unsafe { MONGOC.as_ref().clone().unwrap().lock() }.await;
-        mongoc.default_database().unwrap().collection("devices")
-    };
-
-    if let Ok(mut device_cursor) = device_coll
-        .find(
-            doc! { "owner_name": email.clone() },
-            FindOptions::builder()
-                .projection(doc! { "id": 1, "components.id": 1 })
-                .build(),
-        )
-        .await
-    {
-        let mut devices = vec![];
-        while let Ok(true) = device_cursor.advance().await {
-            let device = device_cursor.deserialize_current();
-            match device {
-                Ok(device) => devices.push(ResponseDevice {
-                    id: device.id,
-                    components: device.components.iter().map(|c| c.id).collect(),
+        
+    let notif = WebNotification::BuzzerCommandNotification { device_id, component_id, command, };
+    
+    if let Ok(_) = iot_tx.clone().unwrap().send(notif).await {
+        if let Some(response) = iot_rx.clone().unwrap().lock().await.recv().await {
+            return (
+                response.status_code,
+                Json(ControlBuzzerResponse {
+                    message: response.message,
                 }),
-                Err(_) => {
-                    return (
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(GetAllDeviceResponse {
-                            devices: None,
-                            message: format!(
-                                "Failed to fetch all devices for user '{}'",
-                                email.clone()
-                            ),
-                        }),
-                    )
-                }
-            }
-        }
-        (
-            StatusCode::OK,
-            Json(GetAllDeviceResponse {
-                devices: Some(devices),
-                message: format!(
-                    "Successfully fetch all devices for user '{}'",
-                    email.clone()
-                ),
-            }),
-        )
-    } else {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(GetAllDeviceResponse {
-                devices: None,
-                message: format!("Failed to fetch all devices for user '{}'", email.clone()),
-            }),
-        )
+            );
+        };
     }
+         
+    return (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ControlBuzzerResponse {
+            message: String::from("Internal server error"),
+        }),
+    );
 }
 
-pub fn routes() -> ApiRouter {
+pub fn routes(web_feature_instance: &mut WebFeature) -> ApiRouter {
+    unsafe {
+        IOT_RX = Some(web_feature_instance.iot_rx.clone());
+        IOT_TX = Some(web_feature_instance.iot_tx.clone());
+    }
+
     ApiRouter::new().api_route(
-        "/devices",
-        get_with(handler, |op| {
+        "/buzzer",
+        post_with(handler, |op| {
             op.description("Get all devices for a given user by email")
                 .tag("Devices status")
-                .response::<200, Json<GetAllDeviceResponse>>()
-                .response::<403, Json<GetAllDeviceResponse>>()
-                .response::<500, Json<GetAllDeviceResponse>>()
+                .response::<200, Json<ControlBuzzerResponse>>()
+                .response::<403, Json<ControlBuzzerResponse>>()
+                .response::<500, Json<ControlBuzzerResponse>>()
         }),
     )
 }

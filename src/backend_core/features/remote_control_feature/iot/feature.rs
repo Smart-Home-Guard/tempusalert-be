@@ -1,5 +1,4 @@
 use axum::async_trait;
-use mongodb::bson::{doc, to_bson};
 use rumqttc::{Event, Incoming, Publish};
 use std::{sync::Arc, time::SystemTime};
 use tokio::sync::{
@@ -7,17 +6,14 @@ use tokio::sync::{
     Mutex,
 };
 
-use crate::{
-    auth::get_email_from_client_token,
-    backend_core::{
-        features::{
-            remote_control_feature::{IotNotification, WebNotification}, IotFeature
-        },
-        utils::non_primitive_cast,
+use crate::backend_core::{
+    features::{
+        remote_control_feature::{IotNotification, WebNotification}, IotFeature
     },
+    utils::non_primitive_cast
 };
 
-pub struct IotFireFeature {
+pub struct IotRemoteControlFeature {
     mqttc: rumqttc::AsyncClient,
     mqtt_event_loop: Arc<Mutex<rumqttc::EventLoop>>,
     mongoc: mongodb::Client,
@@ -26,11 +22,10 @@ pub struct IotFireFeature {
     jwt_key: String,
 }
 
-impl IotFireFeature {
-}
+impl IotRemoteControlFeature {}
 
 #[async_trait]
-impl IotFeature for IotFireFeature {
+impl IotFeature for IotRemoteControlFeature {
     fn create<I: 'static, W: 'static>(
         mqttc: rumqttc::AsyncClient,
         mqtt_event_loop: rumqttc::EventLoop,
@@ -39,7 +34,7 @@ impl IotFeature for IotFireFeature {
         web_rx: Receiver<W>,
         jwt_key: String,
     ) -> Option<Self> {
-        Some(IotFireFeature {
+        Some(IotRemoteControlFeature {
             mqttc,
             mqtt_event_loop: Arc::new(Mutex::new(mqtt_event_loop)),
             mongoc: mongoc.clone(),
