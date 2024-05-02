@@ -14,6 +14,8 @@ mod get_fire_logs_of_user;
 mod get_gas_logs_of_user;
 mod get_heat_logs_of_user;
 mod get_smoke_logs_of_user;
+mod get_buzzer_logs;
+mod get_light_logs;
 
 pub fn create_router(web: &mut WebFireFeature) -> ApiRouter {
     unsafe {
@@ -27,4 +29,6 @@ pub fn create_router(web: &mut WebFireFeature) -> ApiRouter {
                     .nest("/", get_heat_logs_of_user::routes())
                     .nest("/", get_smoke_logs_of_user::routes())
                     .nest("/", get_fire_logs_of_user::routes())
+                    .nest("/", get_buzzer_logs::routes())
+                    .nest("/", get_light_logs::routes())
 }
