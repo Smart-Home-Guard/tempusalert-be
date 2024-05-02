@@ -28,7 +28,7 @@ impl IotTask {
             }));
         }
         for handle in join_handles {
-            handle.await.unwrap()
+            handle.await.unwrap();
         }
         Ok(())
     }
