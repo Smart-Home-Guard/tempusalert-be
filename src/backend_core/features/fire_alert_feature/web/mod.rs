@@ -21,7 +21,7 @@ pub struct FireResponse {
 #[derive(Clone)]
 pub struct WebFireFeature {
     mongoc: mongodb::Client,
-    _iot_instance: Option<Weak<IotFireFeature>>,
+    iot_instance: Option<Weak<IotFireFeature>>,
     jwt_key: String,
 }
 
@@ -33,7 +33,7 @@ impl WebFeature for WebFireFeature {
     ) -> Option<Self> {
         Some(WebFireFeature {
             mongoc,
-            _iot_instance: None,
+            iot_instance: None,
             jwt_key,
         })
     }
@@ -57,7 +57,11 @@ impl WebFeature for WebFireFeature {
     where
         Self: Sized,
     {
-        self._iot_instance = Some(non_primitive_cast(iot_instance.clone()).unwrap());
+        self.iot_instance = Some(non_primitive_cast(iot_instance.clone()).unwrap());
+    }
+    
+    fn get_iot_feature_instance(&self) -> Arc<dyn IotFeature + Send + Sync> {
+        self.iot_instance.as_ref().unwrap().upgrade().unwrap()
     }
 
     async fn send_message_to_iot(&self, message: String) -> String { String::from("") }

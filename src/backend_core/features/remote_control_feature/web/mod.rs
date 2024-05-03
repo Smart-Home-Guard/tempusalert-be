@@ -52,6 +52,10 @@ impl WebFeature for WebRemoteControlFeature {
         self.iot_instance = Some(non_primitive_cast(iot_instance.clone()).unwrap());
     }
 
+    fn get_iot_feature_instance(&self) -> Arc<dyn IotFeature + Send + Sync> {
+        self.iot_instance.as_ref().unwrap().upgrade().unwrap()
+    }
+
     async fn send_message_to_iot(&self, message: String) -> String { 
         self.iot_instance.as_ref().unwrap().upgrade().unwrap().respond_message_from_web(message).await
     }

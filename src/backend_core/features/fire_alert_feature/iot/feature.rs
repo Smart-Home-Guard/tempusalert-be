@@ -19,7 +19,7 @@ pub struct IotFireFeature {
     mqttc: rumqttc::AsyncClient,
     mqtt_event_loop: Arc<Mutex<rumqttc::EventLoop>>,
     mongoc: mongodb::Client,
-    _web_instance: Option<Weak<WebFireFeature>>,
+    web_instance: Option<Weak<WebFireFeature>>,
     jwt_key: String,
 }
 
@@ -75,7 +75,7 @@ impl IotFeature for IotFireFeature {
             mqttc,
             mqtt_event_loop: Arc::new(Mutex::new(mqtt_event_loop)),
             mongoc: mongoc.clone(),
-            _web_instance: None,
+            web_instance: None,
             jwt_key,
         })
     }
@@ -103,7 +103,11 @@ impl IotFeature for IotFireFeature {
     where
         Self: Sized, 
     {
-        self._web_instance = Some(non_primitive_cast(web_instance.clone()).unwrap()); 
+        self.web_instance = Some(non_primitive_cast(web_instance.clone()).unwrap()); 
+    }
+
+    fn get_web_feature_instance(&self) -> Arc<dyn WebFeature + Send + Sync> {
+        self.web_instance.as_ref().unwrap().upgrade().unwrap()
     }
 
     async fn process_next_mqtt_message(&mut self) {

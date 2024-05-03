@@ -6,7 +6,7 @@ use mongodb::bson::doc;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{auth::get_client_id_from_web_token, backend_core::features::{remote_control_feature::{models::*, notifications::RemoteControlIotNotification, web::WebRemoteControlFeature, WebNotification}, WebFeature}, json::Json};
+use crate::{auth::get_client_id_from_web_token, backend_core::features::{remote_control_feature::{models::*, notifications::RemoteControlIotNotification, WebNotification}, WebFeature}, json::Json};
 
 use super::WEB_INSTANCE;
 
@@ -52,7 +52,7 @@ async fn handler(
     let client_id = get_client_id_from_web_token(web_instance.jwt_key.as_str(), jwt, &mut web_instance.mongoc).await.unwrap();
 
     let notif = WebNotification::BuzzerCommandNotification { device_id, component_id, command, client_id };
-    
+   
     if let Ok(response) = serde_json::from_str::<RemoteControlIotNotification>(
         &web_instance.clone().send_message_to_iot(serde_json::to_string(&notif).unwrap()).await
     ) {

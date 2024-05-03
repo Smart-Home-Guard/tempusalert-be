@@ -29,6 +29,8 @@ pub trait IotFeature {
     where
         Self: Sized; 
 
+    fn get_web_feature_instance(&self) -> Arc<dyn WebFeature + Send + Sync>;
+
     fn get_mqttc(&mut self) -> rumqttc::AsyncClient;
     fn get_mongoc(&mut self) -> mongodb::Client;
 
@@ -51,6 +53,8 @@ pub trait WebFeature {
     fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: Weak<I>)
     where
         Self: Sized;
+
+    fn get_iot_feature_instance(&self) -> Arc<dyn IotFeature + Send + Sync>;
     
     fn create_router(&mut self) -> ApiRouter;
     

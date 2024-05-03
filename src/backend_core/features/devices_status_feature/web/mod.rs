@@ -21,7 +21,7 @@ pub struct GenericResponse {
 #[derive(Clone)]
 pub struct WebDeviceStatusFeature {
     mongoc: mongodb::Client,
-    _iot_instance: Option<Weak<IotDeviceStatusFeature>>,
+    iot_instance: Option<Weak<IotDeviceStatusFeature>>,
     jwt_key: String,
 }
 
@@ -33,7 +33,7 @@ impl WebFeature for WebDeviceStatusFeature {
     ) -> Option<Self> {
         Some(WebDeviceStatusFeature {
             mongoc,
-            _iot_instance: None,
+            iot_instance: None,
             jwt_key,
         })
     }
@@ -53,7 +53,11 @@ impl WebFeature for WebDeviceStatusFeature {
     where
         Self: Sized, 
     {
-        self._iot_instance = Some(non_primitive_cast(iot_instance.clone()).unwrap());
+        self.iot_instance = Some(non_primitive_cast(iot_instance.clone()).unwrap());
+    }
+    
+    fn get_iot_feature_instance(&self) -> Arc<dyn IotFeature + Send + Sync> {
+        self.iot_instance.as_ref().unwrap().upgrade().unwrap()
     }
 
     fn create_router(&mut self) -> ApiRouter {
