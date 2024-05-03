@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use aide::axum::{routing::post_with, ApiRouter, IntoApiResponse};
 use axum::{
     extract::Query, http::{HeaderMap, StatusCode},
@@ -7,9 +5,8 @@ use axum::{
 use mongodb::bson::doc;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use tokio::sync::{mpsc::{Receiver, Sender}, Mutex};
 
-use crate::{auth::get_client_id_from_web_token, backend_core::features::remote_control_feature::{models::*, IotNotification, WebFeature, WebNotification}, json::Json};
+use crate::{auth::get_client_id_from_web_token, backend_core::features::{remote_control_feature::{models::*, notifications::RemoteControlIotNotification, WebNotification}, WebFeature}, json::Json};
 
 use super::WEB_INSTANCE;
 
@@ -52,22 +49,20 @@ async fn handler(
     }
         
     let jwt = String::from(headers.get("jwt").unwrap().to_str().unwrap());
-    let client_id = unsafe {
-        get_client_id_from_web_token(web_instance.jwt_key.as_str(), jwt, &mut web_instance.mongoc).await.unwrap()
-    };
+    let client_id = get_client_id_from_web_token(web_instance.jwt_key.as_str(), jwt, &mut web_instance.mongoc).await.unwrap();
 
     let notif = WebNotification::BuzzerCommandNotification { device_id, component_id, command, client_id };
-    
-    // if let Ok(_) = iot_tx.clone().unwrap().send(notif).await {
-    //    if let Some(response) = iot_rx.clone().unwrap().lock().await.recv().await {
-    //        return (
-    //            response.status_code,
-    //            Json(ControlBuzzerResponse {
-    //                message: response.message,
-    //            }),
-    //        );
-    //    };
-    // }
+   
+    if let Ok(response) = serde_json::from_str::<RemoteControlIotNotification>(
+        &web_instance.clone().send_message_to_iot(serde_json::to_string(&notif).unwrap()).await
+    ) {
+        return (
+            { if response.status_code == 200 { StatusCode::OK } else { StatusCode::BAD_REQUEST } },
+            Json(ControlBuzzerResponse {
+                message: response.message,
+            }),
+        );
+    }
          
     return (
         StatusCode::INTERNAL_SERVER_ERROR,
@@ -77,7 +72,7 @@ async fn handler(
     );
 }
 
-pub fn routes(web_feature_instance: &mut WebFeature) -> ApiRouter {
+pub fn routes() -> ApiRouter {
     ApiRouter::new().api_route(
         "/buzzer",
         post_with(handler, |op| {

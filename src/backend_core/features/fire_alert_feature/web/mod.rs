@@ -6,7 +6,6 @@ use axum::async_trait;
 use schemars::JsonSchema;
 use serde::Serialize;
 
-use super::notifications::{FireIotNotification, FireWebNotification};
 use crate::backend_core::features::fire_alert_feature::iot::IotFireFeature;
 use crate::backend_core::features::{IotFeature, WebFeature};
 use crate::backend_core::utils::non_primitive_cast;
@@ -22,7 +21,7 @@ pub struct FireResponse {
 #[derive(Clone)]
 pub struct WebFireFeature {
     mongoc: mongodb::Client,
-    _iot_instance: Option<Weak<IotFireFeature>>,
+    iot_instance: Option<Weak<IotFireFeature>>,
     jwt_key: String,
 }
 
@@ -34,7 +33,7 @@ impl WebFeature for WebFireFeature {
     ) -> Option<Self> {
         Some(WebFireFeature {
             mongoc,
-            _iot_instance: None,
+            iot_instance: None,
             jwt_key,
         })
     }
@@ -58,10 +57,15 @@ impl WebFeature for WebFireFeature {
     where
         Self: Sized,
     {
-        self._iot_instance = Some(non_primitive_cast(iot_instance.clone()).unwrap());
+        self.iot_instance = Some(non_primitive_cast(iot_instance.clone()).unwrap());
+    }
+    
+    fn get_iot_feature_instance(&self) -> Arc<dyn IotFeature + Send + Sync> {
+        self.iot_instance.as_ref().unwrap().upgrade().unwrap()
     }
 
-    async fn process_next_iot_push_message(&mut self) {}
+    async fn send_message_to_iot(&self, message: String) -> String { String::from("") }
+    async fn respond_message_from_iot(&self, message: String) -> String { String::from("") }
 
     fn into_any(self: Arc<Self>) -> Arc<dyn Any> {
         self

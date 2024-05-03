@@ -1,12 +1,14 @@
-use axum::http::StatusCode;
+use serde::{Deserialize, Serialize};
 
 use super::models::{BuzzerCommand, LightCommand};
 
+#[derive(Serialize, Deserialize)]
 pub struct RemoteControlIotNotification {
-    pub status_code: StatusCode,
+    pub status_code: usize,
     pub message: String,
 }
 
+#[derive(Serialize, Deserialize)]
 pub enum RemoteControlWebNotification {
     BuzzerCommandNotification {
         device_id: usize,

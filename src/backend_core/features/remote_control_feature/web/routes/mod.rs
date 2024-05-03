@@ -13,6 +13,6 @@ pub fn create_router(web_feature_instance: &mut WebRemoteControlFeature) -> ApiR
         WEB_INSTANCE = Some(web_feature_instance.clone());
     }
 
-    ApiRouter::new().nest("/", control_buzzer::routes(web_feature_instance))
-                    .nest("/", control_light::routes(web_feature_instance))
+    ApiRouter::new().nest("/", control_buzzer::routes())
+                    .nest("/", control_light::routes())
 }

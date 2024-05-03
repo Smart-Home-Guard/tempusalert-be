@@ -8,7 +8,6 @@ use mongodb::{
 use rumqttc::{Event, EventLoop, Incoming, Publish};
 use tokio::sync::Mutex;
 
-use super::super::notifications::{DeviceStatusIotNotification, DeviceStatusWebNotification};
 use super::mqtt_messages::{
     ConnectDeviceData, DeviceStatusMQTTMessage, DisconnectDeviceData, ReadBatteryData,
     ReadDeviceErrorData,
@@ -30,7 +29,7 @@ pub struct IotDeviceStatusFeature {
     mqttc: rumqttc::AsyncClient,
     mqtt_event_loop: Arc<Mutex<EventLoop>>,
     mongoc: mongodb::Client,
-    _web_instance: Option<Weak<WebDeviceStatusFeature>>,
+    web_instance: Option<Weak<WebDeviceStatusFeature>>,
     jwt_key: String,
 }
 
@@ -51,7 +50,7 @@ impl IotFeature for IotDeviceStatusFeature {
             mqttc,
             mongoc,
             mqtt_event_loop: Arc::new(Mutex::new(mqtt_event_loop)),
-            _web_instance: None,
+            web_instance: None,
             jwt_key,
         })
     }
@@ -79,7 +78,11 @@ impl IotFeature for IotDeviceStatusFeature {
     where
         Self: Sized, 
     {
-        self._web_instance = Some(non_primitive_cast(web_instance.clone()).unwrap());
+        self.web_instance = Some(non_primitive_cast(web_instance.clone()).unwrap());
+    }
+
+    fn get_web_feature_instance(&self) -> Arc<dyn WebFeature + Send + Sync> {
+        self.web_instance.as_ref().unwrap().upgrade().unwrap()
     }
 
     async fn process_next_mqtt_message(&mut self) {
@@ -203,9 +206,10 @@ impl IotFeature for IotDeviceStatusFeature {
             }
         }
     }
+ 
+    async fn send_message_to_web(&self, message: String) -> String { String::from("") }
+    async fn respond_message_from_web(&self, message: String) -> String { String::from("") }   
 
-    async fn process_next_web_push_message(&mut self) {}
-    
     fn into_any(self: Arc<Self>) -> Arc<dyn Any> {
         self
     }

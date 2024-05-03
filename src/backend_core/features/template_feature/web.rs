@@ -81,8 +81,13 @@ impl WebFeature for WebExampleFeature {
             get_with(WebExampleFeature::example, WebExampleFeature::example_docs),
         )
     }
+    
+    fn get_iot_feature_instance(&self) -> Arc<dyn IotFeature + Send + Sync> {
+        self._iot_instance.as_ref().unwrap().upgrade().unwrap()
+    }
 
-    async fn process_next_iot_push_message(&mut self) {}
+    async fn send_message_to_iot(&self, message: String) -> String { String::from("") }
+    async fn respond_message_from_iot(&self, message: String) -> String { String::from("") }
 
     fn into_any(self: Arc<Self>) -> Arc<dyn Any> {
         self

@@ -61,8 +61,15 @@ impl IotFeature for IotExampleFeature {
         self._web_instance = Some(non_primitive_cast(web_instance.clone()).unwrap());
     }
 
+    fn get_web_feature_instance(&self) -> Arc<dyn WebFeature + Send + Sync> {
+        self._web_instance.as_ref().unwrap().upgrade().unwrap()
+    }
+
     async fn process_next_mqtt_message(&mut self) {}
-    async fn process_next_web_push_message(&mut self) {}
+    
+    async fn send_message_to_web(&self, message: String) -> String { String::from("") }
+    async fn respond_message_from_web(&self, message: String) -> String { String::from("") }
+
 
     fn into_any(self: Arc<Self>) -> Arc<dyn Any> {
         self

@@ -9,22 +9,19 @@ macro_rules! create_features {
         use crate::clonable_wrapper::ClonableWrapper;
         use crate::types::*;
         $(
-            let mut web_feat = $feature_module::WebFeature::create($mongoc, JWT_KEY.to_owned()).unwrap();
-            let web_feat_ptr = &mut web_feat as *mut $feature_module::WebFeature;
+            let web_feat = $feature_module::WebFeature::create($mongoc, JWT_KEY.to_owned()).unwrap();
             let (mqttc, event_loop) = $init_mqtt_client($feature_module::IotFeature::name().as_str()).await;
-            let mut iot_feat = $feature_module::IotFeature::create(mqttc, event_loop, $mongoc, JWT_KEY.to_owned()).unwrap();
-            let iot_feat_ptr = &mut iot_feat as *mut $feature_module::IotFeature; 
+            let iot_feat = $feature_module::IotFeature::create(mqttc, event_loop, $mongoc, JWT_KEY.to_owned()).unwrap();
 
-            let web_feat_arc = Arc::new(web_feat);
-            let iot_feat_arc = Arc::new(iot_feat);
+            let mut web_feat_arc = Arc::new(web_feat);
+            let mut iot_feat_arc = Arc::new(iot_feat);
+            
+            let web_feat_ptr = Arc::get_mut(&mut web_feat_arc).unwrap() as *mut $feature_module::WebFeature;
+            let iot_feat_ptr = Arc::get_mut(&mut iot_feat_arc).unwrap() as *mut $feature_module::IotFeature;
             
             unsafe {
-                let mut web_feat_dup = std::ptr::read(web_feat_ptr);
-                web_feat_dup.set_iot_feature_instance(Arc::downgrade(&iot_feat_arc));
-                let mut iot_feat_dup = std::ptr::read(iot_feat_ptr);
-                iot_feat_dup.set_web_feature_instance(Arc::downgrade(&web_feat_arc));
-                std::mem::forget(web_feat_dup);
-                std::mem::forget(iot_feat_dup);
+                (*web_feat_ptr).set_iot_feature_instance(Arc::downgrade(&iot_feat_arc));
+                (*iot_feat_ptr).set_web_feature_instance(Arc::downgrade(&web_feat_arc));
             }
 
             let web_clonable_wrapper: ClonableWrapper<WebFeatureDyn> = ClonableWrapper::create(

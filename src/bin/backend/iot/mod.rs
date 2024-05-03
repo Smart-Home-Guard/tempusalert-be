@@ -18,24 +18,17 @@ impl IotTask {
         Ok(Self { config, features })
     }
 
-    pub async fn run(self) -> AppResult {
+    pub async fn run(mut self) -> AppResult {
         let mut join_handles = vec![];
-        for feat in self.features {
+        for feat in &mut self.features {
             let feat_cloned = feat.clone();
             
             join_handles.push(tokio::spawn(async move {
                 watch_users(feat_cloned).await;
             }));
-
-            let mut feat_cloned = feat.clone();
-            join_handles.push(tokio::spawn(async move {
-                loop {
-                    feat_cloned.process_next_mqtt_message().await;
-                }
-            }));
         }
         for handle in join_handles {
-            handle.await.unwrap()
+            handle.await.unwrap();
         }
         Ok(())
     }
