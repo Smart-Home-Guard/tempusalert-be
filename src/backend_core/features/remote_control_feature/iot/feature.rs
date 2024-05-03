@@ -78,7 +78,7 @@ impl IotFeature for IotRemoteControlFeature {
     }
 
     async fn send_message_to_web(&self, message: String) -> String { 
-        self.web_instance.as_ref().unwrap().upgrade().unwrap().respond_message_from_iot(message).await
+        self.get_web_feature_instance().respond_message_from_iot(message).await
     }
 
     async fn respond_message_from_web(&self, message: String) -> String {

@@ -57,7 +57,7 @@ impl WebFeature for WebRemoteControlFeature {
     }
 
     async fn send_message_to_iot(&self, message: String) -> String { 
-        self.iot_instance.as_ref().unwrap().upgrade().unwrap().respond_message_from_web(message).await
+        self.get_iot_feature_instance().respond_message_from_web(message).await
     }
 
     async fn respond_message_from_iot(&self, message: String) -> String { String::from("") }
