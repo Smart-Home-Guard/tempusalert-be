@@ -35,6 +35,8 @@ pub enum AppError {
     AddrParseError(#[from] std::net::AddrParseError),
     #[error(transparent)]
     UnknownError(#[from] anyhow::Error),
+    #[error(transparent)]
+    MQTTClientError(#[from] rumqttc::ClientError),
 }
 
 pub enum AuthError {
@@ -131,10 +133,14 @@ impl AppError {
                     "Address parser error",
                 )
             }
+            AppError::MQTTClientError(e) => {
+                eprintln!("{:?}", e);
+                (StatusCode::INTERNAL_SERVER_ERROR, "error", "Error while sending message to the MQTT server")
+            }
             AppError::UnknownError(e) => {
                 eprintln!("{:?}", e);
                 (StatusCode::INTERNAL_SERVER_ERROR, "error", "Unknown error")
-            }
+            } 
         }
     }
 }

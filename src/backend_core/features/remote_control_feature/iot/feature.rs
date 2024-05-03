@@ -1,6 +1,5 @@
 use axum::{async_trait, http::StatusCode};
 use rumqttc::{Event, Incoming, Publish};
-use serde::de::IntoDeserializer;
 use std::{any::Any, sync::{Arc, Weak}};
 use tokio::sync::Mutex;
 use crate::{backend_core::{
@@ -80,19 +79,26 @@ impl IotFeature for IotRemoteControlFeature {
 
     async fn respond_message_from_web(&self, message: String) -> String {
         let notif = serde_json::from_str(message.as_str()).unwrap();
-        match notif {
+        let send_res = match notif {
             RemoteControlWebNotification::LightCommandNotification { device_id, component_id, command, client_id } => {
                 let message = LightRemoteControlCommand { device_id, component_id, command };
-                publish_mqtt_message(message, self.mqttc.clone(), client_id, self.get_module_name()).await; 
+                publish_mqtt_message(message, self.mqttc.clone(), client_id, self.get_module_name()).await 
             },
             RemoteControlWebNotification::BuzzerCommandNotification { device_id, component_id, command, client_id } => {
                 let message = BuzzerRemoteControlCommand { device_id, component_id, command };
-                publish_mqtt_message(message, self.mqttc.clone(), client_id, self.get_module_name()).await; 
+                publish_mqtt_message(message, self.mqttc.clone(), client_id, self.get_module_name()).await 
             }
-        }
-        let resp = RemoteControlIotNotification {
-           status_code: 200,
-           message: String::from("Published message successfully"), 
+        };
+        let resp = if let Err(_) = send_res {
+            RemoteControlIotNotification {
+                status_code: 200,
+                message: String::from("Published message successfully"), 
+            }
+        } else {
+            RemoteControlIotNotification {
+                status_code: 500,
+                message: String::from("Internal server error"), 
+            }
         };
         serde_json::to_string(&resp).unwrap()
     }
