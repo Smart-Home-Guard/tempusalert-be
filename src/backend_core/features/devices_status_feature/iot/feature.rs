@@ -8,7 +8,6 @@ use mongodb::{
 use rumqttc::{Event, EventLoop, Incoming, Publish};
 use tokio::sync::Mutex;
 
-use super::super::notifications::{DeviceStatusIotNotification, DeviceStatusWebNotification};
 use super::mqtt_messages::{
     ConnectDeviceData, DeviceStatusMQTTMessage, DisconnectDeviceData, ReadBatteryData,
     ReadDeviceErrorData,
@@ -204,8 +203,8 @@ impl IotFeature for IotDeviceStatusFeature {
         }
     }
  
-    async fn send_message_to_web(&mut self, message: String) -> String { String::from("") }
-    async fn respond_message_from_web(&mut self, message: String) -> String { String::from("") }   
+    async fn send_message_to_web(&self, message: String) -> String { String::from("") }
+    async fn respond_message_from_web(&self, message: String) -> String { String::from("") }   
 
     fn into_any(self: Arc<Self>) -> Arc<dyn Any> {
         self

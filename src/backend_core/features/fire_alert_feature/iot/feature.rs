@@ -4,10 +4,7 @@ use rumqttc::{Event, Incoming, Publish};
 use std::{any::Any, sync::{Arc, Weak}, time::SystemTime};
 use tokio::sync::Mutex;
 
-use super::{
-    super::notifications::{FireIotNotification, FireWebNotification},
-    mqtt_messages::FireMQTTMessage,
-};
+use super::mqtt_messages::FireMQTTMessage;
 use crate::{
     auth::get_email_from_client_token,
     backend_core::{
@@ -198,8 +195,8 @@ impl IotFeature for IotFireFeature {
         }
     }
    
-    async fn send_message_to_web(&mut self, message: String) -> String { String::from("") }
-    async fn respond_message_from_web(&mut self, message: String) -> String { String::from("") }
+    async fn send_message_to_web(&self, message: String) -> String { String::from("") }
+    async fn respond_message_from_web(&self, message: String) -> String { String::from("") }
 
     fn into_any(self: Arc<Self>) -> Arc<dyn Any> {
         self

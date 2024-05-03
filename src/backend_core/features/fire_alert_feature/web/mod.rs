@@ -6,7 +6,6 @@ use axum::async_trait;
 use schemars::JsonSchema;
 use serde::Serialize;
 
-use super::notifications::{FireIotNotification, FireWebNotification};
 use crate::backend_core::features::fire_alert_feature::iot::IotFireFeature;
 use crate::backend_core::features::{IotFeature, WebFeature};
 use crate::backend_core::utils::non_primitive_cast;
@@ -61,8 +60,8 @@ impl WebFeature for WebFireFeature {
         self._iot_instance = Some(non_primitive_cast(iot_instance.clone()).unwrap());
     }
 
-    async fn send_message_to_iot(&mut self, message: String) -> String { String::from("") }
-    async fn respond_message_from_iot(&mut self, message: String) -> String { String::from("") }
+    async fn send_message_to_iot(&self, message: String) -> String { String::from("") }
+    async fn respond_message_from_iot(&self, message: String) -> String { String::from("") }
 
     fn into_any(self: Arc<Self>) -> Arc<dyn Any> {
         self

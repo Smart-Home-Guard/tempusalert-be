@@ -63,8 +63,8 @@ impl IotFeature for IotExampleFeature {
 
     async fn process_next_mqtt_message(&mut self) {}
     
-    async fn send_message_to_web(&mut self, message: String) -> String { String::from("") }
-    async fn respond_message_from_web(&mut self, message: String) -> String { String::from("") }
+    async fn send_message_to_web(&self, message: String) -> String { String::from("") }
+    async fn respond_message_from_web(&self, message: String) -> String { String::from("") }
 
 
     fn into_any(self: Arc<Self>) -> Arc<dyn Any> {

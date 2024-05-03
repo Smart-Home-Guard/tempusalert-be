@@ -1,4 +1,3 @@
-use ethabi::ParamType;
 use axum::{async_trait, http::StatusCode};
 use rumqttc::{Event, Incoming, Publish};
 use serde::de::IntoDeserializer;
@@ -9,6 +8,8 @@ use crate::{backend_core::{
         remote_control_feature::{notifications::{RemoteControlWebNotification, RemoteControlIotNotification}, web::WebRemoteControlFeature}, IotFeature, WebFeature
     }, utils::non_primitive_cast,
 }, publish_mqtt_message::publish_mqtt_message};
+
+use super::mqtt_messages::{BuzzerRemoteControlCommand, LightRemoteControlCommand};
 
 #[derive(Clone)]
 pub struct IotRemoteControlFeature {
@@ -73,17 +74,19 @@ impl IotFeature for IotRemoteControlFeature {
         self.web_instance = Some(non_primitive_cast(web_instance.clone()).unwrap());
     }
 
-    async fn send_message_to_web(&mut self, message: String) -> String { 
-        self.web_instance.unwrap().upgrade().unwrap().respond_message_from_iot(message).await
+    async fn send_message_to_web(&self, message: String) -> String { 
+        self.web_instance.as_ref().unwrap().upgrade().unwrap().respond_message_from_iot(message).await
     }
 
-    async fn respond_message_from_web(&mut self, message: String) -> String {
+    async fn respond_message_from_web(&self, message: String) -> String {
         let notif = serde_json::from_str(message.as_str()).unwrap();
         match notif {
             RemoteControlWebNotification::LightCommandNotification { device_id, component_id, command, client_id } => {
+                let message = LightRemoteControlCommand { device_id, component_id, command };
                 publish_mqtt_message(message, self.mqttc.clone(), client_id, self.get_module_name()).await; 
             },
             RemoteControlWebNotification::BuzzerCommandNotification { device_id, component_id, command, client_id } => {
+                let message = BuzzerRemoteControlCommand { device_id, component_id, command };
                 publish_mqtt_message(message, self.mqttc.clone(), client_id, self.get_module_name()).await; 
             }
         }

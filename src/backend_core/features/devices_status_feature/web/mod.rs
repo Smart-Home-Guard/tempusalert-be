@@ -6,7 +6,6 @@ use axum::async_trait;
 use schemars::JsonSchema;
 use serde::Serialize;
 
-use super::notifications::{DeviceStatusIotNotification, DeviceStatusWebNotification};
 use crate::backend_core::features::devices_status_feature::iot::IotDeviceStatusFeature;
 use crate::backend_core::features::{IotFeature, WebFeature};
 use crate::backend_core::utils::non_primitive_cast;
@@ -61,8 +60,8 @@ impl WebFeature for WebDeviceStatusFeature {
         routes::create_router(self)
     }
     
-    async fn send_message_to_iot(&mut self, message: String) -> String { String::from("") }
-    async fn respond_message_from_iot(&mut self, message: String) -> String { String::from("") }
+    async fn send_message_to_iot(&self, message: String) -> String { String::from("") }
+    async fn respond_message_from_iot(&self, message: String) -> String { String::from("") }
 
     fn into_any(self: Arc<Self>) -> Arc<dyn Any> {
         self
