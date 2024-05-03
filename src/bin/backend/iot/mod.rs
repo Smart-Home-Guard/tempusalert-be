@@ -18,9 +18,9 @@ impl IotTask {
         Ok(Self { config, features })
     }
 
-    pub async fn run(self) -> AppResult {
+    pub async fn run(mut self) -> AppResult {
         let mut join_handles = vec![];
-        for feat in self.features {
+        for feat in &mut self.features {
             let feat_cloned = feat.clone();
             
             join_handles.push(tokio::spawn(async move {
