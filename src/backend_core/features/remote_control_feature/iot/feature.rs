@@ -93,7 +93,7 @@ impl IotFeature for IotRemoteControlFeature {
                 publish_mqtt_message(message, self.mqttc.clone(), client_id, self.get_module_name()).await 
             }
         };
-        let resp = if let Err(_) = send_res {
+        let resp = if let Ok(_) = send_res {
             RemoteControlIotNotification {
                 status_code: 200,
                 message: String::from("Published message successfully"), 
