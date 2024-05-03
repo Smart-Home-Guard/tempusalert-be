@@ -16,8 +16,4 @@ impl<T> ClonableWrapper<T> where T: ?Sized + 'static + Send + Sync {
     pub fn clone(&self) -> Box<T> {
         (self.clone_closure)(self.data.clone())
     }
-
-    pub fn get(&mut self) -> Box<T> {
-        self.clone()
-    }
 }
