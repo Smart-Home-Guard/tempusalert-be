@@ -5,6 +5,7 @@ mod middlewares;
 mod push_apis;
 mod register_api;
 mod logout_api;
+mod room_apis;
 mod utils;
 
 use std::{str::FromStr, sync::Arc};
