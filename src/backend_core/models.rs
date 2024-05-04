@@ -26,3 +26,9 @@ pub struct PushKey {
     pub p256dh: String,
     pub auth: String,
 }
+
+#[derive(Serialize, Deserialize, JsonSchema)]
+pub struct Room {
+    pub name: String,
+    pub devices: Vec<u32>,
+}
