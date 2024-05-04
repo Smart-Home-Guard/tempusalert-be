@@ -1,4 +1,8 @@
-use std::{any::Any, sync::{Arc, Weak}, time::SystemTime};
+use std::{
+    any::Any,
+    sync::{Arc, Weak},
+    time::SystemTime,
+};
 
 use axum::async_trait;
 use mongodb::{
@@ -16,11 +20,13 @@ use crate::{
     auth::get_email_from_client_token,
     backend_core::{
         features::{
-            devices_status_feature::{models::{
-                BatteryStatus, Component, ComponentStatus, DeviceError,
-            }, web::WebDeviceStatusFeature},
+            devices_status_feature::{
+                models::{BatteryStatus, Component, ComponentStatus, DeviceError},
+                web::WebDeviceStatusFeature,
+            },
             IotFeature, WebFeature,
-        }, utils::non_primitive_cast,
+        },
+        utils::non_primitive_cast,
     },
 };
 
@@ -76,7 +82,7 @@ impl IotFeature for IotDeviceStatusFeature {
 
     fn set_web_feature_instance<W: WebFeature + 'static>(&mut self, web_instance: Weak<W>)
     where
-        Self: Sized, 
+        Self: Sized,
     {
         self.web_instance = Some(non_primitive_cast(web_instance.clone()).unwrap());
     }
@@ -137,19 +143,24 @@ impl IotFeature for IotDeviceStatusFeature {
                         {
                             let device_coll: Collection<Document> =
                                 mongoc.default_database().unwrap().collection("devices");
-                            for ConnectDeviceData { id, component } in data {
+                            for ConnectDeviceData {
+                                id,
+                                component,
+                                kind,
+                            } in data
+                            {
                                 match device_coll.find_one(doc! { "id": id, "owner_name": username.clone() }, None).await {
                                     Ok(Some(_)) => {
                                         if let Ok(None) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone(), "components": { "$elemMatch": { "id": component } } }, doc! { "$push": { "components.$.logs": to_bson(&ComponentStatus::Connect { timestamp: SystemTime::now() }).unwrap() } }, None).await {
-                                            if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone() }, doc! { "$push": { "components": to_bson(&Component { id: component, logs: vec![ComponentStatus::Connect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
+                                            if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone() }, doc! { "$push": { "components": to_bson(&Component { id: component, kind, logs: vec![ComponentStatus::Connect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
                                                 eprintln!("Failed to process connect device data");
                                             }
                                         }
                                     }
                                     Ok(None) => {
-                                        if let Err(_) = device_coll.insert_one(doc! { "id": id, "owner_name": username.clone(), "battery_logs": to_bson(&vec![] as &Vec<BatteryStatus>).unwrap(), "error_logs": to_bson(&vec![] as &Vec<DeviceError>).unwrap(), "components": to_bson(&vec![] as &Vec<Component>).unwrap() }, None).await {
+                                        if let Err(_) = device_coll.insert_one(doc! { "id": id, "owner_name": username.clone(), "kind": to_bson(&kind).unwrap(), "battery_logs": to_bson(&vec![] as &Vec<BatteryStatus>).unwrap(), "error_logs": to_bson(&vec![] as &Vec<DeviceError>).unwrap(), "components": to_bson(&vec![] as &Vec<Component>).unwrap() }, None).await {
                                             eprintln!("Failed to process connect device data");
-                                        } else if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone() }, doc! { "$push": { "components": to_bson(&Component { id, logs: vec![ComponentStatus::Connect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
+                                        } else if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone() }, doc! { "$push": { "components": to_bson(&Component { id, kind, logs: vec![ComponentStatus::Connect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
                                             eprintln!("Failed to process connect device data");
                                         }
                                     }
@@ -179,11 +190,9 @@ impl IotFeature for IotDeviceStatusFeature {
                                 {
                                     Ok(Some(_)) => {
                                         if let Ok(None) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone(), "components": { "$elemMatch": { "id": component } } }, doc! { "$push": { "components.$.logs": to_bson(&ComponentStatus::Disconnect { timestamp: SystemTime::now() }).unwrap() } }, None).await {
-                                            if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "onwer_name": username.clone() }, doc! { "$push": { "components": to_bson(&Component { id, logs: vec![ComponentStatus::Disconnect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
-                                                eprintln!("Failed to process disconnect device data");
-                                            }
-                                        }
+                                        eprintln!("Cannot disconnect a non-existent component");
                                     }
+                                }
                                     Ok(None) => {
                                         eprintln!(
                                             "Device '{}' did not exist for user '{}'",
@@ -206,9 +215,13 @@ impl IotFeature for IotDeviceStatusFeature {
             }
         }
     }
- 
-    async fn send_message_to_web(&self, message: String) -> String { String::from("") }
-    async fn respond_message_from_web(&self, message: String) -> String { String::from("") }   
+
+    async fn send_message_to_web(&self, message: String) -> String {
+        String::from("")
+    }
+    async fn respond_message_from_web(&self, message: String) -> String {
+        String::from("")
+    }
 
     fn into_any(self: Arc<Self>) -> Arc<dyn Any> {
         self

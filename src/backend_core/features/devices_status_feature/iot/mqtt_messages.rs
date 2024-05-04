@@ -1,6 +1,25 @@
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
 type Token = String;
+
+#[derive(Serialize_repr, Deserialize_repr, JsonSchema, Clone)]
+#[cfg_attr(test, derive(std::cmp::PartialEq, Debug))]
+#[repr(usize)]
+pub enum ComponentType {
+    GeneralLight = 0,
+    GeneralBuzzer = 1,
+
+    Smoke = 50,
+    Heat = 51,
+    CO = 52,
+    LPG = 53,
+    Fire = 54,
+    FireButton = 55,
+    FireLight = 56,
+    FireBuzzer = 57,
+}
 
 #[derive(Deserialize, Serialize)]
 #[cfg_attr(test, derive(std::cmp::PartialEq, Debug))]
@@ -47,6 +66,7 @@ pub struct ReadDeviceErrorData {
 pub struct ConnectDeviceData {
     pub id: u32,
     pub component: u32,
+    pub kind: ComponentType,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -59,8 +79,8 @@ pub struct DisconnectDeviceData {
 #[cfg(test)]
 mod deserialize_tests {
     use super::{
-        ConnectDeviceData, DeviceStatusMQTTMessage, DisconnectDeviceData, ReadBatteryData,
-        ReadDeviceErrorData, Token,
+        ComponentType, ConnectDeviceData, DeviceStatusMQTTMessage, DisconnectDeviceData,
+        ReadBatteryData, ReadDeviceErrorData, Token,
     };
 
     #[test]
@@ -146,7 +166,8 @@ mod deserialize_tests {
                 "data":  [
                     {
                         "id": 0,
-                        "component": 1 
+                        "component": 1,
+                        "kind": 0
                     }
                 ]
             }
@@ -158,6 +179,7 @@ mod deserialize_tests {
             data: vec![ConnectDeviceData {
                 id: 0,
                 component: 1,
+                kind: ComponentType::GeneralLight,
             }],
         };
 
@@ -195,8 +217,8 @@ mod deserialize_tests {
 #[cfg(test)]
 mod serialize_tests {
     use super::{
-        ConnectDeviceData, DeviceStatusMQTTMessage, DisconnectDeviceData, ReadBatteryData,
-        ReadDeviceErrorData, Token,
+        ComponentType, ConnectDeviceData, DeviceStatusMQTTMessage, DisconnectDeviceData,
+        ReadBatteryData, ReadDeviceErrorData, Token,
     };
 
     #[test]
@@ -287,6 +309,7 @@ mod serialize_tests {
             data: vec![ConnectDeviceData {
                 id: 0,
                 component: 1,
+                kind: ComponentType::GeneralLight,
             }],
         };
         let result = serde_json::to_string(&input)
@@ -301,7 +324,8 @@ mod serialize_tests {
                 "data": [
                     {
                         "id": 0,
-                        "component": 1 
+                        "component": 1,
+                        "kind": 0
                     }
                 ]
             }

@@ -3,6 +3,8 @@ use std::time::SystemTime;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use super::iot::mqtt_messages::ComponentType;
+
 #[derive(Serialize, Deserialize, JsonSchema)]
 pub struct Device {
     pub id: u32,
@@ -15,6 +17,7 @@ pub struct Device {
 #[derive(Serialize, Deserialize, JsonSchema)]
 pub struct Component {
     pub id: u32,
+    pub kind: ComponentType,
     pub logs: Vec<ComponentStatus>,
 }
 
