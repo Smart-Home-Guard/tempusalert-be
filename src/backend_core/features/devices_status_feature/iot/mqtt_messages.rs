@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
 type Token = String;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Serialize_repr, Deserialize_repr)]
 #[cfg_attr(test, derive(std::cmp::PartialEq, Debug))]
+#[repr(usize)]
 pub enum ComponentType {
     GeneralLight = 0,
     GeneralBuzzer = 1,
