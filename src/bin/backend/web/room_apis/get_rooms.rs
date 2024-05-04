@@ -3,14 +3,14 @@ use axum::{
     extract::Query,
     http::{HeaderMap, StatusCode},
 };
-use mongodb::{
-    bson::{self, doc, Bson},
-    Collection,
-};
+use mongodb::{bson::doc, Collection};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use tempusalert_be::{
-    backend_core::{features::devices_status_feature::models::Component, models::Room},
+    backend_core::{
+        features::devices_status_feature::models::{Component, Device},
+        models::Room,
+    },
     json::Json,
 };
 
@@ -79,9 +79,52 @@ async fn get_all_handler(
 
     let room_coll: Collection<Room> = mongoc.default_database().unwrap().collection("rooms");
 
-    let query_doc = doc! {
-        "owner_name": email.clone(),
-    };
+    if let Ok(mut room_cursor) = room_coll
+        .find(doc! { "owner_name": email.clone() }, None)
+        .await
+    {
+        let mut rooms = vec![];
+        while let Ok(true) = room_cursor.advance().await {
+            let room = room_cursor.deserialize_current();
+            match room {
+                Ok(room) => {
+                    let devices = futures::future::join_all(room.devices.iter().map(|id| async {
+                        let components = get_all_components_by_device(email.clone(), *id).await;
+                        ResponseDevice {
+                            id: *id,
+                            components,
+                        }
+                    }))
+                    .await;
+
+                    rooms.push(ResponseRoom {
+                        name: room.name,
+                        devices,
+                    });
+                }
+                Err(_) => {
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(GetRoomsOfUserResponse::GetAllRooms {
+                            message: format!(
+                                "Failed to fetch all rooms for user '{}'",
+                                email.clone(),
+                            ),
+                            value: None,
+                        }),
+                    );
+                }
+            }
+        }
+
+        return (
+            StatusCode::OK,
+            Json(GetRoomsOfUserResponse::GetAllRooms {
+                message: format!("Fetch all rooms successfully"),
+                value: Some(rooms),
+            }),
+        );
+    }
 
     (
         StatusCode::INTERNAL_SERVER_ERROR,
@@ -95,7 +138,7 @@ async fn get_all_handler(
 async fn get_one_handler(
     headers: HeaderMap,
     email: String,
-    room_id: String,
+    room_name: String,
 ) -> (StatusCode, Json<GetRoomsOfUserResponse>) {
     if headers.get("email").is_none()
         || headers
@@ -115,9 +158,46 @@ async fn get_one_handler(
 
     let room_coll: Collection<Room> = mongoc.default_database().unwrap().collection("rooms");
 
-    let query_doc = doc! {
-        "owner_name": email.clone(),
-    };
+    if let Ok(room_opt) = room_coll
+        .find_one(
+            doc! { "name": room_name.clone(), "owner_name": email.clone() },
+            None,
+        )
+        .await
+    {
+        if room_opt.is_none() {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(GetRoomsOfUserResponse::GetOneRoom {
+                    message: format!("No room with name {room_name} for user {email}"),
+                    value: None,
+                }),
+            );
+        }
+
+        let room = room_opt.unwrap();
+        let devices = futures::future::join_all(room.devices.iter().map(|id| async {
+            let components = get_all_components_by_device(email.clone(), *id).await;
+            ResponseDevice {
+                id: *id,
+                components,
+            }
+        }))
+        .await;
+
+        return (
+            StatusCode::OK,
+            Json(GetRoomsOfUserResponse::GetOneRoom {
+                message: format!("Fetch room {room_name} successfully"),
+                value: Some({
+                    ResponseRoom {
+                        name: room.name,
+                        devices,
+                    }
+                }),
+            }),
+        );
+    }
 
     (
         StatusCode::INTERNAL_SERVER_ERROR,
@@ -126,6 +206,20 @@ async fn get_one_handler(
             value: None,
         }),
     )
+}
+
+async fn get_all_components_by_device(email: String, id: u32) -> Vec<Component> {
+    let mongoc = MONGOC.get_or_init(init_database).await;
+    let device_coll: Collection<Device> = mongoc.default_database().unwrap().collection("devices");
+
+    if let Ok(Some(device)) = device_coll
+        .find_one(doc! { "owner_name": email, "id": id }, None)
+        .await
+    {
+        device.components
+    } else {
+        vec![]
+    }
 }
 
 pub fn routes() -> ApiRouter {
