@@ -1,9 +1,10 @@
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 type Token = String;
 
-#[derive(Serialize_repr, Deserialize_repr)]
+#[derive(Serialize_repr, Deserialize_repr, JsonSchema, Clone)]
 #[cfg_attr(test, derive(std::cmp::PartialEq, Debug))]
 #[repr(usize)]
 pub enum ComponentType {

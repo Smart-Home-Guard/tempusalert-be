@@ -152,7 +152,7 @@ impl IotFeature for IotDeviceStatusFeature {
                                 match device_coll.find_one(doc! { "id": id, "owner_name": username.clone() }, None).await {
                                     Ok(Some(_)) => {
                                         if let Ok(None) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone(), "components": { "$elemMatch": { "id": component } } }, doc! { "$push": { "components.$.logs": to_bson(&ComponentStatus::Connect { timestamp: SystemTime::now() }).unwrap() } }, None).await {
-                                            if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone() }, doc! { "$push": { "components": to_bson(&Component { id: component, logs: vec![ComponentStatus::Connect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
+                                            if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone() }, doc! { "$push": { "components": to_bson(&Component { id: component, kind, logs: vec![ComponentStatus::Connect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
                                                 eprintln!("Failed to process connect device data");
                                             }
                                         }
@@ -160,7 +160,7 @@ impl IotFeature for IotDeviceStatusFeature {
                                     Ok(None) => {
                                         if let Err(_) = device_coll.insert_one(doc! { "id": id, "owner_name": username.clone(), "kind": to_bson(&kind).unwrap(), "battery_logs": to_bson(&vec![] as &Vec<BatteryStatus>).unwrap(), "error_logs": to_bson(&vec![] as &Vec<DeviceError>).unwrap(), "components": to_bson(&vec![] as &Vec<Component>).unwrap() }, None).await {
                                             eprintln!("Failed to process connect device data");
-                                        } else if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone() }, doc! { "$push": { "components": to_bson(&Component { id, logs: vec![ComponentStatus::Connect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
+                                        } else if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone() }, doc! { "$push": { "components": to_bson(&Component { id, kind, logs: vec![ComponentStatus::Connect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
                                             eprintln!("Failed to process connect device data");
                                         }
                                     }
@@ -190,11 +190,9 @@ impl IotFeature for IotDeviceStatusFeature {
                                 {
                                     Ok(Some(_)) => {
                                         if let Ok(None) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone(), "components": { "$elemMatch": { "id": component } } }, doc! { "$push": { "components.$.logs": to_bson(&ComponentStatus::Disconnect { timestamp: SystemTime::now() }).unwrap() } }, None).await {
-                                            if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "onwer_name": username.clone() }, doc! { "$push": { "components": to_bson(&Component { id, logs: vec![ComponentStatus::Disconnect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
-                                                eprintln!("Failed to process disconnect device data");
-                                            }
-                                        }
+                                        eprintln!("Cannot disconnect a non-existent component");
                                     }
+                                }
                                     Ok(None) => {
                                         eprintln!(
                                             "Device '{}' did not exist for user '{}'",

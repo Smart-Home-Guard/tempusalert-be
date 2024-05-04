@@ -7,9 +7,13 @@ use mongodb::{bson::doc, options::FindOptions, Collection};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{backend_core::features::devices_status_feature::models::Device, json::Json};
-
 use super::MONGOC;
+use crate::{
+    backend_core::features::devices_status_feature::{
+        iot::mqtt_messages::ComponentType, models::Device,
+    },
+    json::Json,
+};
 
 #[derive(Deserialize, JsonSchema)]
 pub struct GetAllDevicesQuery {
@@ -23,9 +27,15 @@ pub struct GetAllDeviceResponse {
 }
 
 #[derive(Serialize, JsonSchema)]
+pub struct ResponseComponent {
+    component: u32,
+    kind: ComponentType,
+}
+
+#[derive(Serialize, JsonSchema)]
 pub struct ResponseDevice {
     id: u32,
-    components: Vec<u32>,
+    components: Vec<ResponseComponent>,
 }
 
 async fn handler(
@@ -65,7 +75,14 @@ async fn handler(
             match device {
                 Ok(device) => devices.push(ResponseDevice {
                     id: device.id,
-                    components: device.components.iter().map(|c| c.id).collect(),
+                    components: device
+                        .components
+                        .iter()
+                        .map(|c| ResponseComponent {
+                            component: c.id,
+                            kind: c.kind.clone(),
+                        })
+                        .collect(),
                 }),
                 Err(_) => {
                     return (
