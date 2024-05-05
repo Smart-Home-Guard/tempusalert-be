@@ -46,7 +46,7 @@ pub enum GetRoomsOfUserResponse {
     },
 }
 
-async fn handler(
+async fn get_rooms_handler(
     headers: HeaderMap,
     Query(GetRoomsQuery { email, room_name }): Query<GetRoomsQuery>,
 ) -> impl IntoApiResponse {
@@ -223,20 +223,20 @@ async fn get_all_components_by_device(email: String, id: u32) -> Vec<Component> 
 }
 
 #[derive(Deserialize, JsonSchema)]
-pub struct CreateRoomBody {
+pub struct RoomIdentifier {
     email: String,
     room_name: String,
 }
 
 #[derive(Serialize, JsonSchema)]
-pub struct CreateRoomResponse {
+pub struct NotificationMessageResponse {
     message: String,
 }
 
 async fn create_room_handler(
     headers: HeaderMap,
-    Json(CreateRoomBody { email, room_name }): Json<CreateRoomBody>,
-) -> (StatusCode, Json<CreateRoomResponse>) {
+    Json(RoomIdentifier { email, room_name }): Json<RoomIdentifier>,
+) -> (StatusCode, Json<NotificationMessageResponse>) {
     if headers.get("email").is_none()
         || headers
             .get("email")
@@ -244,7 +244,7 @@ async fn create_room_handler(
     {
         return (
             StatusCode::FORBIDDEN,
-            Json(CreateRoomResponse {
+            Json(NotificationMessageResponse {
                 message: String::from("Forbidden"),
             }),
         );
@@ -256,7 +256,7 @@ async fn create_room_handler(
 
     if room_coll
         .find_one(
-            doc! {"name": room_name.clone(), "owner": email.clone()},
+            doc! {"name": room_name.clone(), "owner_name": email.clone()},
             None,
         )
         .await
@@ -265,7 +265,7 @@ async fn create_room_handler(
     {
         return (
             StatusCode::BAD_REQUEST,
-            Json(CreateRoomResponse {
+            Json(NotificationMessageResponse {
                 message: format!("Room '{}' already exists for user '{}'", room_name, email),
             }),
         );
@@ -284,7 +284,7 @@ async fn create_room_handler(
     {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(CreateRoomResponse {
+            Json(NotificationMessageResponse {
                 message: String::from("Failed to create room"),
             }),
         );
@@ -292,9 +292,65 @@ async fn create_room_handler(
 
     (
         StatusCode::OK,
-        Json(CreateRoomResponse {
+        Json(NotificationMessageResponse {
             message: format!(
                 "Room '{}' created successfully for user '{}'",
+                room_name, email
+            ),
+        }),
+    )
+}
+
+async fn delete_room_handler(
+    headers: HeaderMap,
+    Query(RoomIdentifier { email, room_name }): Query<RoomIdentifier>,
+) -> (StatusCode, Json<NotificationMessageResponse>) {
+    if headers.get("email").is_none()
+        || headers
+            .get("email")
+            .is_some_and(|value| value != email.as_str())
+    {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(NotificationMessageResponse {
+                message: String::from("Forbidden"),
+            }),
+        );
+    }
+
+    let mongoc = MONGOC.get_or_init(init_database).await;
+
+    let room_coll: Collection<Room> = mongoc.default_database().unwrap().collection("rooms");
+
+    if let Ok(None) = room_coll
+        .find_one(doc! { "name": &room_name, "owner_name": &email }, None)
+        .await
+    {
+        return (
+            StatusCode::NOT_FOUND,
+            Json(NotificationMessageResponse {
+                message: format!("Room '{}' does not exist for user '{}'", room_name, email),
+            }),
+        );
+    }
+
+    if let Err(_) = room_coll
+        .delete_one(doc! { "name": &room_name, "owner_name": &email }, None)
+        .await
+    {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(NotificationMessageResponse {
+                message: String::from("Failed to delete room"),
+            }),
+        );
+    }
+
+    (
+        StatusCode::OK,
+        Json(NotificationMessageResponse {
+            message: format!(
+                "Room '{}' deleted successfully for user '{}'",
                 room_name, email
             ),
         }),
@@ -304,7 +360,7 @@ async fn create_room_handler(
 pub fn routes() -> ApiRouter {
     ApiRouter::new().api_route(
         "/",
-        get_with(handler, |op| {
+        get_with(get_rooms_handler, |op| {
             op.description("Get room by user email")
                 .tag("Room")
                 .response::<200, Json<GetRoomsOfUserResponse>>()
@@ -314,9 +370,16 @@ pub fn routes() -> ApiRouter {
         .post_with(create_room_handler, |op| {
             op.description("Create new room for specific user")
                 .tag("Room")
-                .response::<200, Json<CreateRoomResponse>>()
-                .response::<403, Json<CreateRoomResponse>>()
-                .response::<500, Json<CreateRoomResponse>>()
+                .response::<200, Json<NotificationMessageResponse>>()
+                .response::<403, Json<NotificationMessageResponse>>()
+                .response::<500, Json<NotificationMessageResponse>>()
+        })
+        .delete_with(delete_room_handler, |op| {
+            op.description("Create new room for specific user")
+                .tag("Room")
+                .response::<200, Json<NotificationMessageResponse>>()
+                .response::<403, Json<NotificationMessageResponse>>()
+                .response::<500, Json<NotificationMessageResponse>>()
         }),
     )
 }

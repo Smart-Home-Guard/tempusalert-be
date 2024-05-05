@@ -1,6 +1,5 @@
 mod add_device;
 mod patch_device_of_rooms;
-mod patch_rooms;
 mod rooms;
 mod utils;
 
