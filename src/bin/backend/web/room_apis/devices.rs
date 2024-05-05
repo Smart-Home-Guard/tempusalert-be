@@ -239,7 +239,7 @@ async fn remove_device_from_room_handler(
 
 pub fn routes() -> ApiRouter {
     ApiRouter::new().api_route(
-        "/",
+        "/devices",
         post_with(add_device_handler, |op| {
             op.description("Add devices to room for specific user")
                 .tag("Room")
