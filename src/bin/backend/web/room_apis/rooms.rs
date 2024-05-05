@@ -78,7 +78,7 @@ async fn get_all_handler(
     let mongoc = MONGOC.get_or_init(init_database).await;
 
     let room_coll: Collection<Room> = mongoc.default_database().unwrap().collection("rooms");
-    
+
     if let Ok(mut room_cursor) = room_coll
         .find(doc! { "owner_name": email.clone() }, None)
         .await
@@ -222,6 +222,85 @@ async fn get_all_components_by_device(email: String, id: u32) -> Vec<Component> 
     }
 }
 
+#[derive(Deserialize, JsonSchema)]
+pub struct CreateRoomBody {
+    email: String,
+    room_name: String,
+}
+
+#[derive(Serialize, JsonSchema)]
+pub struct CreateRoomResponse {
+    message: String,
+}
+
+async fn create_room_handler(
+    headers: HeaderMap,
+    Json(CreateRoomBody { email, room_name }): Json<CreateRoomBody>,
+) -> (StatusCode, Json<CreateRoomResponse>) {
+    if headers.get("email").is_none()
+        || headers
+            .get("email")
+            .is_some_and(|value| value != email.as_str())
+    {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(CreateRoomResponse {
+                message: String::from("Forbidden"),
+            }),
+        );
+    }
+
+    let mongoc = MONGOC.get_or_init(init_database).await;
+
+    let room_coll: Collection<Room> = mongoc.default_database().unwrap().collection("rooms");
+
+    if room_coll
+        .find_one(
+            doc! {"name": room_name.clone(), "owner": email.clone()},
+            None,
+        )
+        .await
+        .unwrap_or(None)
+        .is_some()
+    {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(CreateRoomResponse {
+                message: format!("Room '{}' already exists for user '{}'", room_name, email),
+            }),
+        );
+    }
+
+    if let Err(_) = room_coll
+        .insert_one(
+            Room {
+                name: room_name.clone(),
+                devices: vec![],
+                owner_name: email.clone(),
+            },
+            None,
+        )
+        .await
+    {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(CreateRoomResponse {
+                message: String::from("Failed to create room"),
+            }),
+        );
+    }
+
+    (
+        StatusCode::OK,
+        Json(CreateRoomResponse {
+            message: format!(
+                "Room '{}' created successfully for user '{}'",
+                room_name, email
+            ),
+        }),
+    )
+}
+
 pub fn routes() -> ApiRouter {
     ApiRouter::new().api_route(
         "/",
@@ -231,6 +310,13 @@ pub fn routes() -> ApiRouter {
                 .response::<200, Json<GetRoomsOfUserResponse>>()
                 .response::<403, Json<GetRoomsOfUserResponse>>()
                 .response::<500, Json<GetRoomsOfUserResponse>>()
+        })
+        .post_with(create_room_handler, |op| {
+            op.description("Create new room for specific user")
+                .tag("Room")
+                .response::<200, Json<CreateRoomResponse>>()
+                .response::<403, Json<CreateRoomResponse>>()
+                .response::<500, Json<CreateRoomResponse>>()
         }),
     )
 }

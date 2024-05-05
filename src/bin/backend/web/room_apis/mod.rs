@@ -1,13 +1,13 @@
 mod add_device;
-mod get_rooms;
 mod patch_device_of_rooms;
 mod patch_rooms;
+mod rooms;
 mod utils;
 
 use aide::axum::ApiRouter;
 
 pub fn room_routes() -> ApiRouter {
     ApiRouter::new()
-        .nest("/", get_rooms::routes())
-        .nest("/", add_device::routes())
+        .nest("/", rooms::routes())
+        .nest("/devices", add_device::routes())
 }

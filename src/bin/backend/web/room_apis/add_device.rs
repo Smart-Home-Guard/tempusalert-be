@@ -93,7 +93,7 @@ async fn handler(
                     );
                 }
                 return (
-                    StatusCode::BAD_REQUEST,
+                    StatusCode::NOT_FOUND,
                     Json(AddDeviceResponse {
                         message: String::from(format!(
                             "Cannot find device {:?} of user {}",
@@ -133,19 +133,20 @@ async fn handler(
     (
         StatusCode::INTERNAL_SERVER_ERROR,
         Json(AddDeviceResponse {
-            message: String::from("Internal server error hehe"),
+            message: String::from("Internal server error"),
         }),
     )
 }
 
 pub fn routes() -> ApiRouter {
     ApiRouter::new().api_route(
-        "/devices",
+        "/",
         post_with(handler, |op| {
             op.description("Add device to room for specific user")
                 .tag("Room")
                 .response::<200, Json<AddDeviceResponse>>()
                 .response::<403, Json<AddDeviceResponse>>()
+                .response::<404, Json<AddDeviceResponse>>()
                 .response::<500, Json<AddDeviceResponse>>()
         }),
     )
