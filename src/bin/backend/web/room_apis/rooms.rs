@@ -375,7 +375,7 @@ pub fn routes() -> ApiRouter {
                 .response::<500, Json<NotificationMessageResponse>>()
         })
         .delete_with(delete_room_handler, |op| {
-            op.description("Create new room for specific user")
+            op.description("Delete new room for specific user")
                 .tag("Room")
                 .response::<200, Json<NotificationMessageResponse>>()
                 .response::<403, Json<NotificationMessageResponse>>()
