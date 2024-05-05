@@ -19,7 +19,7 @@ use crate::database_client::{init_database, MONGOC};
 #[derive(Deserialize, JsonSchema)]
 pub struct GetRoomsQuery {
     email: String,
-    room_id: Option<String>,
+    room_name: Option<String>,
 }
 
 #[derive(Serialize, JsonSchema)]
@@ -48,9 +48,9 @@ pub enum GetRoomsOfUserResponse {
 
 async fn handler(
     headers: HeaderMap,
-    Query(GetRoomsQuery { email, room_id }): Query<GetRoomsQuery>,
+    Query(GetRoomsQuery { email, room_name }): Query<GetRoomsQuery>,
 ) -> impl IntoApiResponse {
-    if let Some(id) = room_id {
+    if let Some(id) = room_name {
         get_one_handler(headers, email, id).await
     } else {
         get_all_handler(headers, email).await
@@ -78,7 +78,7 @@ async fn get_all_handler(
     let mongoc = MONGOC.get_or_init(init_database).await;
 
     let room_coll: Collection<Room> = mongoc.default_database().unwrap().collection("rooms");
-
+    
     if let Ok(mut room_cursor) = room_coll
         .find(doc! { "owner_name": email.clone() }, None)
         .await
