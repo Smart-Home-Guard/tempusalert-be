@@ -6,12 +6,12 @@ use tokio::sync::Mutex;
 
 use super::mqtt_messages::FireMQTTMessage;
 use crate::{
-    auth::get_email_from_client_token,
+    auth::{get_email_from_client_token, get_email_from_web_token},
     backend_core::{
         features::{
             fire_alert_feature::{models::{FireStatus, SensorDataType, SensorLogData}, web::WebFireFeature}, IotFeature, WebFeature,
         }, utils::non_primitive_cast,
-    },
+    }, push_notification::push_notification,
 };
 
 #[derive(Clone)]
@@ -142,7 +142,7 @@ impl IotFeature for IotFireFeature {
                             lpg
                         } => {
                             if let Some(email) =
-                                get_email_from_client_token(&self.jwt_key, token, &mut mongoc).await
+                                get_email_from_client_token(&self.jwt_key, token.clone(), &mut mongoc).await
                             {
                                 let sensor_data = vec![
                                     (SensorDataType::Fire, fire_data),
@@ -189,6 +189,12 @@ impl IotFeature for IotFireFeature {
                                         .into_iter()
                                         .filter(| SensorLogData { alert, .. } | *alert == FireStatus::UNSAFE)
                                         .collect::<Vec<_>>();
+                                    
+                                    push_notification(
+                                        email.clone(), 
+                                        serde_json::to_string(&alert_data).unwrap(), 
+                                        &mut mongoc,
+                                    ).await;
                                 }
                             } else {
                                 eprintln!("Invalid token");

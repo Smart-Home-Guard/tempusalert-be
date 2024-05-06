@@ -21,7 +21,7 @@ pub fn get_client_id_from_client_token(key: &str, token: String) -> Option<Strin
     Some(claim.client_id)
 }
 
-pub fn get_email_from_email_token(key: &str, token: String) -> Option<String> {
+pub fn get_email_from_web_token(key: &str, token: String) -> Option<String> {
     let claim = decrypt_jwt::<WebClientClaim>(key, token.as_str())?;
     Some(claim.email)
 }
@@ -31,7 +31,7 @@ pub async fn get_client_id_from_web_token(
     token: String,
     mongoc: &mut mongodb::Client,
 ) -> Option<String> {
-    let email = get_email_from_email_token(key, token)?;
+    let email = get_email_from_web_token(key, token)?;
     if let Ok(Some(user_doc)) = mongoc
         .default_database()
         .unwrap()
