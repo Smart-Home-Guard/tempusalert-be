@@ -1,7 +1,5 @@
-use tempusalert_be::database_client::{self, MongocConfig};
+use tempusalert_be::{database_client::{self, MongocConfig}, parse_env_var::parse_env_var};
 use tokio::sync::OnceCell;
-
-use crate::parse_env_var;
 
 pub async fn init_database() -> mongodb::Client {
     let config = MongocConfig {

@@ -7,7 +7,7 @@ use rumqttc::{AsyncClient, EventLoop};
 use tempusalert_be::{
     backend_core::features::{devices_status_feature, fire_alert_feature, remote_control_feature, IotFeature, WebFeature},
     errors::AppError,
-    mqtt_client::{self, ClientConfig},
+    mqtt_client::{self, ClientConfig}, parse_env_var::parse_env_var,
 };
 use web::WebTask;
 
@@ -15,7 +15,6 @@ mod config;
 mod database_client;
 mod globals;
 mod mail;
-mod push_notification;
 mod clonable_wrapper;
 
 #[macro_use]
@@ -53,13 +52,6 @@ pub async fn join_all(tasks: Vec<Task>) -> AppResult {
         Some(err) => Err(err),
         None => unreachable!("This channel never closed."),
     }
-}
-
-fn parse_env_var<T: std::str::FromStr>(var_name: &str) -> T {
-    dotenv::var(var_name)
-        .ok()
-        .and_then(|val| val.parse().ok())
-        .expect(format!("{var_name} not found in environment variables").as_str())
 }
 
 async fn init_mqtt_client(client_id: &str) -> (AsyncClient, EventLoop) {

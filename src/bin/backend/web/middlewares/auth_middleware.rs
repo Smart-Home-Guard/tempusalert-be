@@ -4,7 +4,7 @@ use axum::{
     middleware::Next,
     response::Response,
 };
-use tempusalert_be::auth::get_email_from_email_token;
+use tempusalert_be::auth::get_email_from_web_token;
 
 use crate::config::JWT_KEY;
 
@@ -19,7 +19,7 @@ pub async fn set_username_from_token_in_request_middleware(
         request.headers_mut().append(
             "email",
             HeaderValue::from_str(
-                get_email_from_email_token(JWT_KEY.as_str(), jwt.to_string())
+                get_email_from_web_token(JWT_KEY.as_str(), jwt.to_string())
                     .unwrap_or("".to_string())
                     .as_str(),
             )

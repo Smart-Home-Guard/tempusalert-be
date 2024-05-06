@@ -12,9 +12,9 @@ use mongodb::{
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use tempusalert_be::{backend_core::models::PushCredential, json::Json};
+use tempusalert_be::{backend_core::models::PushCredential, json::Json, push_notification::PUBLIC_KEY};
 
-use crate::{database_client::{init_database, MONGOC}, push_notification::PUBLIC_KEY};
+use crate::database_client::{init_database, MONGOC};
 
 #[derive(Deserialize, JsonSchema)]
 struct Params {

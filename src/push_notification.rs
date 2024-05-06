@@ -1,12 +1,11 @@
 use mongodb::{bson::doc, Cursor};
 use once_cell::sync::Lazy;
-use tempusalert_be::backend_core::models::{PushCredential, PushKey};
 use web_push::{
     ContentEncoding, IsahcWebPushClient, SubscriptionInfo, VapidSignatureBuilder, WebPushClient,
     WebPushMessageBuilder,
 };
 
-use crate::parse_env_var;
+use crate::{backend_core::models::{PushCredential, PushKey}, parse_env_var::parse_env_var};
 
 static SECRET_KEY: Lazy<String> =
     Lazy::new(|| parse_env_var("PRIVATE_VAPID_KEY"));
