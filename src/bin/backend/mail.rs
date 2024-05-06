@@ -4,8 +4,7 @@ use lettre::{
     Message, SmtpTransport, Transport,
 };
 use once_cell::sync::Lazy;
-
-use crate::parse_env_var;
+use tempusalert_be::parse_env_var::parse_env_var;
 
 const SMTP_USER: Lazy<String> = Lazy::new(|| parse_env_var("SMTP_USER"));
 const SMTP_PASSWORD: Lazy<String> = Lazy::new(|| parse_env_var("SMTP_PASSWORD"));

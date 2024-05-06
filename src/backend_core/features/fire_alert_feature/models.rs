@@ -23,9 +23,8 @@ pub enum SensorDataType {
     LPG,
 }
 
-#[derive(Serialize_repr, Deserialize_repr, JsonSchema, Debug)]
+#[derive(Serialize_repr, Deserialize_repr, PartialEq, Eq, JsonSchema, Clone, Copy, Debug)]
 #[repr(u8)]
-#[cfg_attr(test, derive(std::cmp::PartialEq))]
 pub enum FireStatus {
     SAFE = 0,
     UNSAFE = 1,

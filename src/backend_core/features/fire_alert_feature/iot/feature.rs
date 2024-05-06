@@ -9,7 +9,7 @@ use crate::{
     auth::get_email_from_client_token,
     backend_core::{
         features::{
-            fire_alert_feature::{models::{SensorDataType, SensorLogData}, web::WebFireFeature}, IotFeature, WebFeature,
+            fire_alert_feature::{models::{FireStatus, SensorDataType, SensorLogData}, web::WebFireFeature}, IotFeature, WebFeature,
         }, utils::non_primitive_cast,
     },
 };
@@ -184,6 +184,11 @@ impl IotFeature for IotFireFeature {
                                             .await;
                                         }
                                     }
+
+                                    let alert_data = sensor_logs
+                                        .into_iter()
+                                        .filter(| SensorLogData { alert, .. } | *alert == FireStatus::UNSAFE)
+                                        .collect::<Vec<_>>();
                                 }
                             } else {
                                 eprintln!("Invalid token");
