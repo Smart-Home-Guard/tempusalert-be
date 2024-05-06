@@ -1,5 +1,5 @@
 pub mod iot;
-mod models;
+pub mod models;
 mod notifications;
 pub mod web;
 

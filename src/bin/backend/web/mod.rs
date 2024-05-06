@@ -1,10 +1,11 @@
 mod auth_apis;
 mod doc;
 mod feature_apis;
+mod logout_api;
 mod middlewares;
 mod push_apis;
 mod register_api;
-mod logout_api;
+mod room_apis;
 mod utils;
 
 use std::{str::FromStr, sync::Arc};
@@ -16,7 +17,9 @@ use aide::{
 };
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
-use crate::{clonable_wrapper::ClonableWrapper, config::WebConfig, types::WebFeatureDyn, AppResult};
+use crate::{
+    clonable_wrapper::ClonableWrapper, config::WebConfig, types::WebFeatureDyn, AppResult,
+};
 use axum::{
     http::{header::CONTENT_TYPE, HeaderName, HeaderValue, Method, StatusCode, Uri},
     Extension, Json,
@@ -72,7 +75,8 @@ impl WebTask {
             .nest_api_service("/auth/logout", logout_api::logout_routes())
             .nest_api_service("/auth/register", register_api::register_routes())
             .nest_api_service("/api/push-credential", push_apis::push_routes())
-            .nest_api_service("/api/features", feature_apis::features_route());
+            .nest_api_service("/api/features", feature_apis::features_route())
+            .nest_api_service("/api/rooms", room_apis::room_routes());
 
         for feat in &mut self.features {
             self.router = self.router.nest_api_service(
@@ -90,7 +94,13 @@ impl WebTask {
                 set_username_from_token_in_request_middleware,
             ))
             .layer(TraceLayer::new_for_http())
-            .layer(CorsLayer::new().allow_methods([Method::GET, Method::POST, Method::PATCH, Method::PUT]).allow_credentials(true).allow_headers([CONTENT_TYPE, HeaderName::from_str("jwt").unwrap()]).allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())) // TODO: Whitelist additional origins
+            .layer(
+                CorsLayer::new()
+                    .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::PUT])
+                    .allow_credentials(true)
+                    .allow_headers([CONTENT_TYPE, HeaderName::from_str("jwt").unwrap()])
+                    .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap()),
+            ) // TODO: Whitelist additional origins
             .into_make_service();
         tokio::spawn(async move {
             println!(
