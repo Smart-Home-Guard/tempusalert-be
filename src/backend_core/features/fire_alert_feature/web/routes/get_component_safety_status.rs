@@ -173,7 +173,7 @@ pub fn routes() -> ApiRouter {
     ApiRouter::new().api_route(
         "/status",
         get_with(handler, |op| {
-            op.description("Get smoke log by user email")
+            op.description("Get fire-device status")
                 .tag("Fire alert")
                 .response::<200, Json<GetComponentSafetyStatusResponse>>()
                 .response::<403, Json<GetComponentSafetyStatusResponse>>()
