@@ -113,7 +113,7 @@ async fn handler(
     }
 
     let document = cursor.deserialize_current().unwrap();
-    let status = bson::from_bson::<SensorLogData>(document.into()).map(|s| s.alert).ok();
+    let status = bson::from_bson::<SensorLogData>(document.get(log_field).unwrap().into()).map(|s| s.alert).ok();
     (
         StatusCode::OK,
         Json(GetComponentSafetyStatusResponse {
@@ -138,7 +138,7 @@ async fn get_fire_component_type(email: String, component_id: String) -> Option<
     let mut cursor = device_coll.aggregate(pipeline, None).await.ok()?;
     cursor.advance().await.ok()?;
     let document = cursor.deserialize_current().ok()?;
-    let component = bson::from_bson::<Component>(document.into()).ok()?;
+    let component = bson::from_bson::<Component>(document.get("components").unwrap().into()).ok()?;
 
     match component.kind {
         | ComponentType::CO
