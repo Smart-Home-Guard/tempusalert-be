@@ -11,7 +11,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    backend_core::features::fire_alert_feature::models::{FireLog, FireStatus},
+    backend_core::{features::{devices_status_feature::models::Device, fire_alert_feature::models::{FireLog, FireStatus}}, models::Room},
     json::Json,
 };
 
@@ -21,6 +21,7 @@ use super::MONGOC;
 pub struct GetStatusQuery {
     email: String,
     component_ids: Option<Vec<String>>,
+    room_name: Option<String>,
 }
 
 #[derive(Serialize, JsonSchema)]
@@ -33,6 +34,10 @@ pub struct ComponentSafetyStatus {
 #[serde(untagged)]
 pub enum GetStatusResponse {
     ComponentSafetyStatuses {
+        message: String,
+        value: Option<Vec<ComponentSafetyStatus>>,
+    },
+    RoomSafetyStatus {
         message: String,
         value: Option<Vec<ComponentSafetyStatus>>,
     },
@@ -53,9 +58,12 @@ async fn handler(
     Query(GetStatusQuery {
         email,
         component_ids,
+        room_name,
     }): Query<GetStatusQuery>,
 ) -> impl IntoApiResponse {
-    if component_ids.is_some() {
+    if room_name.is_some() {
+        handle_room_status(headers, email, room_name.unwrap()).await
+    } else if component_ids.is_some() {
         handle_component_statuses(headers, email, component_ids.unwrap()).await
     } else {
         (
@@ -66,6 +74,60 @@ async fn handler(
             }),
         )
     }
+}
+
+async fn handle_room_status(
+    headers: HeaderMap,
+    email: String,
+    room_name: String,
+) -> (StatusCode, Json<GetStatusResponse>) {
+    if headers.get("email").is_none()
+        || headers
+            .get("email")
+            .is_some_and(|value| value != email.as_str())
+    {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(GetStatusResponse::RoomSafetyStatus {
+                message: String::from("Forbidden"),
+                value: None,
+            }),
+        );
+    }
+
+    let component_ids = get_component_ids_by_room(email.clone(), room_name).await;
+
+    if component_ids.is_none() {
+        return (
+            StatusCode::NOT_FOUND,
+            Json(GetStatusResponse::RoomSafetyStatus {
+                message: String::from("Room not found"),
+                value: None,
+            }),
+        );
+    }
+
+    let component_ids = component_ids.unwrap();
+
+    let statuses = get_component_statuses(email, component_ids).await.map(|inner| inner.into_iter().map(|v| ComponentSafetyStatus { id: v._id, status: v.alert }).collect());
+
+    if statuses.is_none() {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(GetStatusResponse::RoomSafetyStatus {
+                message: String::from("Internal server error"),
+                value: None,
+            }),
+        );
+    }
+
+    (
+        StatusCode::OK,
+        Json(GetStatusResponse::RoomSafetyStatus {
+            message: String::from("Successfully fetch all statuses"),
+            value: statuses,
+        }),
+    )
 }
 
 async fn handle_component_statuses(
@@ -87,6 +149,72 @@ async fn handle_component_statuses(
         );
     }
 
+    let statuses = get_component_statuses(email, component_ids).await.map(|inner| inner.into_iter().map(|v| ComponentSafetyStatus { id: v._id, status: v.alert }).collect());
+    (
+        StatusCode::OK,
+        Json(GetStatusResponse::ComponentSafetyStatuses {
+            message: String::from("Get fire status successfully"),
+            value: statuses, 
+        })
+    )
+}
+
+async fn get_component_ids_by_room(email: String, room_name: String) -> Option<Vec<String>> {
+    let room_coll: Collection<Room> = {
+        let mongoc = unsafe { MONGOC.as_ref().clone().unwrap().lock() }.await;
+        mongoc.default_database().unwrap().collection("rooms")
+    };
+
+    let room = room_coll.find_one(doc! { "owner_name": email.clone(), "name": room_name }, None).await.ok().flatten()?;
+
+    let devices = room.devices;
+
+    let device_coll: Collection<Device> = {
+        let mongoc = unsafe { MONGOC.as_ref().clone().unwrap().lock() }.await;
+        mongoc.default_database().unwrap().collection("devices")
+    };
+    
+    let pipeline = vec![
+        doc! {
+            "$match": {
+                "owner_name": email.clone(),
+                "id": {
+                    "$in": bson::to_document(&devices).ok()?,
+                },
+            }
+        },
+       doc! {
+            "$project": {
+                "components": 1,
+            }
+        }, 
+        doc! {
+            "$unwind": "components",
+        },
+        doc! {
+            "$group": {
+                "_id": None::<String>,
+                "ids": { "$push": "$components.id" },
+            }
+        },
+        doc! {
+            "$replaceRoot": {
+                "newRoot": "$ids",
+            }
+        },
+    ];
+
+    let mut cursor = device_coll.aggregate(pipeline, None).await.ok()?;
+    let mut component_ids = vec![];
+    while cursor.advance().await.ok()? {
+        let document = cursor.deserialize_current().ok()?;
+        component_ids.push(bson::from_bson(document.into()).ok()?);
+    }
+
+    Some(component_ids)
+}
+
+async fn get_component_statuses(email: String, component_ids: Vec<String>) -> Option<Vec<ComponentStatusPipelineOutput>> {
     let fire_coll: Collection<FireLog> = {
         let mongoc = unsafe { MONGOC.as_ref().clone().unwrap().lock() }.await;
         mongoc.default_database().unwrap().collection("fire_alerts")
@@ -136,38 +264,14 @@ async fn handle_component_statuses(
         }, 
     ];
 
-    let cursor = fire_coll.aggregate(pipeline, None).await;
-    if !cursor.is_ok() {
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(GetStatusResponse::ComponentSafetyStatuses {
-                message: String::from("Bad request"),
-                value: None,
-            }),
-        );
+    let mut cursor = fire_coll.aggregate(pipeline, None).await.ok()?;
+    let mut res = vec![];
+    while cursor.advance().await.ok()? {
+        let document = cursor.deserialize_current().ok()?;
+        res.push(bson::from_bson(document.into()).ok()?);
     }
 
-    let mut cursor = cursor.unwrap();
-    if !cursor.advance().await.is_ok() {
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(GetStatusResponse::ComponentSafetyStatuses {
-                message: String::from("Internal server error"),
-                value: None,
-            }),
-        );
-    }
-
-    let document = cursor.deserialize_current().unwrap();
-    let statuses = bson::from_bson::<Vec<ComponentStatusPipelineOutput>>(document.into()).ok().map(|inner| inner.into_iter().map(|v| ComponentSafetyStatus { id: v._id, status: v.alert }).collect());
-    (
-        StatusCode::OK,
-        Json(GetStatusResponse::ComponentSafetyStatuses {
-            message: String::from("Get fire status successfully"),
-            value: statuses, 
-        })
-    )
-
+    Some(res)
 }
 
 pub fn routes() -> ApiRouter {
