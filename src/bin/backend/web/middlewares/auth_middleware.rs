@@ -25,10 +25,6 @@ pub async fn set_username_from_token_in_request_middleware(
             )
             .unwrap(),
         );
-    } else {
-        request
-            .headers_mut()
-            .append("email", HeaderValue::from_str("").unwrap());
     }
     let response = next.run(request).await;
     Ok(response)
