@@ -32,5 +32,5 @@ pub fn create_router(web: &mut WebFireFeature) -> ApiRouter {
                     .nest("/", get_fire_logs_of_user::routes())
                     .nest("/", get_buzzer_logs::routes())
                     .nest("/", get_light_logs::routes())
-                    .nest("/", get_component_safety_status::routes())
+                    .nest("/", get_status::routes())
 }
