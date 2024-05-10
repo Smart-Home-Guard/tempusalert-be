@@ -20,6 +20,7 @@ use crate::database_client::{init_database, MONGOC};
 pub struct GetRoomsQuery {
     email: String,
     room_name: Option<String>,
+    name_only: Option<String>,
 }
 
 #[derive(Serialize, JsonSchema)]
@@ -45,17 +46,73 @@ pub enum GetRoomsOfUserResponse {
         message: String,
         value: Option<ResponseRoom>,
     },
+    GetRoomNames {
+        message: String,
+        value: Option<Vec<String>>,
+    },
 }
 
 async fn get_rooms_handler(
     headers: HeaderMap,
-    Query(GetRoomsQuery { email, room_name }): Query<GetRoomsQuery>,
+    Query(GetRoomsQuery { email, room_name, name_only }): Query<GetRoomsQuery>,
 ) -> impl IntoApiResponse {
-    if let Some(id) = room_name {
+    if let Some(_) = name_only {
+        get_name_only_handler(headers, email).await
+    } else if let Some(id) = room_name {
         get_one_handler(headers, email, id).await
     } else {
         get_all_handler(headers, email).await
     }
+}
+
+async fn get_name_only_handler(
+    headers: HeaderMap,
+    email: String,
+) -> (StatusCode, Json<GetRoomsOfUserResponse>) {
+    if headers.get("email").is_none()
+        || headers
+            .get("email")
+            .is_some_and(|value| value != email.as_str())
+    {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(GetRoomsOfUserResponse::GetRoomNames {
+                message: String::from("Forbidden"),
+                value: None,
+            }),
+        );
+    }
+
+    let mongoc = MONGOC.get_or_init(init_database).await;
+
+    let room_coll: Collection<Room> = mongoc.default_database().unwrap().collection("rooms");
+
+    if let Ok(mut room_cursor) = room_coll
+        .find(doc! { "owner_name": email.clone() }, None)
+        .await
+    {
+        let mut rooms = vec![];
+        while let Ok(true) = room_cursor.advance().await {
+            let room = room_cursor.deserialize_current().unwrap();
+            rooms.push(room.name);
+        }
+
+        return (
+            StatusCode::OK,
+            Json(GetRoomsOfUserResponse::GetRoomNames {
+                message: format!("Fetch all room names successfully"),
+                value: Some(rooms),
+            }),
+        );
+    }
+
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(GetRoomsOfUserResponse::GetRoomNames {
+            message: String::from("Internal server error"),
+            value: None,
+        }),
+    )
 }
 
 async fn get_all_handler(
