@@ -16,7 +16,7 @@ mod get_heat_logs_of_user;
 mod get_smoke_logs_of_user;
 mod get_buzzer_logs;
 mod get_light_logs;
-mod get_component_safety_status;
+mod get_status;
 
 pub fn create_router(web: &mut WebFireFeature) -> ApiRouter {
     unsafe {
