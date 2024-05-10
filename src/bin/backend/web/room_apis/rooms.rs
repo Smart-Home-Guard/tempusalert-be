@@ -35,6 +35,7 @@ pub struct ResponseRoom {
 }
 
 #[derive(Serialize, JsonSchema)]
+#[serde(untagged)]
 pub enum GetRoomsOfUserResponse {
     GetAllRooms {
         message: String,
