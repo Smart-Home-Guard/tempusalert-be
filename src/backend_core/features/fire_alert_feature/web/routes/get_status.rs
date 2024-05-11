@@ -135,7 +135,7 @@ async fn handle_room_status_of_types(
 ) -> (StatusCode, Json<GetStatusResponse>) {
     let response = handle_room_status(headers, email.clone(), room_name.clone()).await;
     if let GetStatusResponse::RoomSafetyStatus { message, component_statuses: value } = response.1.0 {
-        if value.is_none() {
+        if value.is_none() || value.as_ref().unwrap().len() == 0 {
             return (
                 response.0,
                 Json(GetStatusResponse::RoomDetailedSafetyStatus {
@@ -167,7 +167,7 @@ async fn handle_room_status_of_types(
             mongoc.default_database().unwrap().collection("fire_alerts")
         };
 
-        let component_ids = get_component_ids_by_room(email.clone(), room_name).await;
+        let (component_ids, _) = get_component_ids_by_room(email.clone(), room_name).await.unwrap();
 
         for typ in types {
             let log_field = match typ {
@@ -290,7 +290,17 @@ async fn handle_room_status(
         );
     }
 
-    let component_ids = component_ids.unwrap();
+    let (component_ids, message) = component_ids.unwrap();
+
+    if component_ids.len() == 0 {
+        return (
+            StatusCode::OK,
+            Json(GetStatusResponse::RoomSafetyStatus {
+                message,
+                component_statuses: Some(vec![]),
+            }),
+        );
+    }
 
     let statuses = get_component_statuses(email, component_ids).await.map(|inner| inner.into_iter().map(|v| ComponentSafetyStatus { id: v._id, status: v.alert }).collect());
 
@@ -342,7 +352,7 @@ async fn handle_component_statuses(
     )
 }
 
-async fn get_component_ids_by_room(email: String, room_name: String) -> Option<Vec<String>> {
+async fn get_component_ids_by_room(email: String, room_name: String) -> Option<(Vec<String>, String)> {
     let room_coll: Collection<Room> = {
         let mongoc = unsafe { MONGOC.as_ref().clone().unwrap().lock() }.await;
         mongoc.default_database().unwrap().collection("rooms")
@@ -387,14 +397,22 @@ async fn get_component_ids_by_room(email: String, room_name: String) -> Option<V
         },
     ];
 
-    let mut cursor = device_coll.aggregate(pipeline, None).await.ok()?;
+    let cursor = device_coll.aggregate(pipeline, None).await;
+    if cursor.is_err() {
+        return Some((vec![], "Room is empty".to_string()));
+    }
+    let mut cursor = cursor.unwrap();
     let mut component_ids = vec![];
-    while cursor.advance().await.ok()? {
-        let document = cursor.deserialize_current().ok()?;
-        component_ids.push(bson::from_bson(document.into()).ok()?);
+    while let Ok(true) = cursor.advance().await {
+        let document = cursor.deserialize_current();
+        if document.is_err() {
+            return Some((vec![], "Room is empty".to_string()));
+        }
+        let document = document.unwrap();
+        component_ids.push(bson::from_bson(document.into()).unwrap());
     }
 
-    Some(component_ids)
+    Some((component_ids, "Fetch all components successfully".to_string()))
 }
 
 async fn get_component_statuses(email: String, component_ids: Vec<String>) -> Option<Vec<ComponentStatusPipelineOutput>> {
