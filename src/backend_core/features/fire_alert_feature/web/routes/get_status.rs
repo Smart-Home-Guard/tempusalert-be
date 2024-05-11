@@ -52,7 +52,7 @@ pub enum GetStatusResponse {
     },
     RoomSafetyStatus {
         message: String,
-        value: Option<Vec<ComponentSafetyStatus>>,
+        component_statuses: Option<Vec<ComponentSafetyStatus>>,
     },
     RoomDetailedSafetyStatus {
         message: String,
@@ -134,7 +134,7 @@ async fn handle_room_status_of_types(
     end_time: Option<i32>,
 ) -> (StatusCode, Json<GetStatusResponse>) {
     let response = handle_room_status(headers, email.clone(), room_name.clone()).await;
-    if let GetStatusResponse::RoomSafetyStatus { message, value } = response.1.0 {
+    if let GetStatusResponse::RoomSafetyStatus { message, component_statuses: value } = response.1.0 {
         if value.is_none() {
             return (
                 response.0,
@@ -273,7 +273,7 @@ async fn handle_room_status(
             StatusCode::FORBIDDEN,
             Json(GetStatusResponse::RoomSafetyStatus {
                 message: String::from("Forbidden"),
-                value: None,
+                component_statuses: None,
             }),
         );
     }
@@ -285,7 +285,7 @@ async fn handle_room_status(
             StatusCode::NOT_FOUND,
             Json(GetStatusResponse::RoomSafetyStatus {
                 message: String::from("Room not found"),
-                value: None,
+                component_statuses: None,
             }),
         );
     }
@@ -299,7 +299,7 @@ async fn handle_room_status(
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(GetStatusResponse::RoomSafetyStatus {
                 message: String::from("Internal server error"),
-                value: None,
+                component_statuses: None,
             }),
         );
     }
@@ -308,7 +308,7 @@ async fn handle_room_status(
         StatusCode::OK,
         Json(GetStatusResponse::RoomSafetyStatus {
             message: String::from("Successfully fetch all statuses"),
-            value: statuses,
+            component_statuses: statuses,
         }),
     )
 }
