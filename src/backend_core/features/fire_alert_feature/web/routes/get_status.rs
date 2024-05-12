@@ -9,6 +9,7 @@ use mongodb::{
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use serde_json::from_str;
 
 use crate::{backend_core::{features::{devices_status_feature::models::Device, fire_alert_feature::models::{FireLog, FireStatus, SensorDataType}}, models::Room}, json::Json};
 
@@ -17,7 +18,7 @@ use super::MONGOC;
 #[derive(Deserialize, JsonSchema)]
 pub struct GetStatusQuery {
     email: String,
-    component_ids: Option<Vec<usize>>,
+    component_ids: Option<String>,
     room_name: Option<String>,
     co: Option<()>,
     fire: Option<()>,
@@ -113,7 +114,17 @@ async fn handler(
             handle_room_status_of_types(headers, email, room_name.unwrap(), types, start_time, end_time).await
         }
     } else if component_ids.is_some() {
-        handle_component_statuses(headers, email, component_ids.unwrap()).await
+        if let Ok(component_ids) = serde_json::from_str(&component_ids.unwrap()) {
+            handle_component_statuses(headers, email, component_ids).await
+        } else {
+            (
+                StatusCode::BAD_REQUEST,
+                Json(GetStatusResponse::Unrecognized {
+                    message: String::from("components_ids must be a list of integers"),
+                    value: None,
+                }),
+            )
+        }
     } else {
         (
             StatusCode::BAD_REQUEST,
