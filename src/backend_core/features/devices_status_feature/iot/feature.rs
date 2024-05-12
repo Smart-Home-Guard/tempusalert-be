@@ -65,11 +65,11 @@ impl IotFeature for IotDeviceStatusFeature {
     where
         Self: Sized,
     {
-        "devices-status".into()
+        "device-status".into()
     }
 
     fn get_module_name(&self) -> String {
-        "devices-status".into()
+        "device-status".into()
     }
 
     fn get_mqttc(&mut self) -> rumqttc::AsyncClient {

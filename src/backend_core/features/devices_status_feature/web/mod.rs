@@ -42,11 +42,11 @@ impl WebFeature for WebDeviceStatusFeature {
     where
         Self: Sized,
     {
-        "devices-status".into()
+        "device-status".into()
     }
 
     fn get_module_name(&self) -> String {
-        "devices-status".into()
+        "device-status".into()
     }
 
     fn set_iot_feature_instance<I: IotFeature + 'static>(&mut self, iot_instance: Weak<I>)
