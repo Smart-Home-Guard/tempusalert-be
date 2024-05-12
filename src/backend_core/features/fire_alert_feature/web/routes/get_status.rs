@@ -1,3 +1,5 @@
+use std::time::SystemTime;
+
 use aide::axum::{routing::get_with, ApiRouter, IntoApiResponse};
 use axum::{
     extract::Query,
@@ -39,7 +41,7 @@ pub struct ComponentSafetyStatus {
 
 #[derive(Deserialize, Serialize, JsonSchema)]
 pub struct RoomLogEntryResponse {
-    timestamp: usize,
+    timestamp: SystemTime,
     value: isize,
 }
 
