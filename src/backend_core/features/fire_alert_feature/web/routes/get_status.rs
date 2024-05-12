@@ -17,7 +17,7 @@ use super::MONGOC;
 #[derive(Deserialize, JsonSchema)]
 pub struct GetStatusQuery {
     email: String,
-    component_ids: Option<Vec<String>>,
+    component_ids: Option<Vec<usize>>,
     room_name: Option<String>,
     co: Option<()>,
     fire: Option<()>,
@@ -201,7 +201,7 @@ async fn handle_room_status_of_types(
                 },
                 doc! {
                     "$match": {
-                        "component": { "$in": &component_ids },
+                        "component": { "$in": bson::to_bson(&component_ids).unwrap() },
                     }
                 },
                 doc! {
@@ -279,7 +279,6 @@ async fn handle_room_status(
     }
 
     let component_ids = get_component_ids_by_room(email.clone(), room_name).await;
-    println!("{component_ids:?}");
     if component_ids.is_none() {
         return (
             StatusCode::NOT_FOUND,
@@ -326,7 +325,7 @@ async fn handle_room_status(
 async fn handle_component_statuses(
     headers: HeaderMap,
     email: String,
-    component_ids: Vec<String>,
+    component_ids: Vec<usize>,
 ) -> (StatusCode, Json<GetStatusResponse>) {
     if headers.get("email").is_none()
         || headers
@@ -352,7 +351,7 @@ async fn handle_component_statuses(
     )
 }
 
-async fn get_component_ids_by_room(email: String, room_name: String) -> Option<(Vec<String>, String)> {
+async fn get_component_ids_by_room(email: String, room_name: String) -> Option<(Vec<usize>, String)> {
     let room_coll: Collection<Room> = {
         let mongoc = unsafe { MONGOC.as_ref().clone().unwrap().lock() }.await;
         mongoc.default_database().unwrap().collection("rooms")
@@ -376,7 +375,7 @@ async fn get_component_ids_by_room(email: String, room_name: String) -> Option<(
             "$match": {
                 "owner_name": email.clone(),
                 "id": {
-                    "$in": devices.into_iter().map(|d| Bson::String(d.to_string())).collect::<Vec<Bson>>(),
+                    "$in": devices.into_iter().map(|d| bson::to_bson(&d).unwrap()).collect::<Vec<Bson>>(),
                 },
             }
         },
@@ -394,11 +393,6 @@ async fn get_component_ids_by_room(email: String, room_name: String) -> Option<(
                 "ids": { "$push": "$components.id" },
             }
         },
-        doc! {
-            "$replaceRoot": {
-                "newRoot": "$ids",
-            }
-        },
     ];
 
     let cursor = device_coll.aggregate(pipeline, None).await;
@@ -406,20 +400,14 @@ async fn get_component_ids_by_room(email: String, room_name: String) -> Option<(
         return Some((vec![], "Room is empty".to_string()));
     }
     let mut cursor = cursor.unwrap();
-    let mut component_ids = vec![];
-    while let Ok(true) = cursor.advance().await {
-        let document = cursor.deserialize_current();
-        if document.is_err() {
-            return Some((vec![], "Room is empty".to_string()));
-        }
-        let document = document.unwrap();
-        component_ids.push(bson::from_bson(document.into()).unwrap());
-    }
+    cursor.advance().await.unwrap();
+    let document = cursor.deserialize_current().unwrap();
+    let component_ids = bson::from_bson(document.get("ids")?.into()).unwrap();
 
     Some((component_ids, "Fetch all components successfully".to_string()))
 }
 
-async fn get_component_statuses(email: String, component_ids: Vec<String>) -> Option<Vec<ComponentStatusPipelineOutput>> {
+async fn get_component_statuses(email: String, component_ids: Vec<usize>) -> Option<Vec<ComponentStatusPipelineOutput>> {
     let fire_coll: Collection<FireLog> = {
         let mongoc = unsafe { MONGOC.as_ref().clone().unwrap().lock() }.await;
         mongoc.default_database().unwrap().collection("fire_alerts")
@@ -452,7 +440,7 @@ async fn get_component_statuses(email: String, component_ids: Vec<String>) -> Op
         },
         doc! {
             "$match": {
-                "component": { "$in": component_ids },
+                "component": { "$in": bson::to_bson(&component_ids).unwrap() },
             }
         },
         doc! {
