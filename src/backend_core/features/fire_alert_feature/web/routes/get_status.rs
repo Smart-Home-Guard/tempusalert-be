@@ -1,7 +1,7 @@
 use aide::axum::{routing::get_with, ApiRouter, IntoApiResponse};
 use axum::{
     extract::Query,
-    http::{HeaderMap, StatusCode}, Json,
+    http::{HeaderMap, StatusCode},
 };
 use mongodb::{
     bson::{self, doc, Bson},
@@ -10,7 +10,7 @@ use mongodb::{
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::backend_core::{features::{devices_status_feature::models::Device, fire_alert_feature::models::{FireLog, FireStatus, SensorDataType}}, models::Room};
+use crate::{backend_core::{features::{devices_status_feature::models::Device, fire_alert_feature::models::{FireLog, FireStatus, SensorDataType}}, models::Room}, json::Json};
 
 use super::MONGOC;
 
