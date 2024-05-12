@@ -4,7 +4,7 @@ use axum::{
     http::{HeaderMap, StatusCode}, Json,
 };
 use mongodb::{
-    bson::{self, doc},
+    bson::{self, doc, Bson},
     Collection,
 };
 use schemars::JsonSchema;
@@ -279,7 +279,7 @@ async fn handle_room_status(
     }
 
     let component_ids = get_component_ids_by_room(email.clone(), room_name).await;
-
+    println!("{component_ids:?}");
     if component_ids.is_none() {
         return (
             StatusCode::NOT_FOUND,
@@ -370,17 +370,17 @@ async fn get_component_ids_by_room(email: String, room_name: String) -> Option<(
         let mongoc = unsafe { MONGOC.as_ref().clone().unwrap().lock() }.await;
         mongoc.default_database().unwrap().collection("devices")
     };
-    
+
     let pipeline = vec![
         doc! {
             "$match": {
                 "owner_name": email.clone(),
                 "id": {
-                    "$in": bson::to_document(&devices).ok()?,
+                    "$in": devices.into_iter().map(|d| Bson::String(d.to_string())).collect::<Vec<Bson>>(),
                 },
             }
         },
-       doc! {
+        doc! {
             "$project": {
                 "components": 1,
             }
@@ -403,8 +403,10 @@ async fn get_component_ids_by_room(email: String, room_name: String) -> Option<(
 
     let cursor = device_coll.aggregate(pipeline, None).await;
     if cursor.is_err() {
+        println!("pipeline failed");
         return Some((vec![], "Room is empty".to_string()));
     }
+    println!("pipeline successful");
     let mut cursor = cursor.unwrap();
     let mut component_ids = vec![];
     while let Ok(true) = cursor.advance().await {
