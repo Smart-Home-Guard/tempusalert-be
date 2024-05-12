@@ -64,7 +64,7 @@ pub enum GetStatusResponse {
         buzzer_logs: Option<Vec<RoomLogEntryResponse>>,
         button_logs: Option<Vec<RoomLogEntryResponse>>,
         fire_logs: Option<Vec<RoomLogEntryResponse>>,
-        gas_logs: Option<Vec<RoomLogEntryResponse>>,
+        lpg_logs: Option<Vec<RoomLogEntryResponse>>,
     },
     Unrecognized {
         message: String,
@@ -158,7 +158,7 @@ async fn handle_room_status_of_types(
                     buzzer_logs: None,
                     button_logs: None,
                     fire_logs: None,
-                    gas_logs: None,
+                    lpg_logs: None,
                 }),
             );
         }
@@ -170,7 +170,7 @@ async fn handle_room_status_of_types(
         let mut buzzer_logs = None;
         let mut button_logs = None;
         let mut fire_logs = None;
-        let mut gas_logs = None;
+        let mut lpg_logs = None;
 
         let fire_coll: Collection<FireLog> = {
             let mongoc = unsafe { MONGOC.as_ref().clone().unwrap().lock() }.await;
@@ -182,7 +182,7 @@ async fn handle_room_status_of_types(
         for typ in types {
             let log_field = match typ {
                 SensorDataType::CO => "co_logs",
-                SensorDataType::LPG => "gas_logs",
+                SensorDataType::LPG => "lpg_logs",
                 SensorDataType::Fire => "fire_logs",
                 SensorDataType::Heat => "heat_logs",
                 SensorDataType::Smoke => "smoke_logs",
@@ -240,7 +240,7 @@ async fn handle_room_status_of_types(
             
             match typ {
                 SensorDataType::CO => { co_logs = Some(res); },
-                SensorDataType::LPG => { gas_logs = Some(res); },
+                SensorDataType::LPG => { lpg_logs = Some(res); },
                 SensorDataType::Fire => { fire_logs = Some(res); },
                 SensorDataType::Heat => { heat_logs = Some(res); },
                 SensorDataType::Smoke => { smoke_logs = Some(res); },
@@ -262,7 +262,7 @@ async fn handle_room_status_of_types(
                 buzzer_logs,
                 button_logs,
                 fire_logs,
-                gas_logs,
+                lpg_logs,
             }),
         );
     }
@@ -430,7 +430,7 @@ async fn get_component_statuses(email: String, component_ids: Vec<usize>) -> Opt
             "co_logs": 1,
             "buzzer_logs": 1,
             "fire_logs": 1,
-            "gas_logs": 1,
+            "lpg_logs": 1,
             "heat_logs": 1,
             "light_logs": 1,
             "smoke_logs": 1,
@@ -439,7 +439,7 @@ async fn get_component_statuses(email: String, component_ids: Vec<usize>) -> Opt
         doc! {
             "$project": {
                 "logs": {
-                    "$concatArrays": ["$co_logs", "$buzzer_logs", "$gas_logs", "$heat_logs", "$light_logs", "$smoke_logs", "$button_logs"],
+                    "$concatArrays": ["$co_logs", "$buzzer_logs", "$lpg_logs", "$heat_logs", "$light_logs", "$smoke_logs", "$button_logs"],
                 }
             }
         },
