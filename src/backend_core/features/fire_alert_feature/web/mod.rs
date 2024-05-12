@@ -42,11 +42,11 @@ impl WebFeature for WebFireFeature {
     where
         Self: Sized,
     {
-        "fire-alerts".into()
+        "fire".into()
     }
 
     fn get_module_name(&self) -> String {
-        "fire-alerts".into()
+        "fire".into()
     }
 
     fn create_router(&mut self) -> ApiRouter {

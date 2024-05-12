@@ -6,7 +6,7 @@ use tokio::sync::Mutex;
 
 use super::mqtt_messages::FireMQTTMessage;
 use crate::{
-    auth::{get_email_from_client_token, get_email_from_web_token},
+    auth::get_email_from_client_token,
     backend_core::{
         features::{
             fire_alert_feature::{models::{FireStatus, SensorDataType, SensorLogData}, web::WebFireFeature}, IotFeature, WebFeature,
@@ -84,11 +84,11 @@ impl IotFeature for IotFireFeature {
     where
         Self: Sized,
     {
-        "fire-alerts".into()
+        "fire".into()
     }
 
     fn get_module_name(&self) -> String {
-        "fire-alerts".into()
+        "fire".into()
     }
 
     fn get_mqttc(&mut self) -> rumqttc::AsyncClient {
