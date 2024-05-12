@@ -2,9 +2,9 @@ import time
 import paho.mqtt.client as mqtt
 import json
 
-id = "84ac5dd0-94b4-424c-ae5a-96a4cacdc093"
+id = "f8c69536-131d-4816-8c06-454fccc7e95c"
 
-client_metrics_topic = id + "/fire-alert-metrics"
+client_metrics_topic = id + "/device-status-metrics"
 server_command_topic = id + "/<feature>-commands"
 client_name = id
 
@@ -15,33 +15,25 @@ mqtt_client.loop_start()
 
 for i in range(5):
     message = {
-        "kind": "0",
+        "kind": "2",
         "payload": {
-            "token": "eyJhbGciOiJIUzI1NiJ9.eyJjbGllbnRfaWQiOiI4NGFjNWRkMC05NGI0LTQyNGMtYWU1YS05NmE0Y2FjZGMwOTMiLCJub25jZSI6ImU1ZjY2YzJiLWMxMzItNGY0NS1hMjU4LTUyMzhhNzAwOWFhZCJ9.u25Vv9Ct8FrIbSHSo2-59n-7wLhpyvr_WtVrfNhObZc",
-            "fire": [{"id": 0, "component": 8, "value": 460, "alert": 0}],
-            "smoke": [
-                {"id": 0, "component": 0, "value": 120, "alert": 0},
-                {"id": 0, "component": 1, "value": 240, "alert": 0},
-                {"id": 1, "component": 0, "value": 120, "alert": 0},
-                {"id": 2, "component": 0, "value": 120, "alert": 0},
-                {"id": 0, "component": 0, "value": 120, "alert": 0},
-            ],
-            "co": [
-                {"id": 0, "component": 4, "value": 460, "alert": 0},
-                {"id": 1, "component": 4, "value": 460, "alert": 0},
-            ],
-            "heat": [
-                {"id": 2, "component": 2, "value": 460, "alert": 0},
-                {"id": 3, "component": 2, "value": 460, "alert": 0},
-            ],
-            "fire-button": [{"id": 1, "component": 10, "value": 1, "alert": 0}],
-            "lpg": [
-                {
-                    "id": 1,
-                    "component": 6,
-                    "value": 20,
-                    "alert": 0,
-                }
+            "token": "eyJhbGciOiJIUzI1NiJ9.eyJjbGllbnRfaWQiOiJmOGM2OTUzNi0xMzFkLTQ4MTYtOGMwNi00NTRmY2NjN2U5NWMiLCJub25jZSI6IjAxOGY2YzFiLTNlOTctNzZlNy1iODE1LTFlMWIyYWQ1YWQyZCJ9.f7hH5aWeIjdG4jXHTfOLA36xxp2gnjCENAukjdNqFuM",
+            "data": [
+                {"id": i + 1, "component": i * 100 + 1, "kind": 50},
+                {"id": i, "component": i * 100 + 2, "kind": 53},
+                {"id": i, "component": i * 100 + 5, "kind": 52},
+                {"id": i, "component": i * 100 + 6, "kind": 51},
+                {"id": i + 1, "component": i * 100 + 4, "kind": 54},
+                {"id": i + 1, "component": i * 100 + 12, "kind": 54},
+                {"id": i + 1, "component": i * 100 + 17, "kind": 55},
+                {"id": i + 2, "component": i * 100 + 13, "kind": 56},
+                {"id": i + 2, "component": i * 100 + 24, "kind": 57},
+                {"id": i + 3, "component": i * 100 + 23, "kind": 55},
+                {"id": i + 4, "component": i * 100 + 25, "kind": 50},
+                {"id": i + 3, "component": i * 100 + 26, "kind": 52},
+                {"id": i + 4, "component": i * 100 + 27, "kind": 51},
+                {"id": i + 10, "component": i * 100 + 27, "kind": 52},
+                {"id": i + 12, "component": i * 100 + 27, "kind": 53},
             ],
         },
     }
