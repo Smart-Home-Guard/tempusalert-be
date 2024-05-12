@@ -9,7 +9,6 @@ use mongodb::{
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use serde_json::from_str;
 
 use crate::{backend_core::{features::{devices_status_feature::models::Device, fire_alert_feature::models::{FireLog, FireStatus, SensorDataType}}, models::Room}, json::Json};
 
