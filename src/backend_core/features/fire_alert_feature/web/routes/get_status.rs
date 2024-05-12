@@ -205,6 +205,9 @@ async fn handle_room_status_of_types(
                     }
                 },
                 doc! {
+                    "$unwind": "$logs",
+                },
+                doc! {
                     "$replaceRoot": {
                         "newRoot": "$logs",
                     }
