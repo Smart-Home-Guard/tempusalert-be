@@ -386,7 +386,7 @@ async fn get_component_ids_by_room(email: String, room_name: String) -> Option<(
             }
         }, 
         doc! {
-            "$unwind": "components",
+            "$unwind": "$components",
         },
         doc! {
             "$group": {
@@ -403,10 +403,8 @@ async fn get_component_ids_by_room(email: String, room_name: String) -> Option<(
 
     let cursor = device_coll.aggregate(pipeline, None).await;
     if cursor.is_err() {
-        println!("pipeline failed");
         return Some((vec![], "Room is empty".to_string()));
     }
-    println!("pipeline successful");
     let mut cursor = cursor.unwrap();
     let mut component_ids = vec![];
     while let Ok(true) = cursor.advance().await {
