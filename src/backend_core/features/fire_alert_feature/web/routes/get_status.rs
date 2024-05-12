@@ -19,14 +19,14 @@ pub struct GetStatusQuery {
     email: String,
     component_ids: Option<String>,
     room_name: Option<String>,
-    co: Option<()>,
-    fire: Option<()>,
-    gas: Option<()>,
-    heat: Option<()>,
-    light: Option<()>,
-    button: Option<()>,
-    buzzer: Option<()>,
-    smoke: Option<()>,
+    co: Option<boolean>,
+    fire: Option<boolean>,
+    gas: Option<boolean>,
+    heat: Option<boolean>,
+    light: Option<boolean>,
+    button: Option<boolean>,
+    buzzer: Option<boolean>,
+    smoke: Option<boolean>,
     start_time: Option<i32>,
     end_time: Option<i32>,
 }
@@ -97,7 +97,7 @@ async fn handler(
     }): Query<GetStatusQuery>,
 ) -> impl IntoApiResponse {
     if room_name.is_some() {
-        if vec![co, fire, gas, heat, light, button, buzzer, smoke].into_iter().all(|opt| opt.is_none()) {
+        if !vec![co, fire, gas, heat, light, button, buzzer, smoke].into_iter().any(|opt| opt.is_some_and(|v| v)) {
             handle_room_status(headers, email, room_name.unwrap()).await
         } else {
             let mut types = vec![];
