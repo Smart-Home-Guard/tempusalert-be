@@ -444,6 +444,9 @@ async fn get_component_statuses(email: String, component_ids: Vec<usize>) -> Opt
             }
         },
         doc! {
+            "$unwind": "$logs",
+        },
+        doc! {
             "$replaceRoot": {
                 "newRoot": "$logs",
             }
@@ -467,10 +470,10 @@ async fn get_component_statuses(email: String, component_ids: Vec<usize>) -> Opt
         },
     ];
 
-    let mut cursor = fire_coll.aggregate(pipeline, None).await.ok()?;
+    let mut cursor = fire_coll.aggregate(pipeline, None).await.unwrap();
     let mut res = vec![];
-    while cursor.advance().await.ok()? {
-        let document = cursor.deserialize_current().ok()?;
+    while cursor.advance().await.unwrap() {
+        let document = cursor.deserialize_current().unwrap();
         res.push(bson::from_bson(document.into()).ok()?);
     }
 
