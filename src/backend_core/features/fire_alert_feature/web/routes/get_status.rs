@@ -362,6 +362,10 @@ async fn get_component_ids_by_room(email: String, room_name: String) -> Option<(
 
     let devices = room.devices;
 
+    if devices.len() == 0 {
+        return Some((vec![], "Room is empty".to_string()));
+    }
+
     let device_coll: Collection<Device> = {
         let mongoc = unsafe { MONGOC.as_ref().clone().unwrap().lock() }.await;
         mongoc.default_database().unwrap().collection("devices")
