@@ -84,11 +84,11 @@ impl IotFeature for IotFireFeature {
     where
         Self: Sized,
     {
-        "fire".into()
+        "fire-alert".into()
     }
 
     fn get_module_name(&self) -> String {
-        "fire".into()
+        "fire-alert".into()
     }
 
     fn get_mqttc(&mut self) -> rumqttc::AsyncClient {
