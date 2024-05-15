@@ -56,6 +56,7 @@ async fn watch_users(mut feat: Box<dyn IotFeature + Send + Sync>) {
                 .map(|s| s.to_owned())
         }) {
             let mqtt_topic = format!("{}/{}-metrics", cur_client_id, feature_id);
+            println!("Listen to existing user: {mqtt_topic}");
 
             if let Err(error) = mqttc
                 .subscribe(mqtt_topic.clone(), rumqttc::QoS::AtLeastOnce)
@@ -76,11 +77,13 @@ async fn watch_users(mut feat: Box<dyn IotFeature + Send + Sync>) {
                 client_id,
             }) => {
                 let mqtt_topic = format!("{}/{}-metrics", client_id, feature_id);
-                if let Err(e) = mqttc.subscribe(mqtt_topic, rumqttc::QoS::AtLeastOnce).await {
+                if let Err(e) = mqttc.subscribe(mqtt_topic.clone(), rumqttc::QoS::AtLeastOnce).await {
                     eprintln!(
                         "Error subscribing to a new user with client id {}: {}",
                         client_id, e
                     );
+                } else {
+                    println!("Listen to new user: {mqtt_topic}");
                 }
             }
 
@@ -89,12 +92,15 @@ async fn watch_users(mut feat: Box<dyn IotFeature + Send + Sync>) {
                 client_id,
             }) => {
                 let mqtt_topic = format!("{}/{}-metrics", client_id, feature_id);
-                if let Err(e) = mqttc.unsubscribe(mqtt_topic).await {
+                if let Err(e) = mqttc.unsubscribe(mqtt_topic.clone()).await {
                     eprintln!(
                         "Error unsubscribing from an old user with client id {}: {}",
                         client_id, e
                     );
+                } else {
+                    println!("Listen terminated for old user: {mqtt_topic}");
                 }
+
             }
 
             Err(e) => {
