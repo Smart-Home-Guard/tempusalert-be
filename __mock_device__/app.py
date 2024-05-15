@@ -2,14 +2,14 @@ import time
 import paho.mqtt.client as mqtt
 import json
 
-id = "f8c69536-131d-4816-8c06-454fccc7e95c"
+id = "248781fd-5ebb-4395-b90e-f0721039ebfe"
 
 client_metrics_topic = id + "/device-status-metrics"
 server_command_topic = id + "/<feature>-commands"
 client_name = id
 
 mqtt_client = mqtt.Client(client_name)
-mqtt_client.connect("test.mosquitto.org")
+mqtt_client.connect("14.225.192.183")
 
 mqtt_client.loop_start()
 
@@ -17,7 +17,7 @@ for i in range(5):
     message = {
         "kind": "2",
         "payload": {
-            "token": "eyJhbGciOiJIUzI1NiJ9.eyJjbGllbnRfaWQiOiJmOGM2OTUzNi0xMzFkLTQ4MTYtOGMwNi00NTRmY2NjN2U5NWMiLCJub25jZSI6IjAxOGY2YzFiLTNlOTctNzZlNy1iODE1LTFlMWIyYWQ1YWQyZCJ9.f7hH5aWeIjdG4jXHTfOLA36xxp2gnjCENAukjdNqFuM",
+            "token": "eyJhbGciOiJIUzI1NiJ9.eyJjbGllbnRfaWQiOiIyNDg3ODFmZC01ZWJiLTQzOTUtYjkwZS1mMDcyMTAzOWViZmUiLCJub25jZSI6IjAxOGY3YTUwLTA1N2QtNzk1YS05ZDg1LTcwZTg2YWUyYmQ2OSJ9.UgMQHccNA9NUuKUYEiPwf6RelXO-zlXM1SK5aDivJyA",
             "data": [
                 {"id": i + 1, "component": i * 100 + 1, "kind": 50},
                 {"id": i, "component": i * 100 + 2, "kind": 53},
