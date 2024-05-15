@@ -63,9 +63,7 @@ async fn handler(
     if let Ok(mut device_cursor) = device_coll
         .find(
             doc! { "owner_name": email.clone() },
-            FindOptions::builder()
-                .projection(doc! { "id": 1, "components.id": 1 })
-                .build(),
+            None,
         )
         .await
     {
