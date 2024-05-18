@@ -47,7 +47,7 @@ pub enum FireMQTTMessage {
 pub struct SensorData {
     pub id: u32,
     pub component: u32,
-    pub value: u32,
+    pub value: f32,
     pub alert: FireStatus,
 }
 
@@ -157,38 +157,38 @@ mod deserialize_tests {
             fire_data: vec![SensorData {
                 id: 0,
                 component: 8,
-                value: 460,
+                value: 460.0,
                 alert: FireStatus::SAFE,
             }],
             smoke: vec![
                 SensorData {
                     id: 0,
                     component: 0,
-                    value: 120,
+                    value: 120.0,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 0,
                     component: 1,
-                    value: 240,
+                    value: 240.0,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 1,
                     component: 0,
-                    value: 120,
+                    value: 120.0,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 2,
                     component: 0,
-                    value: 120,
+                    value: 120.0,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 0,
                     component: 0,
-                    value: 120,
+                    value: 120.0,
                     alert: FireStatus::SAFE,
                 },
             ],
@@ -196,13 +196,13 @@ mod deserialize_tests {
                 SensorData {
                     id: 0,
                     component: 4,
-                    value: 460,
+                    value: 460.0,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 1,
                     component: 4,
-                    value: 460,
+                    value: 460.0,
                     alert: FireStatus::SAFE,
                 },
             ],
@@ -210,20 +210,20 @@ mod deserialize_tests {
                 SensorData {
                     id: 2,
                     component: 2,
-                    value: 460,
+                    value: 460.0,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 3,
                     component: 2,
-                    value: 460,
+                    value: 460.0,
                     alert: FireStatus::SAFE,
                 },
             ],
             button: vec![SensorData {
                 id: 1,
                 component: 10,
-                value: 1,
+                value: 1.0,
                 alert: FireStatus::SAFE,
             }],
             light: vec![],
@@ -272,7 +272,7 @@ mod deserialize_tests {
             fire_data: vec![SensorData {
                 id: 0,
                 component: 8,
-                value: 460,
+                value: 460.0,
                 alert: FireStatus::UNSAFE,
             }],
             smoke: vec![],
@@ -302,38 +302,38 @@ mod serialize_tests {
             fire_data: vec![SensorData {
                 id: 0,
                 component: 8,
-                value: 460,
+                value: 460.0,
                 alert: FireStatus::SAFE,
             }],
             smoke: vec![
                 SensorData {
                     id: 0,
                     component: 0,
-                    value: 120,
+                    value: 120.0,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 0,
                     component: 1,
-                    value: 240,
+                    value: 240.0,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 1,
                     component: 0,
-                    value: 120,
+                    value: 120.0,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 2,
                     component: 0,
-                    value: 120,
+                    value: 120.0,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 0,
                     component: 0,
-                    value: 120,
+                    value: 120.0,
                     alert: FireStatus::SAFE,
                 },
             ],
@@ -341,13 +341,13 @@ mod serialize_tests {
                 SensorData {
                     id: 0,
                     component: 4,
-                    value: 460,
+                    value: 460.0,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 1,
                     component: 4,
-                    value: 460,
+                    value: 460.0,
                     alert: FireStatus::SAFE,
                 },
             ],
@@ -355,20 +355,20 @@ mod serialize_tests {
                 SensorData {
                     id: 2,
                     component: 2,
-                    value: 460,
+                    value: 460.0,
                     alert: FireStatus::SAFE,
                 },
                 SensorData {
                     id: 3,
                     component: 2,
-                    value: 460,
+                    value: 460.0,
                     alert: FireStatus::SAFE,
                 },
             ],
             button: vec![SensorData {
                 id: 1,
                 component: 10,
-                value: 1,
+                value: 1.0,
                 alert: FireStatus::SAFE,
             }],
             light: vec![],
@@ -377,7 +377,7 @@ mod serialize_tests {
                 SensorData {
                     id: 1,
                     component: 6,
-                    value: 20,
+                    value: 20.0,
                     alert: FireStatus::SAFE,
                 }
             ],
@@ -488,7 +488,7 @@ mod serialize_tests {
             fire_data: vec![SensorData {
                 id: 0,
                 component: 8,
-                value: 460,
+                value: 460.0,
                 alert: FireStatus::UNSAFE,
             }],
             smoke: vec![],
