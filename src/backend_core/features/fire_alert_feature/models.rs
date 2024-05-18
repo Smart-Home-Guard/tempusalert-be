@@ -7,7 +7,7 @@ use std::time::SystemTime;
 pub struct SensorLogData {
     pub id: u32,
     pub component: u32,
-    pub value: u32,
+    pub value: f32,
     pub alert: FireStatus,
     pub timestamp: SystemTime,
 }
