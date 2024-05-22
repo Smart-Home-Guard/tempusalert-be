@@ -96,7 +96,7 @@ impl WebTask {
             .layer(TraceLayer::new_for_http())
             .layer(
                 CorsLayer::new()
-                    .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::PUT])
+                    .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::PUT, Method::DELETE])
                     .allow_credentials(true)
                     .allow_headers([CONTENT_TYPE, HeaderName::from_str("jwt").unwrap()])
                     .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap()),
