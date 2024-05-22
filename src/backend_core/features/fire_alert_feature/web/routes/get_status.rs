@@ -42,7 +42,7 @@ pub struct ComponentSafetyStatus {
 #[derive(Deserialize, Serialize, JsonSchema)]
 pub struct RoomLogEntryResponse {
     timestamp: SystemTime,
-    value: isize,
+    value: f32,
 }
 
 #[derive(Serialize, JsonSchema)]
