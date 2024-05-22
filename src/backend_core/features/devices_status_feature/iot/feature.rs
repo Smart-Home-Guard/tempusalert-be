@@ -158,9 +158,10 @@ impl IotFeature for IotDeviceStatusFeature {
                                         }
                                     }
                                     Ok(None) => {
-                                        if let Err(_) = device_coll.insert_one(doc! { "id": id, "owner_name": username.clone(), "kind": to_bson(&kind).unwrap(), "battery_logs": to_bson(&vec![] as &Vec<BatteryStatus>).unwrap(), "error_logs": to_bson(&vec![] as &Vec<DeviceError>).unwrap(), "components": to_bson(&vec![] as &Vec<Component>).unwrap() }, None).await {
+                                        if let Err(_) = device_coll.insert_one(doc! { "id": id, "owner_name": username.clone(), "battery_logs": to_bson(&vec![] as &Vec<BatteryStatus>).unwrap(), "error_logs": to_bson(&vec![] as &Vec<DeviceError>).unwrap(), "components": to_bson(&vec![] as &Vec<Component>).unwrap() }, None).await {
                                             eprintln!("Failed to process connect device data");
-                                        } else if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone() }, doc! { "$push": { "components": to_bson(&Component { id, kind, logs: vec![ComponentStatus::Connect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
+                                        }
+                                        if let Err(_) = device_coll.find_one_and_update(doc! { "id": id, "owner_name": username.clone() }, doc! { "$push": { "components": to_bson(&Component { id, kind, logs: vec![ComponentStatus::Connect { timestamp: SystemTime::now() }]  }).unwrap() } }, None).await {
                                             eprintln!("Failed to process connect device data");
                                         }
                                     }
